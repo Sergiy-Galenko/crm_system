@@ -1,16 +1,20 @@
 import { notFound } from "next/navigation";
 import { CheckCheck } from "lucide-react";
 import { markTaskDoneAction } from "@/actions/deals";
+import { updateMeetingStatusAction } from "@/actions/meetings";
 import { NoteForm } from "@/components/forms/note-form";
 import { TaskDialog } from "@/components/forms/task-dialog";
 import { DealDialog } from "@/components/forms/deal-dialog";
 import { ClientDialog } from "@/components/forms/client-dialog";
+import { MeetingDialog } from "@/components/forms/meeting-dialog";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { clientAccessWhere, leadAccessWhere, visibleUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
+import { requireUser } from "@/lib/session";
 import { decimalToNumber, formatCurrency, formatDate, fromNow } from "@/lib/utils";
 
 type ClientDetailPageProps = {
@@ -19,11 +23,15 @@ type ClientDetailPageProps = {
 
 export default async function ClientDetailPage({ params }: ClientDetailPageProps) {
   const { id } = await params;
+  const user = await requireUser();
   const { locale, t } = await getServerTranslator();
 
   const [client, users, leads, allClients] = await Promise.all([
-    prisma.client.findUnique({
-      where: { id },
+    prisma.client.findFirst({
+      where: {
+        id,
+        ...clientAccessWhere(user),
+      },
       include: {
         owner: {
           select: {
@@ -71,9 +79,22 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
             },
           },
         },
+        meetings: {
+          orderBy: {
+            startsAt: "asc",
+          },
+          include: {
+            assignedTo: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
     }),
     prisma.user.findMany({
+      where: visibleUsersWhere(user),
       select: {
         id: true,
         name: true,
@@ -83,6 +104,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       },
     }),
     prisma.lead.findMany({
+      where: leadAccessWhere(user),
       select: {
         id: true,
         company: true,
@@ -92,6 +114,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       },
     }),
     prisma.client.findMany({
+      where: clientAccessWhere(user),
       select: {
         id: true,
         company: true,
@@ -135,6 +158,12 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
               clients={allClients}
               leads={leads}
               triggerLabel="New deal"
+            />
+            <MeetingDialog
+              users={users}
+              clients={allClients}
+              defaults={{ clientId: client.id, assignedToId: client.ownerId }}
+              hideClientField
             />
           </>
         }
@@ -220,6 +249,89 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
         </div>
 
         <div className="space-y-6">
+          <div className="card rounded-[2rem] p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950">{t("Meetings")}</h3>
+                <p className="mt-1 text-sm text-slate-500">{t("Scheduled account calls, demos, and review sessions tied to this client.")}</p>
+              </div>
+              <MeetingDialog
+                users={users}
+                clients={allClients}
+                defaults={{ clientId: client.id, assignedToId: client.ownerId }}
+                hideClientField
+              />
+            </div>
+            <div className="mt-6 space-y-3">
+              {client.meetings.length ? (
+                client.meetings.map((meeting) => (
+                  <div key={meeting.id} className="rounded-[1.75rem] border border-white/75 bg-white/75 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-slate-950">{meeting.title}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {meeting.assignedTo.name} • {formatDate(meeting.startsAt, locale, "MMM d, yyyy • HH:mm")}
+                        </p>
+                      </div>
+                      <StatusBadge value={meeting.status} />
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm text-slate-600">
+                      <p>{formatDate(meeting.startsAt, locale, "MMM d, yyyy • HH:mm")} - {formatDate(meeting.endsAt, locale, "HH:mm")}</p>
+                      {meeting.location ? <p>{meeting.location}</p> : null}
+                      {meeting.description ? <p>{meeting.description}</p> : null}
+                      {meeting.outcome ? <p className="text-slate-500">{meeting.outcome}</p> : null}
+                      {meeting.meetingLink ? (
+                        <p>
+                          <a href={meeting.meetingLink} target="_blank" rel="noreferrer" className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-4">
+                            {t("Open meeting link")}
+                          </a>
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <MeetingDialog
+                        users={users}
+                        clients={allClients}
+                        hideClientField
+                        meeting={{
+                          id: meeting.id,
+                          title: meeting.title,
+                          description: meeting.description,
+                          status: meeting.status,
+                          startsAt: meeting.startsAt,
+                          endsAt: meeting.endsAt,
+                          location: meeting.location,
+                          meetingLink: meeting.meetingLink,
+                          outcome: meeting.outcome,
+                          clientId: meeting.clientId,
+                          assignedToId: meeting.assignedToId,
+                        }}
+                        triggerLabel="Edit"
+                      />
+                      {meeting.status === "SCHEDULED" ? (
+                        <>
+                          <form action={updateMeetingStatusAction.bind(null, meeting.id, "COMPLETED")}>
+                            <Button type="submit" variant="secondary" size="sm">{t("Mark completed")}</Button>
+                          </form>
+                          <form action={updateMeetingStatusAction.bind(null, meeting.id, "NO_SHOW")}>
+                            <Button type="submit" variant="subtle" size="sm">{t("Mark no-show")}</Button>
+                          </form>
+                          <form action={updateMeetingStatusAction.bind(null, meeting.id, "CANCELED")}>
+                            <Button type="submit" variant="danger" size="sm">{t("Cancel meeting")}</Button>
+                          </form>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-[1.75rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                  {t("No meetings are scheduled for this client yet.")}
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="card rounded-[2rem] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>

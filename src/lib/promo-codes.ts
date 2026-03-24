@@ -15,6 +15,11 @@ type PromoCodeLike = {
   discountValue: Prisma.Decimal | number;
 };
 
+type PromoCodeViewer = {
+  id: string;
+  role: string;
+};
+
 export type PromoValidationResult =
   | {
       valid: true;
@@ -40,14 +45,19 @@ export function calculateDiscountAmount(
   return clampDiscount(amount, rawDiscount);
 }
 
-export async function validatePromoCode(code: string, amount: number): Promise<PromoValidationResult> {
-  return validatePromoCodeWithClient(prisma, code, amount);
+export async function validatePromoCode(
+  code: string,
+  amount: number,
+  viewer?: PromoCodeViewer,
+): Promise<PromoValidationResult> {
+  return validatePromoCodeWithClient(prisma, code, amount, viewer);
 }
 
 export async function validatePromoCodeWithClient(
   client: typeof prisma | Prisma.TransactionClient,
   code: string,
   amount: number,
+  viewer?: PromoCodeViewer,
 ): Promise<PromoValidationResult> {
   const normalizedCode = code.trim().toUpperCase();
 
@@ -58,8 +68,11 @@ export async function validatePromoCodeWithClient(
     };
   }
 
-  const promoCode = await client.promoCode.findUnique({
-    where: { code: normalizedCode },
+  const promoCode = await client.promoCode.findFirst({
+    where: {
+      code: normalizedCode,
+      ...(viewer && viewer.role !== "ADMIN" ? { createdById: viewer.id } : {}),
+    },
   });
 
   if (!promoCode) {

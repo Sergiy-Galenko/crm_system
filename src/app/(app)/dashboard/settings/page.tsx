@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@/components/ui/table";
+import { teamUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
@@ -11,8 +12,13 @@ import { requireUser } from "@/lib/session";
 export default async function SettingsPage() {
   const { locale, t } = await getServerTranslator();
   const currentUser = await requireUser();
+  const canAssignAdmin = currentUser.role === "ADMIN";
+  const teamDescription = canAssignAdmin
+    ? t("Admins can create and update workspace members. Managers can create and update only the teammates they added.")
+    : t("Managers can create and update only the teammates they added.");
 
   const team = await prisma.user.findMany({
+    where: teamUsersWhere(currentUser),
     orderBy: {
       createdAt: "asc",
     },
@@ -21,6 +27,7 @@ export default async function SettingsPage() {
       name: true,
       email: true,
       role: true,
+      roleLabel: true,
       title: true,
       createdAt: true,
     },
@@ -50,10 +57,10 @@ export default async function SettingsPage() {
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">{t("Team access")}</h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  {t("Admins can create and update workspace members. Managers can view the team roster.")}
+                  {teamDescription}
                 </p>
               </div>
-              {currentUser.role === "ADMIN" ? <UserDialog /> : null}
+              <UserDialog canAssignAdmin={canAssignAdmin} />
             </div>
 
             <div className="card overflow-hidden rounded-[2rem] p-2">
@@ -65,7 +72,7 @@ export default async function SettingsPage() {
                       <TableHeaderCell>{t("Role")}</TableHeaderCell>
                       <TableHeaderCell>{t("Title")}</TableHeaderCell>
                       <TableHeaderCell>{t("Joined")}</TableHeaderCell>
-                      {currentUser.role === "ADMIN" ? <TableHeaderCell className="text-right">{t("Actions")}</TableHeaderCell> : null}
+                      <TableHeaderCell className="text-right">{t("Actions")}</TableHeaderCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -76,24 +83,24 @@ export default async function SettingsPage() {
                           <div className="mt-1 text-xs text-slate-500">{member.email}</div>
                         </TableCell>
                         <TableCell>
-                          <StatusBadge value={member.role} />
+                          <StatusBadge value={member.role} label={member.roleLabel} />
                         </TableCell>
                         <TableCell>{member.title ?? t("No title")}</TableCell>
                         <TableCell>{member.createdAt.toLocaleDateString(locale === "uk" ? "uk-UA" : "en-US", { month: "short", day: "numeric", year: "numeric" })}</TableCell>
-                        {currentUser.role === "ADMIN" ? (
-                          <TableCell className="text-right">
-                            <UserDialog
-                              user={{
-                                id: member.id,
-                                name: member.name,
-                                email: member.email,
-                                role: member.role,
-                                title: member.title,
-                              }}
-                              triggerLabel="Edit"
-                            />
-                          </TableCell>
-                        ) : null}
+                        <TableCell className="text-right">
+                          <UserDialog
+                            canAssignAdmin={canAssignAdmin}
+                            user={{
+                              id: member.id,
+                              name: member.name,
+                              email: member.email,
+                              role: member.role,
+                              roleLabel: member.roleLabel,
+                              title: member.title,
+                            }}
+                            triggerLabel="Edit"
+                          />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

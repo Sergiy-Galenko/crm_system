@@ -8,6 +8,8 @@ const statusVariantMap: Record<string, "default" | "info" | "success" | "warning
   QUALIFIED: "success",
   WON: "success",
   DONE: "success",
+  SCHEDULED: "info",
+  COMPLETED: "success",
   AT_RISK: "warning",
   PROPOSAL: "info",
   NEGOTIATION: "info",
@@ -17,11 +19,13 @@ const statusVariantMap: Record<string, "default" | "info" | "success" | "warning
   IN_PROGRESS: "warning",
   INACTIVE: "danger",
   LOST: "danger",
+  CANCELED: "danger",
+  NO_SHOW: "warning",
 };
 
-export function StatusBadge({ value }: { value: string }) {
+export function StatusBadge({ value, label }: { value: string; label?: string | null }) {
   const { t } = useLocale();
-  const translatedValue = t(value);
+  const translatedValue = label ?? t(value);
 
   return (
     <Badge variant={statusVariantMap[value] ?? "default"}>

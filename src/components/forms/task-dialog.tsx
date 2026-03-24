@@ -81,7 +81,7 @@ export function TaskDialog({
             <FormField label={t("Due date")} error={state.fields?.dueDate}>
               <Input name="dueDate" type="date" defaultValue={toDateInputValue(task?.dueDate)} />
             </FormField>
-            <FormField label={t("Assignee")}>
+            <FormField label={t("Assignee")} error={state.fields?.assignedToId}>
               <Select name="assignedToId" defaultValue={task?.assignedToId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { createPageHref, getPage, getParam, type SearchParamsRecord } from "@/lib/query-params";
 import { decimalToNumber, formatCurrency, formatDate } from "@/lib/utils";
@@ -9,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } fro
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { clientAccessWhere, dealAccessWhere, leadAccessWhere, visibleUsersWhere } from "@/lib/crm-scope";
 import { getServerTranslator } from "@/lib/locale-server";
+import { requireUser } from "@/lib/session";
 
 const pageSize = 8;
 
@@ -18,6 +21,7 @@ type DealsPageProps = {
 };
 
 export default async function DealsPage({ searchParams }: DealsPageProps) {
+  const user = await requireUser();
   const { locale, t } = await getServerTranslator();
   const resolvedSearchParams = await searchParams;
   const query = getParam(resolvedSearchParams, "q");
@@ -25,7 +29,8 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
   const sort = getParam(resolvedSearchParams, "sort") || "close-date";
   const page = getPage(resolvedSearchParams);
 
-  const where = {
+  const where: Prisma.DealWhereInput = {
+    ...dealAccessWhere(user),
     ...(query
       ? {
           OR: [
@@ -70,6 +75,7 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
     }),
     prisma.deal.count({ where }),
     prisma.user.findMany({
+      where: visibleUsersWhere(user),
       select: {
         id: true,
         name: true,
@@ -79,6 +85,7 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
       },
     }),
     prisma.client.findMany({
+      where: clientAccessWhere(user),
       select: {
         id: true,
         company: true,
@@ -88,6 +95,7 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
       },
     }),
     prisma.lead.findMany({
+      where: leadAccessWhere(user),
       select: {
         id: true,
         company: true,

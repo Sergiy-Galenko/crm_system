@@ -2,6 +2,7 @@ import {
   BarChart3,
   BadgePercent,
   BriefcaseBusiness,
+  CalendarDays,
   LayoutDashboard,
   Settings,
   Users,
@@ -21,6 +22,7 @@ export const leadSources = ["WEBSITE", "REFERRAL", "OUTBOUND", "PARTNER", "EVENT
 export const dealStages = ["DISCOVERY", "PROPOSAL", "NEGOTIATION", "WON", "LOST"] as const;
 export const taskStatuses = ["TODO", "IN_PROGRESS", "DONE"] as const;
 export const taskPriorities = ["LOW", "MEDIUM", "HIGH"] as const;
+export const meetingStatuses = ["SCHEDULED", "COMPLETED", "CANCELED", "NO_SHOW"] as const;
 export const discountTypes = ["PERCENT", "FIXED"] as const;
 
 export const dashboardNavigation = [
@@ -43,6 +45,11 @@ export const dashboardNavigation = [
     title: "Deals",
     href: "/dashboard/deals",
     icon: BriefcaseBusiness,
+  },
+  {
+    title: "Meetings",
+    href: "/dashboard/meetings",
+    icon: CalendarDays,
   },
   {
     title: "Promo Codes",

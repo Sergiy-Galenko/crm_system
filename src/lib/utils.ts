@@ -46,6 +46,14 @@ export function toDateInputValue(value: Date | string | null | undefined) {
   return format(new Date(value), "yyyy-MM-dd");
 }
 
+export function toDateTimeInputValue(value: Date | string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  return format(new Date(value), "yyyy-MM-dd'T'HH:mm");
+}
+
 export function fromNow(value: Date | string, locale: Locale = defaultLocale) {
   return formatDistanceToNowStrict(new Date(value), {
     addSuffix: true,

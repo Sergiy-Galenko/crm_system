@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { promoCodeAccessWhere } from "@/lib/crm-scope";
 import { requireUser } from "@/lib/session";
 import { createPageHref, getPage, getParam, type SearchParamsRecord } from "@/lib/query-params";
 import { decimalToNumber, formatCurrency, formatDate } from "@/lib/utils";
@@ -28,6 +29,7 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
   const page = getPage(resolvedSearchParams);
 
   const where = {
+    ...promoCodeAccessWhere(user),
     ...(query
       ? {
           OR: [

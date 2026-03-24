@@ -1,14 +1,18 @@
 import { prisma } from "@/lib/db";
+import { dealAccessWhere, leadAccessWhere, promoCodeAccessWhere, promoUsageAccessWhere } from "@/lib/crm-scope";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { getServerTranslator } from "@/lib/locale-server";
+import { requireUser } from "@/lib/session";
 import { decimalToNumber, formatCurrency, formatNumber } from "@/lib/utils";
 
 export default async function AnalyticsPage() {
+  const user = await requireUser();
   const { locale, t } = await getServerTranslator();
   const [deals, leads, promoCodes, promoUsages] = await Promise.all([
     prisma.deal.findMany({
+      where: dealAccessWhere(user),
       include: {
         client: {
           select: {
@@ -17,14 +21,18 @@ export default async function AnalyticsPage() {
         },
       },
     }),
-    prisma.lead.findMany(),
+    prisma.lead.findMany({
+      where: leadAccessWhere(user),
+    }),
     prisma.promoCode.findMany({
+      where: promoCodeAccessWhere(user),
       orderBy: {
         usedCount: "desc",
       },
       take: 5,
     }),
     prisma.promoCodeUsage.findMany({
+      where: promoUsageAccessWhere(user),
       orderBy: {
         usedAt: "desc",
       },

@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const validation = await validatePromoCode(parsedPayload.data.code, parsedPayload.data.amount);
+  const validation = await validatePromoCode(parsedPayload.data.code, parsedPayload.data.amount, user);
 
   if (!validation.valid) {
     return NextResponse.json<ApiResponse<never>>(

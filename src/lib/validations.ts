@@ -1,4 +1,4 @@
-import { ClientStatus, DealStage, DiscountType, LeadSource, LeadStatus, Role, TaskPriority, TaskStatus } from "@prisma/client";
+import { ClientStatus, DealStage, DiscountType, LeadSource, LeadStatus, MeetingStatus, Role, TaskPriority, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
 const requiredString = (label: string, max = 120) =>
@@ -15,6 +15,14 @@ const optionalDate = z
   .optional()
   .transform((value) => (value ? new Date(value) : undefined))
   .refine((value) => value === undefined || !Number.isNaN(value.getTime()), "Enter a valid date.");
+
+const requiredDateTime = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`)
+    .transform((value) => new Date(value))
+    .refine((value) => !Number.isNaN(value.getTime()), "Enter a valid date.");
 
 export const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email."),
@@ -113,6 +121,25 @@ export const taskSchema = z.object({
   dealId: z.string().optional().or(z.literal("")),
 });
 
+export const meetingSchema = z
+  .object({
+    id: z.string().optional(),
+    title: requiredString("Meeting title"),
+    description: z.string().trim().max(500).optional().or(z.literal("")),
+    status: z.nativeEnum(MeetingStatus),
+    startsAt: requiredDateTime("Start time"),
+    endsAt: requiredDateTime("End time"),
+    location: z.string().trim().max(160).optional().or(z.literal("")),
+    meetingLink: z.string().trim().max(280).optional().or(z.literal("")),
+    outcome: z.string().trim().max(500).optional().or(z.literal("")),
+    clientId: requiredString("Client"),
+    assignedToId: requiredString("Assignee"),
+  })
+  .refine((value) => value.endsAt > value.startsAt, {
+    message: "Meeting end must be after the start time.",
+    path: ["endsAt"],
+  });
+
 export const noteSchema = z.object({
   body: z.string().trim().min(3, "Enter a short note.").max(1000, "Note is too long."),
   clientId: z.string().optional().or(z.literal("")),
@@ -125,6 +152,7 @@ export const userSchema = z.object({
   name: requiredString("Name"),
   email: z.string().trim().email("Enter a valid email."),
   role: z.nativeEnum(Role),
+  roleLabel: z.string().trim().max(60, "Custom role name must be 60 characters or fewer.").optional().or(z.literal("")),
   title: z.string().trim().max(100).optional().or(z.literal("")),
   password: z
     .string()

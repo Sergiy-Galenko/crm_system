@@ -4,6 +4,7 @@ import { ActivityAction, ActivityEntity, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
+import { clientAccessWhere, dealAccessWhere, leadAccessWhere, taskAccessWhere, visibleUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { validatePromoCodeWithClient, recalculateAppliedPromo } from "@/lib/promo-codes";
@@ -26,6 +27,72 @@ export async function upsertDealAction(_prevState: ActionResult, formData: FormD
       t(parsedValues.error.errors[0]?.message ?? "Please review the deal form."),
       translateActionFields(errors, t, ["title", "grossAmount", "clientId", "promoCode"]),
     );
+  }
+
+  const owner = await prisma.user.findFirst({
+    where: {
+      id: parsedValues.data.ownerId,
+      ...visibleUsersWhere(user),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!owner) {
+    return actionError(t("That owner is not in your team."), {
+      ownerId: t("Choose someone from your team."),
+    });
+  }
+
+  const client = await prisma.client.findFirst({
+    where: {
+      id: parsedValues.data.clientId,
+      ...clientAccessWhere(user),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!client) {
+    return actionError(t("That client is not available in your workspace."), {
+      clientId: t("Choose a client from your workspace."),
+    });
+  }
+
+  if (parsedValues.data.leadId) {
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id: parsedValues.data.leadId,
+        ...leadAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!lead) {
+      return actionError(t("That lead is not available in your workspace."), {
+        leadId: t("Choose a lead from your workspace."),
+      });
+    }
+  }
+
+  if (parsedValues.data.id) {
+    const existingDeal = await prisma.deal.findFirst({
+      where: {
+        id: parsedValues.data.id,
+        ...dealAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existingDeal) {
+      return actionError(t("You can only update deals in your workspace."));
+    }
   }
 
   const promoCodeInput = normalizedPromoCode(parsedValues.data.promoCode);
@@ -82,7 +149,7 @@ export async function upsertDealAction(_prevState: ActionResult, formData: FormD
             },
           });
         } else if (promoCodeInput) {
-          const promoValidation = await validatePromoCodeWithClient(tx, promoCodeInput, parsedValues.data.grossAmount);
+          const promoValidation = await validatePromoCodeWithClient(tx, promoCodeInput, parsedValues.data.grossAmount, user);
 
           if (!promoValidation.valid) {
             throw new Error(`PROMO:${promoValidation.message}`);
@@ -239,6 +306,86 @@ export async function upsertTaskAction(_prevState: ActionResult, formData: FormD
     );
   }
 
+  const assignee = await prisma.user.findFirst({
+    where: {
+      id: parsedValues.data.assignedToId,
+      ...visibleUsersWhere(user),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!assignee) {
+    return actionError(t("That assignee is not in your team."), {
+      assignedToId: t("Choose someone from your team."),
+    });
+  }
+
+  if (parsedValues.data.clientId) {
+    const client = await prisma.client.findFirst({
+      where: {
+        id: parsedValues.data.clientId,
+        ...clientAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!client) {
+      return actionError(t("That client is not available in your workspace."));
+    }
+  }
+
+  if (parsedValues.data.leadId) {
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id: parsedValues.data.leadId,
+        ...leadAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!lead) {
+      return actionError(t("That lead is not available in your workspace."));
+    }
+  }
+
+  if (parsedValues.data.dealId) {
+    const deal = await prisma.deal.findFirst({
+      where: {
+        id: parsedValues.data.dealId,
+        ...dealAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!deal) {
+      return actionError(t("That deal is not available in your workspace."));
+    }
+  }
+
+  if (parsedValues.data.id) {
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        id: parsedValues.data.id,
+        ...taskAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existingTask) {
+      return actionError(t("You can only update tasks in your workspace."));
+    }
+  }
+
   const task = parsedValues.data.id
     ? await prisma.task.update({
         where: { id: parsedValues.data.id },
@@ -296,6 +443,20 @@ export async function upsertTaskAction(_prevState: ActionResult, formData: FormD
 export async function markTaskDoneAction(taskId: string) {
   const { t } = await getServerTranslator();
   const user = await requireUser();
+
+  const existingTask = await prisma.task.findFirst({
+    where: {
+      id: taskId,
+      ...taskAccessWhere(user),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!existingTask) {
+    return;
+  }
 
   const task = await prisma.task.update({
     where: { id: taskId },

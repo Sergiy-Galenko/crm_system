@@ -13,20 +13,24 @@ import { idleActionState } from "@/lib/actions";
 import { roles } from "@/lib/constants";
 
 export function UserDialog({
+  canAssignAdmin = false,
   user,
   triggerLabel = "Add user",
 }: {
+  canAssignAdmin?: boolean;
   user?: {
     id: string;
     name: string;
     email: string;
     role: string;
+    roleLabel?: string | null;
     title?: string | null;
   };
   triggerLabel?: string;
 }) {
   const [state, formAction] = useActionState(upsertUserAction, idleActionState);
   const { t } = useLocale();
+  const availableRoles = canAssignAdmin ? roles : roles.filter((role) => role !== "ADMIN");
 
   return (
     <ActionDialog
@@ -45,14 +49,21 @@ export function UserDialog({
             <FormField label={t("Work email")} error={state.fields?.email}>
               <Input name="email" type="email" defaultValue={user?.email} />
             </FormField>
-            <FormField label={t("Role")}>
+            <FormField label={t("Role")} error={state.fields?.role}>
               <Select name="role" defaultValue={user?.role ?? "MANAGER"}>
-                {roles.map((role) => (
+                {availableRoles.map((role) => (
                   <option key={role} value={role}>
                     {t(role)}
                   </option>
                 ))}
               </Select>
+            </FormField>
+            <FormField
+              label={t("Custom role name")}
+              error={state.fields?.roleLabel}
+              description={t("Shown in the UI while permissions still follow the selected system role.")}
+            >
+              <Input name="roleLabel" defaultValue={user?.roleLabel ?? ""} placeholder={t("Team Lead")} />
             </FormField>
             <FormField label={t("Title")}>
               <Input name="title" defaultValue={user?.title ?? ""} />

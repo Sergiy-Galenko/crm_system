@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getPage, getParam, createPageHref, type SearchParamsRecord } from "@/lib/query-params";
 import { decimalToNumber, formatCurrency, fromNow } from "@/lib/utils";
@@ -6,11 +7,14 @@ import { PageHeader } from "@/components/page-header";
 import { ClientDialog } from "@/components/forms/client-dialog";
 import { Pagination } from "@/components/ui/pagination";
 import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { clientAccessWhere, visibleUsersWhere } from "@/lib/crm-scope";
 import { getServerTranslator } from "@/lib/locale-server";
+import { requireUser } from "@/lib/session";
 
 const pageSize = 8;
 
@@ -19,6 +23,7 @@ type ClientsPageProps = {
 };
 
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
+  const user = await requireUser();
   const { locale, t } = await getServerTranslator();
   const resolvedSearchParams = await searchParams;
   const query = getParam(resolvedSearchParams, "q");
@@ -26,7 +31,8 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const sort = getParam(resolvedSearchParams, "sort") || "newest";
   const page = getPage(resolvedSearchParams);
 
-  const where = {
+  const where: Prisma.ClientWhereInput = {
+    ...clientAccessWhere(user),
     ...(query
       ? {
           OR: [
@@ -70,6 +76,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     }),
     prisma.client.count({ where }),
     prisma.user.findMany({
+      where: visibleUsersWhere(user),
       select: {
         id: true,
         name: true,
@@ -155,12 +162,9 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link
-                          href={`/dashboard/clients/${client.id}`}
-                          className="inline-flex h-10 items-center rounded-2xl border border-white/80 bg-white/80 px-4 text-sm font-medium text-slate-700"
-                        >
-                          {t("View")}
-                        </Link>
+                        <Button asChild variant="secondary">
+                          <Link href={`/dashboard/clients/${client.id}`}>{t("View")}</Link>
+                        </Button>
                         <ClientDialog
                           users={users}
                           client={{

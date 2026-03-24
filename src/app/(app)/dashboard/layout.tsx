@@ -1,5 +1,6 @@
 import { addDays } from "date-fns";
 import { AppShell } from "@/components/layout/app-shell";
+import { promoCodeAccessWhere, taskAccessWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
@@ -11,9 +12,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await requireUser();
   const { locale, t } = await getServerTranslator();
 
-  const [upcomingTasks, expiringPromoCodes] = await Promise.all([
+  const [upcomingTasks, expiringPromoCodes, myUpcomingMeetings] = await Promise.all([
     prisma.task.findMany({
       where: {
+        ...taskAccessWhere(user),
         status: {
           not: "DONE",
         },
@@ -28,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }),
     prisma.promoCode.findMany({
       where: {
+        ...promoCodeAccessWhere(user),
         active: true,
         expiresAt: {
           lte: addDays(new Date(), 7),
@@ -38,9 +41,36 @@ export default async function DashboardLayout({ children }: { children: React.Re
       },
       take: 3,
     }),
+    prisma.meeting.findMany({
+      where: {
+        assignedToId: user.id,
+        status: "SCHEDULED",
+        startsAt: {
+          gte: new Date(),
+          lte: addDays(new Date(), 7),
+        },
+      },
+      include: {
+        client: {
+          select: {
+            company: true,
+          },
+        },
+      },
+      orderBy: {
+        startsAt: "asc",
+      },
+      take: 3,
+    }),
   ]);
 
   const notifications = [
+    ...myUpcomingMeetings.map((meeting) => ({
+      id: meeting.id,
+      label: t("Meeting with {company}", { company: meeting.client.company }),
+      meta: t("Scheduled for {date}", { date: formatDate(meeting.startsAt, locale, "MMM d, yyyy • HH:mm") }),
+      createdAt: meeting.startsAt,
+    })),
     ...upcomingTasks.map((task) => ({
       id: task.id,
       label: task.title,
@@ -63,6 +93,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <AppShell
       user={user}
       notifications={notifications}
+      meetingReminder={
+        myUpcomingMeetings[0]
+          ? {
+              title: t("Upcoming meeting"),
+              description: t("{company} on {date}", {
+                company: myUpcomingMeetings[0].client.company,
+                date: formatDate(myUpcomingMeetings[0].startsAt, locale, "MMM d, yyyy • HH:mm"),
+              }),
+              href: "/dashboard/meetings",
+            }
+          : undefined
+      }
     >
       {children}
     </AppShell>

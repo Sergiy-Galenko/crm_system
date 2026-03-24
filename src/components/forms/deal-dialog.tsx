@@ -174,7 +174,7 @@ export function DealDialog({
             <FormField label={t("Expected close date")}>
               <Input name="closeDate" type="date" defaultValue={toDateInputValue(deal?.closeDate)} />
             </FormField>
-            <FormField label={t("Client")}>
+            <FormField label={t("Client")} error={state.fields?.clientId}>
               <Select name="clientId" defaultValue={deal?.clientId ?? clients[0]?.id}>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
@@ -183,7 +183,7 @@ export function DealDialog({
                 ))}
               </Select>
             </FormField>
-            <FormField label={t("Lead")}>
+            <FormField label={t("Lead")} error={state.fields?.leadId}>
               <Select name="leadId" defaultValue={deal?.leadId ?? ""}>
                 <option value="">{t("Not linked")}</option>
                 {leads.map((lead) => (
@@ -193,7 +193,7 @@ export function DealDialog({
                 ))}
               </Select>
             </FormField>
-            <FormField label={t("Owner")}>
+            <FormField label={t("Owner")} error={state.fields?.ownerId}>
               <Select name="ownerId" defaultValue={deal?.ownerId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>

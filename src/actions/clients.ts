@@ -4,6 +4,7 @@ import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
+import { clientAccessWhere, dealAccessWhere, leadAccessWhere, visibleUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
@@ -21,6 +22,38 @@ export async function upsertClientAction(_prevState: ActionResult, formData: For
       t(parsedValues.error.errors[0]?.message ?? "Please review the client form."),
       translateActionFields(errors, t, ["name", "company", "email", "phone", "monthlyValue"]),
     );
+  }
+
+  const owner = await prisma.user.findFirst({
+    where: {
+      id: parsedValues.data.ownerId,
+      ...visibleUsersWhere(user),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!owner) {
+    return actionError(t("That owner is not in your team."), {
+      ownerId: t("Choose someone from your team."),
+    });
+  }
+
+  if (parsedValues.data.id) {
+    const existingClient = await prisma.client.findFirst({
+      where: {
+        id: parsedValues.data.id,
+        ...clientAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existingClient) {
+      return actionError(t("You can only update clients in your workspace."));
+    }
   }
 
   try {
@@ -88,6 +121,54 @@ export async function createNoteAction(_prevState: ActionResult, formData: FormD
 
   if (!parsedValues.success) {
     return actionError(t(parsedValues.error.errors[0]?.message ?? "Please review the note."));
+  }
+
+  if (parsedValues.data.clientId) {
+    const client = await prisma.client.findFirst({
+      where: {
+        id: parsedValues.data.clientId,
+        ...clientAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!client) {
+      return actionError(t("You can only add notes to records in your workspace."));
+    }
+  }
+
+  if (parsedValues.data.leadId) {
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id: parsedValues.data.leadId,
+        ...leadAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!lead) {
+      return actionError(t("You can only add notes to records in your workspace."));
+    }
+  }
+
+  if (parsedValues.data.dealId) {
+    const deal = await prisma.deal.findFirst({
+      where: {
+        id: parsedValues.data.dealId,
+        ...dealAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!deal) {
+      return actionError(t("You can only add notes to records in your workspace."));
+    }
   }
 
   const note = await prisma.note.create({

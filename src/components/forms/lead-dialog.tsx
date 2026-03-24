@@ -86,7 +86,7 @@ export function LeadDialog({
             <FormField label={t("Next follow-up")}>
               <Input name="nextFollowUpAt" type="date" defaultValue={toDateInputValue(lead?.nextFollowUpAt)} />
             </FormField>
-            <FormField label={t("Owner")}>
+            <FormField label={t("Owner")} error={state.fields?.ownerId}>
               <Select name="ownerId" defaultValue={lead?.ownerId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
@@ -95,7 +95,7 @@ export function LeadDialog({
                 ))}
               </Select>
             </FormField>
-            <FormField label={t("Link to client")}>
+            <FormField label={t("Link to client")} error={state.fields?.clientId}>
               <Select name="clientId" defaultValue={lead?.clientId ?? ""}>
                 <option value="">{t("Not linked")}</option>
                 {clients.map((client) => (

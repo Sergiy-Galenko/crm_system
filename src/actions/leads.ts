@@ -4,6 +4,7 @@ import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
+import { clientAccessWhere, leadAccessWhere, visibleUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
@@ -21,6 +22,56 @@ export async function upsertLeadAction(_prevState: ActionResult, formData: FormD
       t(parsedValues.error.errors[0]?.message ?? "Please review the lead form."),
       translateActionFields(errors, t, ["name", "company", "email", "estimatedValue"]),
     );
+  }
+
+  const owner = await prisma.user.findFirst({
+    where: {
+      id: parsedValues.data.ownerId,
+      ...visibleUsersWhere(user),
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!owner) {
+    return actionError(t("That owner is not in your team."), {
+      ownerId: t("Choose someone from your team."),
+    });
+  }
+
+  if (parsedValues.data.clientId) {
+    const client = await prisma.client.findFirst({
+      where: {
+        id: parsedValues.data.clientId,
+        ...clientAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!client) {
+      return actionError(t("That client is not available in your workspace."), {
+        clientId: t("Choose a client from your workspace."),
+      });
+    }
+  }
+
+  if (parsedValues.data.id) {
+    const existingLead = await prisma.lead.findFirst({
+      where: {
+        id: parsedValues.data.id,
+        ...leadAccessWhere(user),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existingLead) {
+      return actionError(t("You can only update leads in your workspace."));
+    }
   }
 
   try {

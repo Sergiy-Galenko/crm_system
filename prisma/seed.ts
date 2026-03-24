@@ -7,6 +7,7 @@ import {
   DiscountType,
   LeadSource,
   LeadStatus,
+  MeetingStatus,
   PrismaClient,
   Role,
   TaskPriority,
@@ -26,6 +27,7 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.activityLog.deleteMany();
   await prisma.promoCodeUsage.deleteMany();
+  await prisma.meeting.deleteMany();
   await prisma.task.deleteMany();
   await prisma.note.deleteMany();
   await prisma.deal.deleteMany();
@@ -37,28 +39,28 @@ async function main() {
   const passwordHash = await bcrypt.hash("Admin@12345", 12);
   const managerPasswordHash = await bcrypt.hash("Manager@12345", 12);
 
-  const [admin, manager] = await Promise.all([
-    prisma.user.create({
-      data: {
-        name: "Olivia Hart",
-        email: "admin@vercelcrm.dev",
-        passwordHash,
-        role: Role.ADMIN,
-        title: "Revenue Operations Lead",
-        avatarColor: "#2154FF",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: "Noah Bennett",
-        email: "manager@vercelcrm.dev",
-        passwordHash: managerPasswordHash,
-        role: Role.MANAGER,
-        title: "Account Manager",
-        avatarColor: "#0F9F68",
-      },
-    }),
-  ]);
+  const admin = await prisma.user.create({
+    data: {
+      name: "Olivia Hart",
+      email: "admin@vercelcrm.dev",
+      passwordHash,
+      role: Role.ADMIN,
+      title: "Revenue Operations Lead",
+      avatarColor: "#2154FF",
+    },
+  });
+
+  const manager = await prisma.user.create({
+    data: {
+      name: "Noah Bennett",
+      email: "manager@vercelcrm.dev",
+      passwordHash: managerPasswordHash,
+      role: Role.MANAGER,
+      title: "Account Manager",
+      avatarColor: "#0F9F68",
+      createdById: admin.id,
+    },
+  });
 
   const clients = await Promise.all([
     prisma.client.create({
@@ -214,6 +216,50 @@ async function main() {
         usedCount: 12,
         discountType: DiscountType.PERCENT,
         discountValue: 20,
+        createdById: admin.id,
+      },
+    }),
+  ]);
+
+  await Promise.all([
+    prisma.meeting.create({
+      data: {
+        title: "Northstar renewal review",
+        description: "Walk through renewal terms, onboarding blockers, and budget confirmation.",
+        status: MeetingStatus.SCHEDULED,
+        startsAt: addDays(new Date(), 1),
+        endsAt: addDays(new Date(Date.now() + 60 * 60 * 1000), 1),
+        location: "Google Meet",
+        meetingLink: "https://meet.google.com/example-northstar",
+        clientId: clients[0]!.id,
+        assignedToId: admin.id,
+        createdById: admin.id,
+      },
+    }),
+    prisma.meeting.create({
+      data: {
+        title: "Velvet Commerce expansion call",
+        description: "Discuss new regional rollout and promo-assisted onboarding package.",
+        status: MeetingStatus.SCHEDULED,
+        startsAt: addDays(new Date(), 2),
+        endsAt: addDays(new Date(Date.now() + 45 * 60 * 1000), 2),
+        location: "Kyiv office / Zoom",
+        clientId: clients[1]!.id,
+        assignedToId: manager.id,
+        createdById: manager.id,
+      },
+    }),
+    prisma.meeting.create({
+      data: {
+        title: "Summit AI recovery check-in",
+        description: "Review churn signals and escalation plan.",
+        status: MeetingStatus.COMPLETED,
+        startsAt: subDays(new Date(), 2),
+        endsAt: subDays(new Date(Date.now() - 30 * 60 * 1000), 2),
+        location: "Phone call",
+        outcome: "Agreed on a two-week recovery plan and shared technical blockers.",
+        clientId: clients[2]!.id,
+        assignedToId: admin.id,
         createdById: admin.id,
       },
     }),

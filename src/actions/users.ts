@@ -4,6 +4,7 @@ import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
+import { teamUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { hashPassword, requireUser } from "@/lib/session";
@@ -12,9 +13,10 @@ import { getFieldErrors, settingsSchema, userSchema } from "@/lib/validations";
 export async function upsertUserAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const { t } = await getServerTranslator();
   const currentUser = await requireUser();
+  const canAssignAdmin = currentUser.role === "ADMIN";
 
-  if (currentUser.role !== "ADMIN") {
-    return actionError(t("Only admins can manage users."));
+  if (currentUser.role !== "ADMIN" && currentUser.role !== "MANAGER") {
+    return actionError(t("Only admins and managers can manage users."));
   }
 
   const values = Object.fromEntries(formData.entries());
@@ -24,7 +26,7 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
     const errors = getFieldErrors(parsedValues.error);
     return actionError(
       t(parsedValues.error.errors[0]?.message ?? "Please review the user form."),
-      translateActionFields(errors, t, ["name", "email", "password"]),
+      translateActionFields(errors, t, ["name", "email", "roleLabel", "password"]),
     );
   }
 
@@ -32,6 +34,28 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
     return actionError(t("New users require a password."), {
       password: t("Password is required."),
     });
+  }
+
+  if (!canAssignAdmin && parsedValues.data.role === "ADMIN") {
+    return actionError(t("Managers cannot create admin accounts."), {
+      role: t("Choose the manager role for this teammate."),
+    });
+  }
+
+  if (parsedValues.data.id && !canAssignAdmin) {
+    const managedUser = await prisma.user.findFirst({
+      where: {
+        id: parsedValues.data.id,
+        ...teamUsersWhere(currentUser),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!managedUser) {
+      return actionError(t("Managers can only manage users in their own team."));
+    }
   }
 
   const passwordHash = parsedValues.data.password ? await hashPassword(parsedValues.data.password) : undefined;
@@ -44,6 +68,7 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
             name: parsedValues.data.name,
             email: parsedValues.data.email.toLowerCase(),
             role: parsedValues.data.role,
+            roleLabel: parsedValues.data.roleLabel || null,
             title: parsedValues.data.title || null,
             passwordHash,
           },
@@ -53,8 +78,10 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
             name: parsedValues.data.name,
             email: parsedValues.data.email.toLowerCase(),
             role: parsedValues.data.role,
+            roleLabel: parsedValues.data.roleLabel || null,
             title: parsedValues.data.title || null,
             passwordHash: passwordHash!,
+            createdById: currentUser.id,
           },
         });
 
@@ -69,6 +96,9 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
     });
 
     revalidatePath("/dashboard/settings");
+    revalidatePath("/dashboard/clients");
+    revalidatePath("/dashboard/leads");
+    revalidatePath("/dashboard/deals");
 
     return actionSuccess(t(parsedValues.data.id ? "User updated." : "User created."));
   } catch {

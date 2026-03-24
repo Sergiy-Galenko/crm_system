@@ -5,11 +5,14 @@ import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { activityAccessWhere, clientAccessWhere, dealAccessWhere, leadAccessWhere, promoCodeAccessWhere, taskAccessWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
+import { requireUser } from "@/lib/session";
 import { decimalToNumber, formatCurrency, formatNumber, fromNow } from "@/lib/utils";
 
 export default async function DashboardPage() {
+  const user = await requireUser();
   const { locale, t } = await getServerTranslator();
   const [
     leadsCount,
@@ -22,14 +25,15 @@ export default async function DashboardPage() {
     upcomingTasks,
     topPromoCodes,
   ] = await Promise.all([
-    prisma.lead.count(),
-    prisma.client.count(),
-    prisma.deal.count(),
+    prisma.lead.count({ where: leadAccessWhere(user) }),
+    prisma.client.count({ where: clientAccessWhere(user) }),
+    prisma.deal.count({ where: dealAccessWhere(user) }),
     prisma.deal.aggregate({
-      where: { stage: "WON" },
+      where: { ...dealAccessWhere(user), stage: "WON" },
       _sum: { netAmount: true },
     }),
     prisma.promoCode.aggregate({
+      where: promoCodeAccessWhere(user),
       _sum: {
         usedCount: true,
       },
@@ -38,6 +42,7 @@ export default async function DashboardPage() {
       },
     }),
     prisma.activityLog.findMany({
+      where: activityAccessWhere(user),
       orderBy: {
         createdAt: "desc",
       },
@@ -53,6 +58,7 @@ export default async function DashboardPage() {
     }),
     prisma.deal.groupBy({
       by: ["stage"],
+      where: dealAccessWhere(user),
       _count: {
         _all: true,
       },
@@ -62,6 +68,7 @@ export default async function DashboardPage() {
     }),
     prisma.task.findMany({
       where: {
+        ...taskAccessWhere(user),
         status: {
           not: "DONE",
         },
@@ -84,6 +91,7 @@ export default async function DashboardPage() {
       },
     }),
     prisma.promoCode.findMany({
+      where: promoCodeAccessWhere(user),
       orderBy: {
         usedCount: "desc",
       },

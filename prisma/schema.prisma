@@ -55,6 +55,13 @@ enum TaskPriority {
   HIGH
 }
 
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
 enum DiscountType {
   PERCENT
   FIXED
@@ -65,6 +72,7 @@ enum ActivityEntity {
   CLIENT
   LEAD
   DEAL
+  MEETING
   PROMO_CODE
   TASK
   NOTE
@@ -87,19 +95,27 @@ model User {
   email             String           @unique
   passwordHash      String
   role              Role             @default(MANAGER)
+  roleLabel         String?
   title             String?
   avatarColor       String           @default("#2154FF")
+  createdById       String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  createdBy         User?            @relation("UserHierarchy", fields: [createdById], references: [id], onDelete: SetNull)
+  managedUsers      User[]           @relation("UserHierarchy")
   ownedClients      Client[]         @relation("ClientOwner")
   ownedLeads        Lead[]           @relation("LeadOwner")
   ownedDeals        Deal[]           @relation("DealOwner")
   assignedTasks     Task[]           @relation("TaskAssignee")
   createdTasks      Task[]           @relation("TaskCreator")
+  assignedMeetings  Meeting[]        @relation("MeetingAssignee")
+  createdMeetings   Meeting[]        @relation("MeetingCreator")
   notes             Note[]           @relation("NoteAuthor")
   createdPromoCodes PromoCode[]      @relation("PromoCodeCreator")
   promoUsages       PromoCodeUsage[] @relation("PromoCodeAppliedBy")
   activities        ActivityLog[]    @relation("ActivityActor")
+
+  @@index([createdById])
 }
 
 model Client {
@@ -122,6 +138,7 @@ model Client {
   deals          Deal[]
   notes          Note[]
   tasks          Task[]
+  meetings       Meeting[]
   promoUsages    PromoCodeUsage[]
 }
 
@@ -206,6 +223,31 @@ model Task {
   client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   deal         Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Meeting {
+  id           String        @id @default(cuid())
+  title        String
+  description  String?
+  status       MeetingStatus @default(SCHEDULED)
+  startsAt     DateTime
+  endsAt       DateTime
+  location     String?
+  meetingLink  String?
+  outcome      String?
+  clientId     String
+  assignedToId String
+  createdById  String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedTo   User          @relation("MeetingAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  createdBy    User          @relation("MeetingCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([startsAt])
+  @@index([status])
+  @@index([clientId])
+  @@index([assignedToId])
 }
 
 model PromoCode {

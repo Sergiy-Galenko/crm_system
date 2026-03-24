@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { Bell, Menu, Search, Sparkles } from "lucide-react";
+import { Bell, CalendarClock, Menu, Search, Sparkles } from "lucide-react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/providers/locale-provider";
 import { dashboardNavigation } from "@/lib/constants";
@@ -26,6 +26,7 @@ type UserSummary = {
   name: string;
   email: string;
   role: string;
+  roleLabel?: string | null;
   title?: string | null;
   avatarColor?: string | null;
 };
@@ -37,13 +38,21 @@ type NotificationItem = {
   createdAt: Date;
 };
 
+type MeetingReminder = {
+  title: string;
+  description: string;
+  href: string;
+};
+
 export function AppShell({
   user,
   notifications,
+  meetingReminder,
   children,
 }: {
   user: UserSummary;
   notifications: NotificationItem[];
+  meetingReminder?: MeetingReminder;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -103,7 +112,7 @@ export function AppShell({
               <UserAvatar name={user.name} color={user.avatarColor} />
               <div>
                 <p className="text-sm font-semibold text-slate-950">{user.name}</p>
-                <p className="text-xs text-slate-500">{t(user.role)}</p>
+                <p className="text-xs text-slate-500">{user.roleLabel ?? t(user.role)}</p>
               </div>
             </div>
             {user.title ? <p className="mt-3 text-sm text-slate-500">{user.title}</p> : null}
@@ -195,6 +204,23 @@ export function AppShell({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+
+        {meetingReminder ? (
+          <div className="card flex flex-col gap-4 rounded-[2rem] p-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-slate-950 p-3 text-white">
+                <CalendarClock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-950">{meetingReminder.title}</p>
+                <p className="mt-1 text-sm text-slate-500">{meetingReminder.description}</p>
+              </div>
+            </div>
+            <Button asChild variant="secondary" size="sm">
+              <Link href={meetingReminder.href}>{t("Open meetings")}</Link>
+            </Button>
+          </div>
+        ) : null}
 
         <main className="min-w-0 pb-6">{children}</main>
       </div>

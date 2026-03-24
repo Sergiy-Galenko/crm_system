@@ -83,7 +83,7 @@ export function ClientDialog({
             <FormField label={t("Location")}>
               <Input name="location" defaultValue={client?.location ?? ""} />
             </FormField>
-            <FormField label={t("Owner")}>
+            <FormField label={t("Owner")} error={state.fields?.ownerId}>
               <Select name="ownerId" defaultValue={client?.ownerId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
