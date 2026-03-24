@@ -5,7 +5,15 @@ const eslintConfig = [
   ...nextCoreWebVitals,
   ...nextTypeScript,
   {
-    ignores: [".next/**", "node_modules/**", "tmp_crm_app/**"],
+    ignores: [".next/**", "frontend/.next/**", "node_modules/**", "tmp_crm_app/**"],
+    settings: {
+      next: {
+        rootDir: "frontend",
+      },
+    },
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+    },
   },
 ];
 

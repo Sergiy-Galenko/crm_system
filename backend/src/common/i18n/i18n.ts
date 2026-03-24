@@ -1,0 +1,131 @@
+import type { Locale } from "./locale";
+
+type TranslationValues = Record<string, string | number>;
+type TranslationDictionary = Record<string, string>;
+
+const uk: TranslationDictionary = {
+  "English": "English",
+  "Українська": "Українська",
+  "Language": "Мова",
+  "Revenue operating system": "Система керування продажами",
+  "Revenue workspace": "Робочий простір продажів",
+  "Workspace": "Робочий простір",
+  "Revenue cockpit": "Панель виручки",
+  "Clean pipeline visibility, promo performance, and account execution in one place.": "Чиста видимість пайплайну, ефективність промокодів і робота з акаунтами в одному місці.",
+  "Dashboard": "Дашборд",
+  "Clients": "Клієнти",
+  "Leads": "Ліди",
+  "Deals": "Угоди",
+  "Meetings": "Міти",
+  "Promo Codes": "Промокоди",
+  "Analytics": "Аналітика",
+  "Settings": "Налаштування",
+  "Calendar": "Календар",
+  "Search CRM records": "Пошук записів CRM",
+  "Search clients, leads, or companies": "Пошук клієнтів, лідів або компаній",
+  "Premium workflow system": "Преміальна CRM-система",
+  "Notifications": "Сповіщення",
+  "No new notifications.": "Нових сповіщень немає.",
+  "Log out": "Вийти",
+  "Close sidebar": "Закрити бокову панель",
+  "Sign in": "Увійти",
+  "Start free": "Почати безкоштовно",
+  "Production-ready CRM on Next.js + Prisma": "CRM для продакшену на Next.js + Prisma",
+  "Minimal revenue operations for premium teams.": "Мінімалістична CRM для сильних команд продажів.",
+  "Manage clients, leads, deals, promo codes, tasks, notes, and admin activity in one polished workspace. Built for Vercel deployment with secure auth, typed validation, and a clean full-stack architecture.": "Керуйте клієнтами, лідами, угодами, промокодами, задачами, нотатками та адмін-діями в одному акуратному робочому просторі. Проєкт підготовлено для деплою на Vercel із безпечною автентифікацією, типізованою валідацією та чистою full-stack архітектурою.",
+  "Launch workspace": "Відкрити CRM",
+  "Use demo account": "Увійти в демо",
+  "Client intelligence": "Аналітика клієнтів",
+  "Accounts, contact history, notes, tasks, and ownership in one clean timeline.": "Акаунти, історія контактів, нотатки, задачі та відповідальні в одній чистій стрічці.",
+  "Deal pipeline": "Пайплайн угод",
+  "Revenue discipline across every stage, from discovery to closed-won.": "Контроль виручки на кожному етапі: від discovery до closed-won.",
+  "Promo orchestration": "Оркестрація промокодів",
+  "Validate discount logic on the server, track usage, and surface performance analytics.": "Перевіряйте промокоди на сервері, відстежуйте використання та бачте результативність.",
+  "Open workspace": "Відкрити простір",
+  "Need an account?": "Потрібен акаунт?",
+  "Create one": "Створити",
+  "Already have an account?": "Вже маєте акаунт?",
+  "Create account": "Створити акаунт",
+  "Work email": "Робочий email",
+  "Password": "Пароль",
+  "Full name": "Повне ім'я",
+  "Title": "Посада",
+  "Confirm password": "Підтвердьте пароль",
+  "Enter your password": "Введіть пароль",
+  "Create a secure password": "Створіть надійний пароль",
+  "Repeat the password": "Повторіть пароль",
+  "Overview": "Огляд",
+  "Revenue operations at a glance": "Операційний огляд виручки",
+  "Track account momentum, pipeline health, promo-code performance, and follow-up workload from a single dashboard.": "Відстежуйте динаміку акаунтів, стан пайплайну, ефективність промокодів і follow-up навантаження з одного дашборду.",
+  "Unauthorized.": "Неавторизовано.",
+  "Invalid payload.": "Некоректний payload.",
+  "Promo code not found.": "Промокод не знайдено.",
+  "This promo code has been disabled.": "Цей промокод вимкнено.",
+  "This promo code has expired.": "Термін дії цього промокоду завершився.",
+  "This promo code has reached its usage limit.": "Цей промокод досяг ліміту використання.",
+  "Enter a promo code to validate it.": "Введіть промокод для перевірки.",
+  "{code} is valid and ready to apply.": "{code} дійсний і готовий до застосування.",
+  "Please review the form.": "Перевірте форму.",
+  "Please review the client form.": "Перевірте форму клієнта.",
+  "Please review the lead form.": "Перевірте форму ліда.",
+  "Please review the deal form.": "Перевірте форму угоди.",
+  "Please review the task form.": "Перевірте форму задачі.",
+  "Please review the meeting form.": "Перевірте форму міту.",
+  "Please review the promo code form.": "Перевірте форму промокоду.",
+  "Please review the user form.": "Перевірте форму користувача.",
+  "Please review your settings.": "Перевірте налаштування.",
+  "We couldn't find an account with that email.": "Ми не знайшли акаунт із таким email.",
+  "Incorrect email or password.": "Невірний email або пароль.",
+  "An account with that email already exists.": "Акаунт із таким email уже існує.",
+  "Use a different email address.": "Використайте іншу email-адресу.",
+  "That owner is not in your team.": "Цей відповідальний не у вашій команді.",
+  "Choose someone from your team.": "Виберіть когось із вашої команди.",
+  "That client is not available in your workspace.": "Цей клієнт недоступний у вашому просторі.",
+  "Choose a client from your workspace.": "Виберіть клієнта зі свого простору.",
+  "That lead is not available in your workspace.": "Цей лід недоступний у вашому просторі.",
+  "Choose a lead from your workspace.": "Виберіть ліда зі свого простору.",
+  "That assignee is not in your team.": "Цей виконавець не у вашій команді.",
+  "Only admins can manage promo codes.": "Лише адміністратори можуть керувати промокодами.",
+  "Only admins and managers can manage users.": "Лише адміністратори та менеджери можуть керувати користувачами.",
+  "Managers cannot create admin accounts.": "Менеджери не можуть створювати акаунти адміністраторів.",
+  "Choose the manager role for this teammate.": "Виберіть роль менеджера для цього користувача.",
+  "Managers can only manage users in their own team.": "Менеджери можуть керувати лише користувачами своєї команди.",
+  "New users require a password.": "Новим користувачам потрібен пароль.",
+  "Password is required.": "Пароль обов'язковий.",
+  "Enter a valid email.": "Введіть коректний email.",
+  "Password must be at least 8 characters.": "Пароль має містити щонайменше 8 символів.",
+  "Confirm your password.": "Підтвердіть пароль.",
+  "Passwords do not match.": "Паролі не збігаються.",
+  "Enter a valid amount.": "Введіть коректну суму.",
+  "Enter a valid date.": "Введіть коректну дату.",
+  "Enter a whole number.": "Введіть ціле число.",
+  "Percent discounts cannot exceed 100.": "Відсоткова знижка не може перевищувати 100.",
+  "Meeting end must be after the start time.": "Завершення міту має бути пізніше початку.",
+  "Enter a short note.": "Введіть коротку нотатку.",
+  "Note is too long.": "Нотатка занадто довга.",
+  "Custom role name must be 60 characters or fewer.": "Кастомна назва ролі має містити не більше 60 символів.",
+  "Status message must be 80 characters or fewer.": "Статус має містити не більше 80 символів.",
+  "Phone must be 40 characters or fewer.": "Телефон має містити не більше 40 символів.",
+  "Location must be 120 characters or fewer.": "Локація має містити не більше 120 символів.",
+  "Bio must be 280 characters or fewer.": "Біо має містити не більше 280 символів.",
+  "Choose a valid hex color.": "Виберіть коректний hex-колір."
+};
+
+const dictionaries: Record<Locale, TranslationDictionary> = {
+  en: {},
+  uk,
+};
+
+export function translate(locale: Locale, key: string, values?: TranslationValues) {
+  const template = dictionaries[locale]?.[key] ?? key;
+
+  if (!values) {
+    return template;
+  }
+
+  return Object.entries(values).reduce((result, [valueKey, value]) => result.replaceAll(`{${valueKey}}`, String(value)), template);
+}
+
+export function createTranslator(locale: Locale) {
+  return (key: string, values?: TranslationValues) => translate(locale, key, values);
+}

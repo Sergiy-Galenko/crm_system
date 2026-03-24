@@ -1,4 +1,5 @@
 .next
+frontend/.next
 node_modules
 .env
 .env.local
@@ -7,4 +8,5 @@ coverage
 dist
 build
 *.log
+*.tsbuildinfo
 tmp_crm_app

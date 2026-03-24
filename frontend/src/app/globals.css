@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope Variable", "Manrope", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+  --color-ink: #0f172a;
+  --color-muted-ink: #667085;
+  --color-line: #e4e7ec;
+  --color-surface: #ffffff;
+  --color-surface-strong: #ffffff;
+  --color-brand: #0f172a;
+  --color-brand-soft: #f2f4f7;
+  --color-success: #157f5a;
+  --color-warning: #b7791f;
+  --color-danger: #d14343;
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+html {
+  background: #f6f7f8;
+}
+
+body {
+  color: var(--color-ink);
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8f9fb 0%, #f4f5f7 100%);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+::selection {
+  background: rgba(33, 84, 255, 0.18);
+}
+
+@utility glass {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility page-shell {
+  @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8;
+}
+
+@utility card {
+  @apply glass rounded-2xl border border-slate-200/80 bg-white;
+}
+
+@utility table-cell {
+  @apply px-4 py-3 text-sm text-slate-700;
+}
+
+@utility metric-value {
+  @apply text-[2rem] font-semibold tracking-tight text-slate-950;
+}
+
+.scrollbar-subtle {
+  scrollbar-width: thin;
+}
+
+.scrollbar-subtle::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.scrollbar-subtle::-webkit-scrollbar-thumb {
+  background: rgba(96, 112, 139, 0.28);
+  border-radius: 999px;
+}
