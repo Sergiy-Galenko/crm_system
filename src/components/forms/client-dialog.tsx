@@ -1,0 +1,101 @@
+"use client";
+
+import { useActionState } from "react";
+import { upsertClientAction } from "@/actions/clients";
+import { ActionDialog } from "@/components/form/action-dialog";
+import { FormField } from "@/components/form/form-field";
+import { SubmitButton } from "@/components/form/submit-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { idleActionState } from "@/lib/actions";
+import { clientStatuses } from "@/lib/constants";
+
+type UserOption = {
+  id: string;
+  name: string;
+};
+
+type ClientInput = {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  status: string;
+  segment?: string | null;
+  location?: string | null;
+  monthlyValue: number;
+  ownerId: string;
+};
+
+export function ClientDialog({
+  users,
+  client,
+  triggerLabel = "New client",
+}: {
+  users: UserOption[];
+  client?: ClientInput;
+  triggerLabel?: string;
+}) {
+  const [state, formAction] = useActionState(upsertClientAction, idleActionState);
+
+  return (
+    <ActionDialog
+      trigger={<Button variant={client ? "secondary" : "primary"}>{triggerLabel}</Button>}
+      title={client ? "Edit client" : "Add client"}
+      description="Track account health, revenue, ownership, and relationship metadata."
+      state={state}
+    >
+      {() => (
+        <form action={formAction} className="grid gap-4">
+          <input type="hidden" name="id" value={client?.id ?? ""} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField label="Contact name" error={state.fields?.name}>
+              <Input name="name" defaultValue={client?.name} />
+            </FormField>
+            <FormField label="Company" error={state.fields?.company}>
+              <Input name="company" defaultValue={client?.company} />
+            </FormField>
+            <FormField label="Email" error={state.fields?.email}>
+              <Input name="email" type="email" defaultValue={client?.email} />
+            </FormField>
+            <FormField label="Phone" error={state.fields?.phone}>
+              <Input name="phone" defaultValue={client?.phone} />
+            </FormField>
+            <FormField label="Status">
+              <Select name="status" defaultValue={client?.status ?? "ACTIVE"}>
+                {clientStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label="Monthly value" error={state.fields?.monthlyValue}>
+              <Input name="monthlyValue" type="number" min="0" step="0.01" defaultValue={client?.monthlyValue ?? ""} />
+            </FormField>
+            <FormField label="Segment">
+              <Input name="segment" defaultValue={client?.segment ?? ""} />
+            </FormField>
+            <FormField label="Location">
+              <Input name="location" defaultValue={client?.location ?? ""} />
+            </FormField>
+            <FormField label="Owner">
+              <Select name="ownerId" defaultValue={client?.ownerId ?? users[0]?.id}>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          </div>
+          <div className="flex justify-end">
+            <SubmitButton>{client ? "Save changes" : "Create client"}</SubmitButton>
+          </div>
+        </form>
+      )}
+    </ActionDialog>
+  );
+}
