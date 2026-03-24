@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } fro
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { getServerTranslator } from "@/lib/locale-server";
 
 const pageSize = 8;
 
@@ -17,6 +18,7 @@ type DealsPageProps = {
 };
 
 export default async function DealsPage({ searchParams }: DealsPageProps) {
+  const { locale, t } = await getServerTranslator();
   const resolvedSearchParams = await searchParams;
   const query = getParam(resolvedSearchParams, "q");
   const stage = getParam(resolvedSearchParams, "stage");
@@ -97,31 +99,33 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
   ]);
 
   const pageCount = Math.max(1, Math.ceil(totalDeals / pageSize));
+  const prevHref = createPageHref("/dashboard/deals", resolvedSearchParams, { page: String(Math.max(1, page - 1)) });
+  const nextHref = createPageHref("/dashboard/deals", resolvedSearchParams, { page: String(Math.min(pageCount, page + 1)) });
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Pipeline"
-        title="Deals"
-        description="Manage stage transitions, gross-to-net revenue, promo adjustments, and close timing in one commercial pipeline."
+        eyebrow={t("Pipeline")}
+        title={t("Deals")}
+        description={t("Manage stage transitions, gross-to-net revenue, promo adjustments, and close timing in one commercial pipeline.")}
         actions={<DealDialog users={users} clients={clients} leads={leads} />}
       />
 
       <div className="card rounded-[2rem] p-5">
         <form className="grid gap-3 md:grid-cols-[1fr_220px_220px]">
-          <Input name="q" defaultValue={query} placeholder="Search deal title or client company" />
+          <Input name="q" defaultValue={query} placeholder={t("Search deal title or client company")} />
           <Select name="stage" defaultValue={stage}>
-            <option value="">All stages</option>
-            <option value="DISCOVERY">Discovery</option>
-            <option value="PROPOSAL">Proposal</option>
-            <option value="NEGOTIATION">Negotiation</option>
-            <option value="WON">Won</option>
-            <option value="LOST">Lost</option>
+            <option value="">{t("All stages")}</option>
+            <option value="DISCOVERY">{t("Discovery")}</option>
+            <option value="PROPOSAL">{t("Proposal")}</option>
+            <option value="NEGOTIATION">{t("Negotiation")}</option>
+            <option value="WON">{t("Won")}</option>
+            <option value="LOST">{t("Lost")}</option>
           </Select>
           <Select name="sort" defaultValue={sort}>
-            <option value="close-date">Nearest close date</option>
-            <option value="value">Highest net value</option>
-            <option value="newest">Newest first</option>
+            <option value="close-date">{t("Nearest close date")}</option>
+            <option value="value">{t("Highest net value")}</option>
+            <option value="newest">{t("Newest first")}</option>
           </Select>
         </form>
       </div>
@@ -132,13 +136,13 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Deal</TableHeaderCell>
-                  <TableHeaderCell>Stage</TableHeaderCell>
-                  <TableHeaderCell>Values</TableHeaderCell>
-                  <TableHeaderCell>Promo</TableHeaderCell>
-                  <TableHeaderCell>Owner</TableHeaderCell>
-                  <TableHeaderCell>Close date</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                  <TableHeaderCell>{t("Deal")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Stage")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Values")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Promo")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Owner")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Close date")}</TableHeaderCell>
+                  <TableHeaderCell className="text-right">{t("Actions")}</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -154,13 +158,13 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
                     <TableCell>
                       <p className="font-medium text-slate-950">{formatCurrency(decimalToNumber(deal.netAmount), deal.currency)}</p>
                       <div className="mt-1 text-xs text-slate-500">
-                        Gross {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency)} • Discount{" "}
+                        {t("Gross")} {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency)} • {t("Discount")}{" "}
                         {formatCurrency(decimalToNumber(deal.discountAmount), deal.currency)}
                       </div>
                     </TableCell>
-                    <TableCell>{deal.promoCode?.code ?? "No promo"}</TableCell>
+                    <TableCell>{deal.promoCode?.code ?? t("No promo")}</TableCell>
                     <TableCell>{deal.owner.name}</TableCell>
-                    <TableCell>{deal.closeDate ? formatDate(deal.closeDate) : "No close date"}</TableCell>
+                    <TableCell>{deal.closeDate ? formatDate(deal.closeDate, locale) : t("No close date")}</TableCell>
                     <TableCell className="text-right">
                       <DealDialog
                         users={users}
@@ -190,15 +194,16 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
         </div>
       ) : (
         <EmptyState
-          title="No deals matched your filters"
-          description="Broaden the search or create a new deal to populate the pipeline."
+          title={t("No deals matched your filters")}
+          description={t("Broaden the search or create a new deal to populate the pipeline.")}
         />
       )}
 
       <Pagination
         page={page}
         pageCount={pageCount}
-        makeHref={(nextPage) => createPageHref("/dashboard/deals", resolvedSearchParams, { page: String(nextPage) })}
+        prevHref={prevHref}
+        nextHref={nextHref}
       />
     </div>
   );

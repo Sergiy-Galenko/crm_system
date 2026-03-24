@@ -25,3 +25,11 @@ export function actionError(message: string, fields?: Record<string, string>): A
     fields,
   };
 }
+
+export function translateActionFields(
+  errors: Record<string, string[]>,
+  t: (key: string) => string,
+  fieldNames: string[],
+) {
+  return Object.fromEntries(fieldNames.map((fieldName) => [fieldName, errors[fieldName]?.[0] ? t(errors[fieldName][0]!) : ""]));
+}

@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { format, formatDistanceToNowStrict } from "date-fns";
+import { enUS, uk as ukLocale } from "date-fns/locale";
 import { twMerge } from "tailwind-merge";
+import { defaultLocale, type Locale } from "@/lib/locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -18,12 +20,22 @@ export function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-export function formatDate(value: Date | string | null | undefined, pattern = "MMM d, yyyy") {
+function getDateLocale(locale: Locale) {
+  return locale === "uk" ? ukLocale : enUS;
+}
+
+export function formatDate(
+  value: Date | string | null | undefined,
+  locale: Locale = defaultLocale,
+  pattern = "MMM d, yyyy",
+) {
   if (!value) {
-    return "Not set";
+    return locale === "uk" ? "Не вказано" : "Not set";
   }
 
-  return format(new Date(value), pattern);
+  return format(new Date(value), pattern, {
+    locale: getDateLocale(locale),
+  });
 }
 
 export function toDateInputValue(value: Date | string | null | undefined) {
@@ -34,8 +46,11 @@ export function toDateInputValue(value: Date | string | null | undefined) {
   return format(new Date(value), "yyyy-MM-dd");
 }
 
-export function fromNow(value: Date | string) {
-  return formatDistanceToNowStrict(new Date(value), { addSuffix: true });
+export function fromNow(value: Date | string, locale: Locale = defaultLocale) {
+  return formatDistanceToNowStrict(new Date(value), {
+    addSuffix: true,
+    locale: getDateLocale(locale),
+  });
 }
 
 export function toSentenceCase(value: string) {

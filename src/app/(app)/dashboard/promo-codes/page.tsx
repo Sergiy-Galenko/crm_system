@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } fro
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { getServerTranslator } from "@/lib/locale-server";
 
 const pageSize = 8;
 
@@ -18,6 +19,7 @@ type PromoCodesPageProps = {
 };
 
 export default async function PromoCodesPage({ searchParams }: PromoCodesPageProps) {
+  const { locale, t } = await getServerTranslator();
   const user = await requireUser();
   const resolvedSearchParams = await searchParams;
   const query = getParam(resolvedSearchParams, "q");
@@ -63,28 +65,30 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
   ]);
 
   const pageCount = Math.max(1, Math.ceil(totalPromoCodes / pageSize));
+  const prevHref = createPageHref("/dashboard/promo-codes", resolvedSearchParams, { page: String(Math.max(1, page - 1)) });
+  const nextHref = createPageHref("/dashboard/promo-codes", resolvedSearchParams, { page: String(Math.min(pageCount, page + 1)) });
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Discount engine"
-        title="Promo codes"
-        description="Track usage limits, expiry windows, server-validated application, and who used each promo on a deal."
+        eyebrow={t("Discount engine")}
+        title={t("Promo codes")}
+        description={t("Track usage limits, expiry windows, server-validated application, and who used each promo on a deal.")}
         actions={user.role === "ADMIN" ? <PromoCodeDialog /> : null}
       />
 
       <div className="card rounded-[2rem] p-5">
         <form className="grid gap-3 md:grid-cols-[1fr_220px_220px]">
-          <Input name="q" defaultValue={query} placeholder="Search code or description" />
+          <Input name="q" defaultValue={query} placeholder={t("Search code or description")} />
           <Select name="status" defaultValue={status}>
-            <option value="">All codes</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
+            <option value="">{t("All codes")}</option>
+            <option value="active">{t("Active")}</option>
+            <option value="disabled">{t("Disabled")}</option>
           </Select>
           <Select name="sort" defaultValue={sort}>
-            <option value="usage">Most used</option>
-            <option value="expires">Nearest expiry</option>
-            <option value="newest">Newest first</option>
+            <option value="usage">{t("Most used")}</option>
+            <option value="expires">{t("Nearest expiry")}</option>
+            <option value="newest">{t("Newest first")}</option>
           </Select>
         </form>
       </div>
@@ -95,13 +99,13 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Code</TableHeaderCell>
-                  <TableHeaderCell>Discount</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell>Usage</TableHeaderCell>
-                  <TableHeaderCell>Expires</TableHeaderCell>
-                  <TableHeaderCell>Owner</TableHeaderCell>
-                  {user.role === "ADMIN" ? <TableHeaderCell className="text-right">Actions</TableHeaderCell> : null}
+                  <TableHeaderCell>{t("Code")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Discount")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Status")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Usage")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Expires")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Owner")}</TableHeaderCell>
+                  {user.role === "ADMIN" ? <TableHeaderCell className="text-right">{t("Actions")}</TableHeaderCell> : null}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -109,7 +113,7 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
                   <TableRow key={promoCode.id}>
                     <TableCell>
                       <p className="font-medium text-slate-950">{promoCode.code}</p>
-                      <div className="mt-1 text-xs text-slate-500">{promoCode.description ?? "No description"}</div>
+                      <div className="mt-1 text-xs text-slate-500">{promoCode.description ?? t("No description")}</div>
                     </TableCell>
                     <TableCell>
                       {promoCode.discountType === "PERCENT"
@@ -121,9 +125,9 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
                     </TableCell>
                     <TableCell>
                       {promoCode.usedCount}
-                      {promoCode.usageLimit ? ` / ${promoCode.usageLimit}` : " / unlimited"}
+                      {promoCode.usageLimit ? ` / ${promoCode.usageLimit}` : ` / ${t("unlimited")}`}
                     </TableCell>
-                    <TableCell>{promoCode.expiresAt ? formatDate(promoCode.expiresAt) : "No expiry"}</TableCell>
+                    <TableCell>{promoCode.expiresAt ? formatDate(promoCode.expiresAt, locale) : t("No expiry")}</TableCell>
                     <TableCell>{promoCode.createdBy.name}</TableCell>
                     {user.role === "ADMIN" ? (
                       <TableCell className="text-right">
@@ -150,15 +154,16 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
         </div>
       ) : (
         <EmptyState
-          title="No promo codes matched your filters"
-          description="Try a broader search or create a new code if you are signed in as an admin."
+          title={t("No promo codes matched your filters")}
+          description={t("Try a broader search or create a new code if you are signed in as an admin.")}
         />
       )}
 
       <Pagination
         page={page}
         pageCount={pageCount}
-        makeHref={(nextPage) => createPageHref("/dashboard/promo-codes", resolvedSearchParams, { page: String(nextPage) })}
+        prevHref={prevHref}
+        nextHref={nextHref}
       />
     </div>
   );

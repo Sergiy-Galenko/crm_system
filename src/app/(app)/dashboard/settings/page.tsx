@@ -5,9 +5,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@/components/ui/table";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 
 export default async function SettingsPage() {
+  const { locale, t } = await getServerTranslator();
   const currentUser = await requireUser();
 
   const team = await prisma.user.findMany({
@@ -27,15 +29,15 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Admin"
-        title="Settings"
-        description="Manage your own profile details and, when permitted, control workspace access for the broader team."
+        eyebrow={t("Admin")}
+        title={t("Settings")}
+        description={t("Manage your own profile details and, when permitted, control workspace access for the broader team.")}
       />
 
       <Tabs defaultValue="profile">
         <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="profile">{t("Profile")}</TabsTrigger>
+          <TabsTrigger value="team">{t("Team")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -46,9 +48,9 @@ export default async function SettingsPage() {
           <div className="space-y-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-slate-950">Team access</h3>
+                <h3 className="text-lg font-semibold text-slate-950">{t("Team access")}</h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Admins can create and update workspace members. Managers can view the team roster.
+                  {t("Admins can create and update workspace members. Managers can view the team roster.")}
                 </p>
               </div>
               {currentUser.role === "ADMIN" ? <UserDialog /> : null}
@@ -59,11 +61,11 @@ export default async function SettingsPage() {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableHeaderCell>Name</TableHeaderCell>
-                      <TableHeaderCell>Role</TableHeaderCell>
-                      <TableHeaderCell>Title</TableHeaderCell>
-                      <TableHeaderCell>Joined</TableHeaderCell>
-                      {currentUser.role === "ADMIN" ? <TableHeaderCell className="text-right">Actions</TableHeaderCell> : null}
+                      <TableHeaderCell>{t("Name")}</TableHeaderCell>
+                      <TableHeaderCell>{t("Role")}</TableHeaderCell>
+                      <TableHeaderCell>{t("Title")}</TableHeaderCell>
+                      <TableHeaderCell>{t("Joined")}</TableHeaderCell>
+                      {currentUser.role === "ADMIN" ? <TableHeaderCell className="text-right">{t("Actions")}</TableHeaderCell> : null}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -76,8 +78,8 @@ export default async function SettingsPage() {
                         <TableCell>
                           <StatusBadge value={member.role} />
                         </TableCell>
-                        <TableCell>{member.title ?? "No title"}</TableCell>
-                        <TableCell>{member.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</TableCell>
+                        <TableCell>{member.title ?? t("No title")}</TableCell>
+                        <TableCell>{member.createdAt.toLocaleDateString(locale === "uk" ? "uk-UA" : "en-US", { month: "short", day: "numeric", year: "numeric" })}</TableCell>
                         {currentUser.role === "ADMIN" ? (
                           <TableCell className="text-right">
                             <UserDialog

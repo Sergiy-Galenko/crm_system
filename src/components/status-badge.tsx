@@ -1,4 +1,7 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/components/providers/locale-provider";
 
 const statusVariantMap: Record<string, "default" | "info" | "success" | "warning" | "danger"> = {
   ACTIVE: "success",
@@ -17,5 +20,12 @@ const statusVariantMap: Record<string, "default" | "info" | "success" | "warning
 };
 
 export function StatusBadge({ value }: { value: string }) {
-  return <Badge variant={statusVariantMap[value] ?? "default"}>{value.replaceAll("_", " ")}</Badge>;
+  const { t } = useLocale();
+  const translatedValue = t(value);
+
+  return (
+    <Badge variant={statusVariantMap[value] ?? "default"}>
+      {translatedValue === value ? value.replaceAll("_", " ") : translatedValue}
+    </Badge>
+  );
 }

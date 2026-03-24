@@ -2,9 +2,11 @@ import { prisma } from "@/lib/db";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+import { getServerTranslator } from "@/lib/locale-server";
 import { decimalToNumber, formatCurrency, formatNumber } from "@/lib/utils";
 
 export default async function AnalyticsPage() {
+  const { locale, t } = await getServerTranslator();
   const [deals, leads, promoCodes, promoUsages] = await Promise.all([
     prisma.deal.findMany({
       include: {
@@ -62,29 +64,29 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Analytics"
-        title="Performance analytics"
-        description="Understand revenue distribution, source mix, promo effectiveness, and pipeline quality across the CRM."
+        eyebrow={t("Analytics")}
+        title={t("Performance analytics")}
+        description={t("Understand revenue distribution, source mix, promo effectiveness, and pipeline quality across the CRM.")}
       />
 
       <div className="grid gap-4 xl:grid-cols-4">
-        <MetricCard label="Won revenue" value={formatCurrency(wonDeals.reduce((sum, deal) => sum + decimalToNumber(deal.netAmount), 0))} meta="Net value from won deals." />
-        <MetricCard label="Win rate" value={`${Math.round(winRate)}%`} meta="Leads converted to won." />
-        <MetricCard label="Average deal" value={formatCurrency(averageDealSize)} meta="Mean net size of won deals." tone="brand" />
-        <MetricCard label="Promo usages" value={formatNumber(promoCodes.reduce((sum, promoCode) => sum + promoCode.usedCount, 0))} meta="Tracked discount applications." />
+        <MetricCard label={t("Won revenue")} value={formatCurrency(wonDeals.reduce((sum, deal) => sum + decimalToNumber(deal.netAmount), 0))} meta={t("Net value from won deals.")} />
+        <MetricCard label={t("Win rate")} value={`${Math.round(winRate)}%`} meta={t("Leads converted to won.")} />
+        <MetricCard label={t("Average deal")} value={formatCurrency(averageDealSize)} meta={t("Mean net size of won deals.")} tone="brand" />
+        <MetricCard label={t("Promo usages")} value={formatNumber(promoCodes.reduce((sum, promoCode) => sum + promoCode.usedCount, 0))} meta={t("Tracked discount applications.")} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <div className="card rounded-[2rem] p-5">
-          <h3 className="text-lg font-semibold text-slate-950">Lead source mix</h3>
-          <p className="mt-1 text-sm text-slate-500">Where top-of-funnel activity is coming from.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t("Lead source mix")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("Where top-of-funnel activity is coming from.")}</p>
           <div className="mt-6 space-y-4">
             {sourceTotals.map((item) => {
               const maxCount = Math.max(...sourceTotals.map((entry) => entry.count), 1);
               return (
                 <div key={item.source}>
                   <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-700">{item.source}</span>
+                    <span className="font-medium text-slate-700">{t(item.source)}</span>
                     <span className="text-slate-500">{item.count}</span>
                   </div>
                   <div className="h-3 rounded-full bg-slate-100">
@@ -97,13 +99,13 @@ export default async function AnalyticsPage() {
         </div>
 
         <div className="card rounded-[2rem] p-5">
-          <h3 className="text-lg font-semibold text-slate-950">Deal stage volume</h3>
-          <p className="mt-1 text-sm text-slate-500">Pipeline spread across each commercial stage.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t("Deal stage volume")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("Pipeline spread across each commercial stage.")}</p>
           <div className="mt-6 space-y-4">
             {stageTotals.map((item) => (
               <div key={item.stage}>
                 <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-700">{item.stage.replaceAll("_", " ")}</span>
+                  <span className="font-medium text-slate-700">{t(item.stage)}</span>
                   <span className="text-slate-500">{item.count}</span>
                 </div>
                 <div className="h-3 rounded-full bg-slate-100">
@@ -117,8 +119,8 @@ export default async function AnalyticsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="card rounded-[2rem] p-5">
-          <h3 className="text-lg font-semibold text-slate-950">Recent promo-code usage</h3>
-          <p className="mt-1 text-sm text-slate-500">Who used a promo code, when it happened, and on which account.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t("Recent promo-code usage")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("Who used a promo code, when it happened, and on which account.")}</p>
           <div className="mt-6 space-y-3">
             {promoUsages.map((usage) => (
               <div key={usage.id} className="rounded-[1.75rem] border border-white/75 bg-white/75 p-4">
@@ -130,9 +132,9 @@ export default async function AnalyticsPage() {
                   <StatusBadge value="ACTIVE" />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
-                  <span>Deal amount {formatCurrency(decimalToNumber(usage.dealAmount))}</span>
-                  <span>Discount {formatCurrency(decimalToNumber(usage.discountAmount))}</span>
-                  <span>{usage.usedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  <span>{t("Deal amount")} {formatCurrency(decimalToNumber(usage.dealAmount))}</span>
+                  <span>{t("Discount")} {formatCurrency(decimalToNumber(usage.discountAmount))}</span>
+                  <span>{usage.usedAt.toLocaleDateString(locale === "uk" ? "uk-UA" : "en-US", { month: "short", day: "numeric" })}</span>
                 </div>
               </div>
             ))}
@@ -140,8 +142,8 @@ export default async function AnalyticsPage() {
         </div>
 
         <div className="card rounded-[2rem] p-5">
-          <h3 className="text-lg font-semibold text-slate-950">Top-performing promo codes</h3>
-          <p className="mt-1 text-sm text-slate-500">Highest-usage codes ranked by applications.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t("Top-performing promo codes")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("Highest-usage codes ranked by applications.")}</p>
           <div className="mt-6 space-y-3">
             {promoCodes.map((promoCode) => (
               <div key={promoCode.id} className="rounded-[1.75rem] border border-white/75 bg-white/75 p-4">
@@ -149,9 +151,9 @@ export default async function AnalyticsPage() {
                   <p className="font-medium text-slate-950">{promoCode.code}</p>
                   <StatusBadge value={promoCode.active ? "ACTIVE" : "INACTIVE"} />
                 </div>
-                <p className="mt-2 text-sm text-slate-500">{promoCode.description ?? "No description"}</p>
+                <p className="mt-2 text-sm text-slate-500">{promoCode.description ?? t("No description")}</p>
                 <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
-                  <span>{promoCode.usedCount} usages</span>
+                  <span>{promoCode.usedCount} {t("usages")}</span>
                   <span>
                     {promoCode.discountType === "PERCENT"
                       ? `${decimalToNumber(promoCode.discountValue)}%`

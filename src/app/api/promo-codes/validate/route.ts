@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getServerTranslator } from "@/lib/locale-server";
 import { getCurrentUser } from "@/lib/session";
 import { promoCodePreviewSchema } from "@/lib/validations";
 import { validatePromoCode } from "@/lib/promo-codes";
@@ -10,13 +11,14 @@ type ApiResponse<T> = {
 };
 
 export async function POST(request: Request) {
+  const { t } = await getServerTranslator();
   const user = await getCurrentUser();
 
   if (!user) {
     return NextResponse.json<ApiResponse<never>>(
       {
         success: false,
-        message: "Unauthorized.",
+        message: t("Unauthorized."),
       },
       { status: 401 },
     );
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json<ApiResponse<never>>(
       {
         success: false,
-        message: parsedPayload.error.errors[0]?.message ?? "Invalid payload.",
+        message: t(parsedPayload.error.errors[0]?.message ?? "Invalid payload."),
       },
       { status: 400 },
     );
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
     return NextResponse.json<ApiResponse<never>>(
       {
         success: false,
-        message: validation.message,
+        message: t(validation.message),
       },
       { status: 200 },
     );
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
     value: number;
   }>>({
     success: true,
-    message: `${validation.promoCode.code} is valid and ready to apply.`,
+    message: t("{code} is valid and ready to apply.", { code: validation.promoCode.code }),
     data: {
       code: validation.promoCode.code,
       discountAmount: validation.discountAmount,

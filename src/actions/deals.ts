@@ -2,9 +2,10 @@
 
 import { ActivityAction, ActivityEntity, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
+import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { validatePromoCodeWithClient, recalculateAppliedPromo } from "@/lib/promo-codes";
 import { requireUser } from "@/lib/session";
 import { dealSchema, getFieldErrors, taskSchema } from "@/lib/validations";
@@ -14,18 +15,17 @@ function normalizedPromoCode(value: string | undefined) {
 }
 
 export async function upsertDealAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
   const values = Object.fromEntries(formData.entries());
   const parsedValues = dealSchema.safeParse(values);
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the deal form.", {
-      title: errors.title?.[0] ?? "",
-      grossAmount: errors.grossAmount?.[0] ?? "",
-      clientId: errors.clientId?.[0] ?? "",
-      promoCode: errors.promoCode?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review the deal form."),
+      translateActionFields(errors, t, ["title", "grossAmount", "clientId", "promoCode"]),
+    );
   }
 
   const promoCodeInput = normalizedPromoCode(parsedValues.data.promoCode);
@@ -159,7 +159,7 @@ export async function upsertDealAction(_prevState: ActionResult, formData: FormD
             entity: ActivityEntity.DEAL,
             action: ActivityAction.PROMO_APPLIED,
             entityId: deal.id,
-            description: `Applied ${promoCode.code} to ${deal.title}.`,
+            description: t("Applied {code} to {title}.", { code: promoCode.code, title: deal.title }),
           });
         }
 
@@ -168,7 +168,9 @@ export async function upsertDealAction(_prevState: ActionResult, formData: FormD
           entity: ActivityEntity.DEAL,
           action: existingDeal ? ActivityAction.UPDATED : ActivityAction.CREATED,
           entityId: deal.id,
-          description: existingDeal ? `Updated deal ${deal.title}.` : `Created deal ${deal.title}.`,
+          description: existingDeal
+            ? t("Updated deal {title}.", { title: deal.title })
+            : t("Created deal {title}.", { title: deal.title }),
         });
 
         const affectedClientIds = new Set<string>([parsedValues.data.clientId]);
@@ -210,29 +212,31 @@ export async function upsertDealAction(_prevState: ActionResult, formData: FormD
       revalidatePath(`/dashboard/clients/${parsedValues.data.clientId}`);
     }
 
-    return actionSuccess(parsedValues.data.id ? "Deal updated." : "Deal created.");
+    return actionSuccess(t(parsedValues.data.id ? "Deal updated." : "Deal created."));
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("PROMO:")) {
-      return actionError(error.message.replace("PROMO:", ""), {
-        promoCode: error.message.replace("PROMO:", ""),
+      const promoMessage = t(error.message.replace("PROMO:", ""));
+      return actionError(promoMessage, {
+        promoCode: promoMessage,
       });
     }
 
-    return actionError("Unable to save the deal right now.");
+    return actionError(t("Unable to save the deal right now."));
   }
 }
 
 export async function upsertTaskAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
   const values = Object.fromEntries(formData.entries());
   const parsedValues = taskSchema.safeParse(values);
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the task form.", {
-      title: errors.title?.[0] ?? "",
-      dueDate: errors.dueDate?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review the task form."),
+      translateActionFields(errors, t, ["title", "dueDate"]),
+    );
   }
 
   const task = parsedValues.data.id
@@ -277,16 +281,20 @@ export async function upsertTaskAction(_prevState: ActionResult, formData: FormD
           ? ActivityAction.UPDATED
           : ActivityAction.CREATED,
     entityId: task.id,
-    description: `${parsedValues.data.id ? "Updated" : "Added"} task ${task.title}.`,
+    description: t("{action} task {title}.", {
+      action: t(parsedValues.data.id ? "Updated" : "Added"),
+      title: task.title,
+    }),
   });
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/clients");
 
-  return actionSuccess(parsedValues.data.id ? "Task updated." : "Task created.");
+  return actionSuccess(t(parsedValues.data.id ? "Task updated." : "Task created."));
 }
 
 export async function markTaskDoneAction(taskId: string) {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
 
   const task = await prisma.task.update({
@@ -302,7 +310,7 @@ export async function markTaskDoneAction(taskId: string) {
     entity: ActivityEntity.TASK,
     action: ActivityAction.COMPLETED,
     entityId: task.id,
-    description: `Completed task ${task.title}.`,
+    description: t("Completed task {title}.", { title: task.title }),
   });
 
   revalidatePath("/dashboard");

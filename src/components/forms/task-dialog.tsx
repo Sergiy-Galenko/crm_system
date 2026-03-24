@@ -5,6 +5,7 @@ import { upsertTaskAction } from "@/actions/deals";
 import { ActionDialog } from "@/components/form/action-dialog";
 import { FormField } from "@/components/form/form-field";
 import { SubmitButton } from "@/components/form/submit-button";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -40,12 +41,13 @@ export function TaskDialog({
   triggerLabel?: string;
 }) {
   const [state, formAction] = useActionState(upsertTaskAction, idleActionState);
+  const { t } = useLocale();
 
   return (
     <ActionDialog
-      trigger={<Button variant={task ? "secondary" : "primary"}>{triggerLabel}</Button>}
-      title={task ? "Edit follow-up" : "Create follow-up"}
-      description="Assign responsibility, set due dates, and keep next actions visible."
+      trigger={<Button variant={task ? "secondary" : "primary"}>{t(triggerLabel)}</Button>}
+      title={t(task ? "Edit follow-up" : "Create follow-up")}
+      description={t("Assign responsibility, set due dates, and keep next actions visible.")}
       state={state}
     >
       {() => (
@@ -55,31 +57,31 @@ export function TaskDialog({
           <input type="hidden" name="leadId" value={task?.leadId ?? defaults?.leadId ?? ""} />
           <input type="hidden" name="dealId" value={task?.dealId ?? defaults?.dealId ?? ""} />
           <div className="grid gap-4 md:grid-cols-2">
-            <FormField label="Task title" error={state.fields?.title} className="md:col-span-2">
+            <FormField label={t("Task title")} error={state.fields?.title} className="md:col-span-2">
               <Input name="title" defaultValue={task?.title} />
             </FormField>
-            <FormField label="Status">
+            <FormField label={t("Status")}>
               <Select name="status" defaultValue={task?.status ?? "TODO"}>
                 {taskStatuses.map((status) => (
                   <option key={status} value={status}>
-                    {status.replaceAll("_", " ")}
+                    {t(status)}
                   </option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Priority">
+            <FormField label={t("Priority")}>
               <Select name="priority" defaultValue={task?.priority ?? "MEDIUM"}>
                 {taskPriorities.map((priority) => (
                   <option key={priority} value={priority}>
-                    {priority}
+                    {t(priority)}
                   </option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Due date" error={state.fields?.dueDate}>
+            <FormField label={t("Due date")} error={state.fields?.dueDate}>
               <Input name="dueDate" type="date" defaultValue={toDateInputValue(task?.dueDate)} />
             </FormField>
-            <FormField label="Assignee">
+            <FormField label={t("Assignee")}>
               <Select name="assignedToId" defaultValue={task?.assignedToId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
@@ -88,12 +90,12 @@ export function TaskDialog({
                 ))}
               </Select>
             </FormField>
-            <FormField label="Description" className="md:col-span-2">
+            <FormField label={t("Description")} className="md:col-span-2">
               <Textarea name="description" defaultValue={task?.description ?? ""} />
             </FormField>
           </div>
           <div className="flex justify-end">
-            <SubmitButton>{task ? "Save changes" : "Create follow-up"}</SubmitButton>
+            <SubmitButton>{t(task ? "Save changes" : "Create follow-up")}</SubmitButton>
           </div>
         </form>
       )}

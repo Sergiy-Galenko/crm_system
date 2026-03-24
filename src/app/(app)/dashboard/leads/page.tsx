@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } fro
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { getServerTranslator } from "@/lib/locale-server";
 
 const pageSize = 8;
 
@@ -17,6 +18,7 @@ type LeadsPageProps = {
 };
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
+  const { locale, t } = await getServerTranslator();
   const resolvedSearchParams = await searchParams;
   const query = getParam(resolvedSearchParams, "q");
   const status = getParam(resolvedSearchParams, "status");
@@ -84,32 +86,34 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   ]);
 
   const pageCount = Math.max(1, Math.ceil(totalLeads / pageSize));
+  const prevHref = createPageHref("/dashboard/leads", resolvedSearchParams, { page: String(Math.max(1, page - 1)) });
+  const nextHref = createPageHref("/dashboard/leads", resolvedSearchParams, { page: String(Math.min(pageCount, page + 1)) });
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Prospecting"
-        title="Leads"
-        description="Qualify new opportunities, monitor next follow-ups, and connect prospects to account records as they mature."
+        eyebrow={t("Prospecting")}
+        title={t("Leads")}
+        description={t("Qualify new opportunities, monitor next follow-ups, and connect prospects to account records as they mature.")}
         actions={<LeadDialog users={users} clients={clients} />}
       />
 
       <div className="card rounded-[2rem] p-5">
         <form className="grid gap-3 md:grid-cols-[1fr_220px_220px]">
-          <Input name="q" defaultValue={query} placeholder="Search company, lead, or email" />
+          <Input name="q" defaultValue={query} placeholder={t("Search company, lead, or email")} />
           <Select name="status" defaultValue={status}>
-            <option value="">All statuses</option>
-            <option value="NEW">New</option>
-            <option value="CONTACTED">Contacted</option>
-            <option value="QUALIFIED">Qualified</option>
-            <option value="PROPOSAL">Proposal</option>
-            <option value="WON">Won</option>
-            <option value="LOST">Lost</option>
+            <option value="">{t("All statuses")}</option>
+            <option value="NEW">{t("New")}</option>
+            <option value="CONTACTED">{t("Contacted")}</option>
+            <option value="QUALIFIED">{t("Qualified")}</option>
+            <option value="PROPOSAL">{t("Proposal")}</option>
+            <option value="WON">{t("Won")}</option>
+            <option value="LOST">{t("Lost")}</option>
           </Select>
           <Select name="sort" defaultValue={sort}>
-            <option value="newest">Newest first</option>
-            <option value="value">Highest estimated value</option>
-            <option value="follow-up">Nearest follow-up</option>
+            <option value="newest">{t("Newest first")}</option>
+            <option value="value">{t("Highest estimated value")}</option>
+            <option value="follow-up">{t("Nearest follow-up")}</option>
           </Select>
         </form>
       </div>
@@ -120,13 +124,13 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Lead</TableHeaderCell>
-                  <TableHeaderCell>Source</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell>Estimated value</TableHeaderCell>
-                  <TableHeaderCell>Owner</TableHeaderCell>
-                  <TableHeaderCell>Follow-up</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                  <TableHeaderCell>{t("Lead")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Source")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Status")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Estimated value")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Owner")}</TableHeaderCell>
+                  <TableHeaderCell>{t("Follow-up")}</TableHeaderCell>
+                  <TableHeaderCell className="text-right">{t("Actions")}</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -138,13 +142,13 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         {lead.name} • {lead.email}
                       </div>
                     </TableCell>
-                    <TableCell>{lead.source.replaceAll("_", " ")}</TableCell>
+                    <TableCell>{t(lead.source)}</TableCell>
                     <TableCell>
                       <StatusBadge value={lead.status} />
                     </TableCell>
                     <TableCell>{formatCurrency(decimalToNumber(lead.estimatedValue))}</TableCell>
                     <TableCell>{lead.owner.name}</TableCell>
-                    <TableCell>{lead.nextFollowUpAt ? formatDate(lead.nextFollowUpAt) : "Not scheduled"}</TableCell>
+                    <TableCell>{lead.nextFollowUpAt ? formatDate(lead.nextFollowUpAt, locale) : t("Not scheduled")}</TableCell>
                     <TableCell className="text-right">
                       <LeadDialog
                         users={users}
@@ -173,15 +177,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         </div>
       ) : (
         <EmptyState
-          title="No leads matched your filters"
-          description="Refine your filters or add a new lead to get the prospecting pipeline moving."
+          title={t("No leads matched your filters")}
+          description={t("Refine your filters or add a new lead to get the prospecting pipeline moving.")}
         />
       )}
 
       <Pagination
         page={page}
         pageCount={pageCount}
-        makeHref={(nextPage) => createPageHref("/dashboard/leads", resolvedSearchParams, { page: String(nextPage) })}
+        prevHref={prevHref}
+        nextHref={nextHref}
       />
     </div>
   );

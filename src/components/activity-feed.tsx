@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useLocale } from "@/components/providers/locale-provider";
 import { fromNow } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/avatar";
 
@@ -15,15 +18,17 @@ export function ActivityFeed({
     } | null;
   }>;
 }) {
+  const { locale, t } = useLocale();
+
   return (
     <div className="card rounded-[2rem] p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Recent activity</h3>
-          <p className="mt-1 text-sm text-slate-500">The latest sales, promo, and account updates.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t("Recent activity")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("The latest sales, promo, and account updates.")}</p>
         </div>
         <Link href="/dashboard/analytics" className="text-sm font-medium text-slate-500 transition hover:text-slate-950">
-          View analytics
+          {t("View analytics")}
         </Link>
       </div>
       <div className="mt-6 space-y-4">
@@ -36,7 +41,7 @@ export function ActivityFeed({
             />
             <div className="min-w-0 flex-1">
               <p className="text-sm leading-6 text-slate-700">{item.description}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">{fromNow(item.createdAt)}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">{fromNow(item.createdAt, locale)}</p>
             </div>
           </div>
         ))}

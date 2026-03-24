@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { decimalToNumber, formatCurrency, formatDate, fromNow } from "@/lib/utils";
 
 type ClientDetailPageProps = {
@@ -18,6 +19,7 @@ type ClientDetailPageProps = {
 
 export default async function ClientDetailPage({ params }: ClientDetailPageProps) {
   const { id } = await params;
+  const { locale, t } = await getServerTranslator();
 
   const [client, users, leads, allClients] = await Promise.all([
     prisma.client.findUnique({
@@ -107,9 +109,9 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Client record"
+        eyebrow={t("Client record")}
         title={client.company}
-        description={`${client.name} • ${client.email} • ${client.location ?? "Location not set"} • owned by ${client.owner.name}`}
+        description={`${client.name} • ${client.email} • ${client.location ?? t("Location not set")} • ${t("Owned by {name}", { name: client.owner.name })}`}
         actions={
           <>
             <ClientDialog
@@ -139,19 +141,19 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       />
 
       <div className="grid gap-4 xl:grid-cols-4">
-        <MetricCard label="Status" value={client.status.replaceAll("_", " ")} meta={client.segment ?? "No segment set"} />
+        <MetricCard label={t("Status")} value={t(client.status)} meta={client.segment ?? t("No segment set")} />
         <MetricCard
-          label="Monthly value"
+          label={t("Monthly value")}
           value={formatCurrency(decimalToNumber(client.monthlyValue))}
-          meta="Current recurring account value."
+          meta={t("Current recurring account value.")}
         />
         <MetricCard
-          label="Total revenue"
+          label={t("Total revenue")}
           value={formatCurrency(decimalToNumber(client.totalRevenue))}
-          meta="Won revenue attached to this client."
+          meta={t("Won revenue attached to this client.")}
           tone="brand"
         />
-        <MetricCard label="Last contact" value={client.lastContactAt ? fromNow(client.lastContactAt) : "N/A"} meta="Updated from notes, deals, or tasks." />
+        <MetricCard label={t("Last contact")} value={client.lastContactAt ? fromNow(client.lastContactAt, locale) : t("N/A")} meta={t("Updated from notes, deals, or tasks.")} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -159,8 +161,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
           <div className="card rounded-[2rem] p-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-slate-950">Deals</h3>
-                <p className="mt-1 text-sm text-slate-500">Commercial work linked to this client.</p>
+                <h3 className="text-lg font-semibold text-slate-950">{t("Deals")}</h3>
+                <p className="mt-1 text-sm text-slate-500">{t("Commercial work linked to this client.")}</p>
               </div>
               <StatusBadge value={client.status} />
             </div>
@@ -171,21 +173,21 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="font-medium text-slate-950">{deal.title}</p>
-                        <p className="mt-1 text-sm text-slate-500">{deal.description ?? "No description added."}</p>
+                        <p className="mt-1 text-sm text-slate-500">{deal.description ?? t("No description added.")}</p>
                       </div>
                       <StatusBadge value={deal.stage} />
                     </div>
                     <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
-                      <span>Gross {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency)}</span>
-                      <span>Net {formatCurrency(decimalToNumber(deal.netAmount), deal.currency)}</span>
-                      <span>{deal.promoCode?.code ? `Promo ${deal.promoCode.code}` : "No promo"}</span>
-                      <span>{deal.closeDate ? formatDate(deal.closeDate) : "No close date"}</span>
+                      <span>{t("Gross")} {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency)}</span>
+                      <span>{t("Net")} {formatCurrency(decimalToNumber(deal.netAmount), deal.currency)}</span>
+                      <span>{deal.promoCode?.code ? `${t("Promo")} ${deal.promoCode.code}` : t("No promo")}</span>
+                      <span>{deal.closeDate ? formatDate(deal.closeDate, locale) : t("No close date")}</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <p className="rounded-[1.75rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                  No deals linked to this client yet.
+                  {t("No deals linked to this client yet.")}
                 </p>
               )}
             </div>
@@ -195,8 +197,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
 
           <div className="card rounded-[2rem] p-5">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">Timeline notes</h3>
-              <p className="mt-1 text-sm text-slate-500">Context captured across calls, onboarding, and renewal moments.</p>
+              <h3 className="text-lg font-semibold text-slate-950">{t("Timeline notes")}</h3>
+              <p className="mt-1 text-sm text-slate-500">{t("Context captured across calls, onboarding, and renewal moments.")}</p>
             </div>
             <div className="mt-6 space-y-3">
               {client.notes.length ? (
@@ -204,13 +206,13 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                   <div key={note.id} className="rounded-[1.75rem] border border-white/75 bg-white/75 p-4">
                     <p className="text-sm leading-6 text-slate-700">{note.body}</p>
                     <div className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">
-                      {note.author.name} • {fromNow(note.createdAt)}
+                      {note.author.name} • {fromNow(note.createdAt, locale)}
                     </div>
                   </div>
                 ))
               ) : (
                 <p className="rounded-[1.75rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                  No notes added for this client yet.
+                  {t("No notes added for this client yet.")}
                 </p>
               )}
             </div>
@@ -221,8 +223,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
           <div className="card rounded-[2rem] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-slate-950">Follow-ups</h3>
-                <p className="mt-1 text-sm text-slate-500">Tasks keeping the account moving forward.</p>
+                <h3 className="text-lg font-semibold text-slate-950">{t("Follow-ups")}</h3>
+                <p className="mt-1 text-sm text-slate-500">{t("Tasks keeping the account moving forward.")}</p>
               </div>
               <TaskDialog users={users} defaults={{ clientId: client.id }} />
             </div>
@@ -234,7 +236,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                       <div>
                         <p className="font-medium text-slate-950">{task.title}</p>
                         <p className="mt-1 text-sm text-slate-500">
-                          {task.assignedTo.name} • due {formatDate(task.dueDate)}
+                          {task.assignedTo.name} • {t("due")} {formatDate(task.dueDate, locale)}
                         </p>
                       </div>
                       <StatusBadge value={task.status} />
@@ -244,7 +246,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                       <form action={markTaskDoneAction.bind(null, task.id)} className="mt-4">
                         <Button type="submit" variant="secondary" size="sm">
                           <CheckCheck className="h-4 w-4" />
-                          Mark done
+                          {t("Mark done")}
                         </Button>
                       </form>
                     ) : null}
@@ -252,7 +254,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                 ))
               ) : (
                 <p className="rounded-[1.75rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                  No follow-up tasks yet.
+                  {t("No follow-up tasks yet.")}
                 </p>
               )}
             </div>
@@ -260,8 +262,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
 
           <div className="card rounded-[2rem] p-5">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">Connected leads</h3>
-              <p className="mt-1 text-sm text-slate-500">Lead records currently linked to the account.</p>
+              <h3 className="text-lg font-semibold text-slate-950">{t("Connected leads")}</h3>
+              <p className="mt-1 text-sm text-slate-500">{t("Lead records currently linked to the account.")}</p>
             </div>
             <div className="mt-6 space-y-3">
               {client.leads.length ? (
@@ -275,13 +277,13 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                       <StatusBadge value={lead.status} />
                     </div>
                     <p className="mt-3 text-sm text-slate-500">
-                      Source {lead.source.replaceAll("_", " ")} • est. {formatCurrency(decimalToNumber(lead.estimatedValue))}
+                      {t("Source")} {t(lead.source)} • {t("est.")} {formatCurrency(decimalToNumber(lead.estimatedValue))}
                     </p>
                   </div>
                 ))
               ) : (
                 <p className="rounded-[1.75rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                  No leads are linked to this client.
+                  {t("No leads are linked to this client.")}
                 </p>
               )}
             </div>

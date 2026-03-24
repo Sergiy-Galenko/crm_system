@@ -5,6 +5,7 @@ import { upsertLeadAction } from "@/actions/leads";
 import { ActionDialog } from "@/components/form/action-dialog";
 import { FormField } from "@/components/form/form-field";
 import { SubmitButton } from "@/components/form/submit-button";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -36,55 +37,56 @@ export function LeadDialog({
   triggerLabel?: string;
 }) {
   const [state, formAction] = useActionState(upsertLeadAction, idleActionState);
+  const { t } = useLocale();
 
   return (
     <ActionDialog
-      trigger={<Button variant={lead ? "secondary" : "primary"}>{triggerLabel}</Button>}
-      title={lead ? "Edit lead" : "Add lead"}
-      description="Capture source quality, next follow-up timing, and expected revenue."
+      trigger={<Button variant={lead ? "secondary" : "primary"}>{t(triggerLabel)}</Button>}
+      title={t(lead ? "Edit lead" : "Add lead")}
+      description={t("Capture source quality, next follow-up timing, and expected revenue.")}
       state={state}
     >
       {() => (
         <form action={formAction} className="grid gap-4">
           <input type="hidden" name="id" value={lead?.id ?? ""} />
           <div className="grid gap-4 md:grid-cols-2">
-            <FormField label="Lead name" error={state.fields?.name}>
+            <FormField label={t("Lead name")} error={state.fields?.name}>
               <Input name="name" defaultValue={lead?.name} />
             </FormField>
-            <FormField label="Company" error={state.fields?.company}>
+            <FormField label={t("Company")} error={state.fields?.company}>
               <Input name="company" defaultValue={lead?.company} />
             </FormField>
-            <FormField label="Email" error={state.fields?.email}>
+            <FormField label={t("Email")} error={state.fields?.email}>
               <Input name="email" type="email" defaultValue={lead?.email} />
             </FormField>
-            <FormField label="Phone">
+            <FormField label={t("Phone")}>
               <Input name="phone" defaultValue={lead?.phone} />
             </FormField>
-            <FormField label="Source">
+            <FormField label={t("Source")}>
               <Select name="source" defaultValue={lead?.source ?? "WEBSITE"}>
                 {leadSources.map((source) => (
                   <option key={source} value={source}>
-                    {source.replaceAll("_", " ")}
+                    {t(source)}
                   </option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Status">
+            <FormField label={t("Status")}>
               <Select name="status" defaultValue={lead?.status ?? "NEW"}>
                 {leadStatuses.map((status) => (
                   <option key={status} value={status}>
-                    {status.replaceAll("_", " ")}
+                    {t(status)}
                   </option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Estimated value" error={state.fields?.estimatedValue}>
+            <FormField label={t("Estimated value")} error={state.fields?.estimatedValue}>
               <Input name="estimatedValue" type="number" step="0.01" min="0" defaultValue={lead?.estimatedValue ?? ""} />
             </FormField>
-            <FormField label="Next follow-up">
+            <FormField label={t("Next follow-up")}>
               <Input name="nextFollowUpAt" type="date" defaultValue={toDateInputValue(lead?.nextFollowUpAt)} />
             </FormField>
-            <FormField label="Owner">
+            <FormField label={t("Owner")}>
               <Select name="ownerId" defaultValue={lead?.ownerId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
@@ -93,9 +95,9 @@ export function LeadDialog({
                 ))}
               </Select>
             </FormField>
-            <FormField label="Link to client">
+            <FormField label={t("Link to client")}>
               <Select name="clientId" defaultValue={lead?.clientId ?? ""}>
-                <option value="">Not linked</option>
+                <option value="">{t("Not linked")}</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.company}
@@ -105,7 +107,7 @@ export function LeadDialog({
             </FormField>
           </div>
           <div className="flex justify-end">
-            <SubmitButton>{lead ? "Save changes" : "Create lead"}</SubmitButton>
+            <SubmitButton>{t(lead ? "Save changes" : "Create lead")}</SubmitButton>
           </div>
         </form>
       )}

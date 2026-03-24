@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Bell, Menu, Search, Sparkles } from "lucide-react";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { useLocale } from "@/components/providers/locale-provider";
 import { dashboardNavigation } from "@/lib/constants";
 import { cn, fromNow } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/avatar";
@@ -45,7 +47,17 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [isLoggingOut, startLogoutTransition] = React.useTransition();
+  const { locale, t } = useLocale();
+
+  function handleLogout() {
+    startLogoutTransition(async () => {
+      await logoutAction();
+      router.replace("/login");
+    });
+  }
 
   return (
     <div className="page-shell flex min-h-screen gap-6 py-6">
@@ -58,10 +70,10 @@ export function AppShell({
         <div className="flex h-full flex-col">
           <BrandMark href="/dashboard" />
           <div className="mt-8 rounded-[1.75rem] border border-white/70 bg-slate-950 px-4 py-4 text-white">
-            <p className="text-xs uppercase tracking-[0.18em] text-white/55">Workspace</p>
-            <p className="mt-3 text-lg font-semibold">Revenue cockpit</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/55">{t("Workspace")}</p>
+            <p className="mt-3 text-lg font-semibold">{t("Revenue cockpit")}</p>
             <p className="mt-2 text-sm leading-6 text-white/65">
-              Clean pipeline visibility, promo performance, and account execution in one place.
+              {t("Clean pipeline visibility, promo performance, and account execution in one place.")}
             </p>
           </div>
           <nav className="mt-6 grid gap-1.5">
@@ -81,7 +93,7 @@ export function AppShell({
                   onClick={() => setOpen(false)}
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.title}
+                  {t(item.title)}
                 </Link>
               );
             })}
@@ -91,7 +103,7 @@ export function AppShell({
               <UserAvatar name={user.name} color={user.avatarColor} />
               <div>
                 <p className="text-sm font-semibold text-slate-950">{user.name}</p>
-                <p className="text-xs text-slate-500">{user.role.toLowerCase()}</p>
+                <p className="text-xs text-slate-500">{t(user.role)}</p>
               </div>
             </div>
             {user.title ? <p className="mt-3 text-sm text-slate-500">{user.title}</p> : null}
@@ -101,7 +113,7 @@ export function AppShell({
 
       {open ? (
         <button
-          aria-label="Close sidebar"
+          aria-label={t("Close sidebar")}
           className="fixed inset-0 z-30 bg-slate-950/20 backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
         />
@@ -116,16 +128,18 @@ export function AppShell({
           <form action="/dashboard/clients" className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-4">
             <Search className="h-4 w-4 text-slate-400" />
             <input
-              aria-label="Search CRM records"
+              aria-label={t("Search CRM records")}
               className="h-11 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               name="q"
-              placeholder="Search clients, leads, or companies"
+              placeholder={t("Search clients, leads, or companies")}
             />
           </form>
 
+          <LocaleSwitcher />
+
           <div className="hidden rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-sm text-slate-500 xl:flex xl:items-center xl:gap-2">
             <Sparkles className="h-4 w-4 text-blue-500" />
-            Premium workflow system
+            {t("Premium workflow system")}
           </div>
 
           <DropdownMenu>
@@ -135,18 +149,18 @@ export function AppShell({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[22rem]">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("Notifications")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {notifications.length ? (
                 notifications.map((item) => (
                   <DropdownMenuItem key={item.id} className="block rounded-2xl px-3 py-3">
                     <p className="font-medium text-slate-900">{item.label}</p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">{item.meta}</p>
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">{fromNow(item.createdAt)}</p>
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">{fromNow(item.createdAt, locale)}</p>
                   </DropdownMenuItem>
                 ))
               ) : (
-                <DropdownMenuItem className="py-4 text-slate-500">No new notifications.</DropdownMenuItem>
+                <DropdownMenuItem className="py-4 text-slate-500">{t("No new notifications.")}</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -165,14 +179,19 @@ export function AppShell({
               <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Settings</Link>
+                <Link href="/dashboard/settings">{t("Settings")}</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <form action={logoutAction}>
-                <button className="w-full">
-                  <DropdownMenuItem>Log out</DropdownMenuItem>
-                </button>
-              </form>
+              <DropdownMenuItem
+                className="w-full"
+                disabled={isLoggingOut}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  handleLogout();
+                }}
+              >
+                {t("Log out")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

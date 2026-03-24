@@ -2,25 +2,25 @@
 
 import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
+import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { getFieldErrors, leadSchema } from "@/lib/validations";
 
 export async function upsertLeadAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
   const values = Object.fromEntries(formData.entries());
   const parsedValues = leadSchema.safeParse(values);
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the lead form.", {
-      name: errors.name?.[0] ?? "",
-      company: errors.company?.[0] ?? "",
-      email: errors.email?.[0] ?? "",
-      estimatedValue: errors.estimatedValue?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review the lead form."),
+      translateActionFields(errors, t, ["name", "company", "email", "estimatedValue"]),
+    );
   }
 
   try {
@@ -61,15 +61,15 @@ export async function upsertLeadAction(_prevState: ActionResult, formData: FormD
       action: parsedValues.data.id ? ActivityAction.UPDATED : ActivityAction.CREATED,
       entityId: lead.id,
       description: parsedValues.data.id
-        ? `Updated lead ${lead.company}.`
-        : `Added lead ${lead.company}.`,
+        ? t("Updated lead {company}.", { company: lead.company })
+        : t("Added lead {company}.", { company: lead.company }),
     });
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/leads");
 
-    return actionSuccess(parsedValues.data.id ? "Lead updated." : "Lead created.");
+    return actionSuccess(t(parsedValues.data.id ? "Lead updated." : "Lead created."));
   } catch {
-    return actionError("Unable to save the lead right now.");
+    return actionError(t("Unable to save the lead right now."));
   }
 }

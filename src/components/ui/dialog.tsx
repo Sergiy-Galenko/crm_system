@@ -52,10 +52,28 @@ export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLD
   return <div className={cn("space-y-1.5", className)} {...props} />;
 }
 
-export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn("text-xl font-semibold tracking-tight text-slate-950", className)} {...props} />;
-}
+export const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn("text-xl font-semibold tracking-tight text-slate-950", className)}
+    {...props}
+  />
+));
 
-export function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm leading-6 text-slate-500", className)} {...props} />;
-}
+DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+export const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm leading-6 text-slate-500", className)}
+    {...props}
+  />
+));
+
+DialogDescription.displayName = DialogPrimitive.Description.displayName;

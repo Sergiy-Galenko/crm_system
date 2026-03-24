@@ -2,17 +2,19 @@
 
 import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
+import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { hashPassword, requireUser } from "@/lib/session";
 import { getFieldErrors, settingsSchema, userSchema } from "@/lib/validations";
 
 export async function upsertUserAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const currentUser = await requireUser();
 
   if (currentUser.role !== "ADMIN") {
-    return actionError("Only admins can manage users.");
+    return actionError(t("Only admins can manage users."));
   }
 
   const values = Object.fromEntries(formData.entries());
@@ -20,16 +22,15 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the user form.", {
-      name: errors.name?.[0] ?? "",
-      email: errors.email?.[0] ?? "",
-      password: errors.password?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review the user form."),
+      translateActionFields(errors, t, ["name", "email", "password"]),
+    );
   }
 
   if (!parsedValues.data.id && !parsedValues.data.password) {
-    return actionError("New users require a password.", {
-      password: "Password is required.",
+    return actionError(t("New users require a password."), {
+      password: t("Password is required."),
     });
   }
 
@@ -63,29 +64,30 @@ export async function upsertUserAction(_prevState: ActionResult, formData: FormD
       action: parsedValues.data.id ? ActivityAction.UPDATED : ActivityAction.CREATED,
       entityId: user.id,
       description: parsedValues.data.id
-        ? `Updated user ${user.email}.`
-        : `Invited user ${user.email}.`,
+        ? t("Updated user {email}.", { email: user.email })
+        : t("Invited user {email}.", { email: user.email }),
     });
 
     revalidatePath("/dashboard/settings");
 
-    return actionSuccess(parsedValues.data.id ? "User updated." : "User created.");
+    return actionSuccess(t(parsedValues.data.id ? "User updated." : "User created."));
   } catch {
-    return actionError("Unable to save the user right now.");
+    return actionError(t("Unable to save the user right now."));
   }
 }
 
 export async function updateSettingsAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const currentUser = await requireUser();
   const values = Object.fromEntries(formData.entries());
   const parsedValues = settingsSchema.safeParse(values);
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review your settings.", {
-      name: errors.name?.[0] ?? "",
-      avatarColor: errors.avatarColor?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review your settings."),
+      translateActionFields(errors, t, ["name", "avatarColor"]),
+    );
   }
 
   await prisma.user.update({
@@ -102,11 +104,11 @@ export async function updateSettingsAction(_prevState: ActionResult, formData: F
     entity: ActivityEntity.USER,
     action: ActivityAction.UPDATED,
     entityId: currentUser.id,
-    description: `${parsedValues.data.name} updated profile settings.`,
+    description: t("{name} updated profile settings.", { name: parsedValues.data.name }),
   });
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
 
-  return actionSuccess("Settings updated.");
+  return actionSuccess(t("Settings updated."));
 }

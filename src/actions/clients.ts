@@ -2,26 +2,25 @@
 
 import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
+import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { clientSchema, getFieldErrors, noteSchema } from "@/lib/validations";
 
 export async function upsertClientAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
   const values = Object.fromEntries(formData.entries());
   const parsedValues = clientSchema.safeParse(values);
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the client form.", {
-      name: errors.name?.[0] ?? "",
-      company: errors.company?.[0] ?? "",
-      email: errors.email?.[0] ?? "",
-      phone: errors.phone?.[0] ?? "",
-      monthlyValue: errors.monthlyValue?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review the client form."),
+      translateActionFields(errors, t, ["name", "company", "email", "phone", "monthlyValue"]),
+    );
   }
 
   try {
@@ -61,33 +60,34 @@ export async function upsertClientAction(_prevState: ActionResult, formData: For
       action: parsedValues.data.id ? ActivityAction.UPDATED : ActivityAction.CREATED,
       entityId: client.id,
       description: parsedValues.data.id
-        ? `Updated client ${client.company}.`
-        : `Added client ${client.company}.`,
+        ? t("Updated client {company}.", { company: client.company })
+        : t("Added client {company}.", { company: client.company }),
     });
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/clients");
     revalidatePath(`/dashboard/clients/${client.id}`);
 
-    return actionSuccess(parsedValues.data.id ? "Client updated." : "Client created.");
+    return actionSuccess(t(parsedValues.data.id ? "Client updated." : "Client created."));
   } catch (error) {
     if (error instanceof Error && error.message.includes("Unique constraint")) {
-      return actionError("That email is already attached to another client.", {
-        email: "Use a different email address.",
+      return actionError(t("That email is already attached to another client."), {
+        email: t("Use a different email address."),
       });
     }
 
-    return actionError("Unable to save the client right now.");
+    return actionError(t("Unable to save the client right now."));
   }
 }
 
 export async function createNoteAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
   const values = Object.fromEntries(formData.entries());
   const parsedValues = noteSchema.safeParse(values);
 
   if (!parsedValues.success) {
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the note.");
+    return actionError(t(parsedValues.error.errors[0]?.message ?? "Please review the note."));
   }
 
   const note = await prisma.note.create({
@@ -105,7 +105,7 @@ export async function createNoteAction(_prevState: ActionResult, formData: FormD
     entity: ActivityEntity.NOTE,
     action: ActivityAction.CREATED,
     entityId: note.id,
-    description: "Added a new note to the CRM timeline.",
+    description: t("Added a new note to the CRM timeline."),
   });
 
   revalidatePath("/dashboard");
@@ -114,5 +114,5 @@ export async function createNoteAction(_prevState: ActionResult, formData: FormD
     revalidatePath(`/dashboard/clients/${parsedValues.data.clientId}`);
   }
 
-  return actionSuccess("Note added.");
+  return actionSuccess(t("Note added."));
 }

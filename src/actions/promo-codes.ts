@@ -2,17 +2,19 @@
 
 import { ActivityAction, ActivityEntity } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
+import { actionError, actionSuccess, translateActionFields, type ActionResult } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
 import { prisma } from "@/lib/db";
+import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { getFieldErrors, promoCodeSchema } from "@/lib/validations";
 
 export async function upsertPromoCodeAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+  const { t } = await getServerTranslator();
   const user = await requireUser();
 
   if (user.role !== "ADMIN") {
-    return actionError("Only admins can manage promo codes.");
+    return actionError(t("Only admins can manage promo codes."));
   }
 
   const values = Object.fromEntries(formData.entries());
@@ -20,11 +22,10 @@ export async function upsertPromoCodeAction(_prevState: ActionResult, formData: 
 
   if (!parsedValues.success) {
     const errors = getFieldErrors(parsedValues.error);
-    return actionError(parsedValues.error.errors[0]?.message ?? "Please review the promo code form.", {
-      code: errors.code?.[0] ?? "",
-      discountValue: errors.discountValue?.[0] ?? "",
-      usageLimit: errors.usageLimit?.[0] ?? "",
-    });
+    return actionError(
+      t(parsedValues.error.errors[0]?.message ?? "Please review the promo code form."),
+      translateActionFields(errors, t, ["code", "discountValue", "usageLimit"]),
+    );
   }
 
   try {
@@ -60,8 +61,8 @@ export async function upsertPromoCodeAction(_prevState: ActionResult, formData: 
       action: parsedValues.data.id ? ActivityAction.UPDATED : ActivityAction.CREATED,
       entityId: promoCode.id,
       description: parsedValues.data.id
-        ? `Updated promo code ${promoCode.code}.`
-        : `Created promo code ${promoCode.code}.`,
+        ? t("Updated promo code {code}.", { code: promoCode.code })
+        : t("Created promo code {code}.", { code: promoCode.code }),
     });
 
     revalidatePath("/dashboard");
@@ -69,8 +70,8 @@ export async function upsertPromoCodeAction(_prevState: ActionResult, formData: 
     revalidatePath("/dashboard/promo-codes");
     revalidatePath("/dashboard/analytics");
 
-    return actionSuccess(parsedValues.data.id ? "Promo code updated." : "Promo code created.");
+    return actionSuccess(t(parsedValues.data.id ? "Promo code updated." : "Promo code created."));
   } catch {
-    return actionError("Unable to save the promo code right now.");
+    return actionError(t("Unable to save the promo code right now."));
   }
 }
