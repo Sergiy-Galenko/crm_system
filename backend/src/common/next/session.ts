@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE } from "@backend/common/constants/app.constants";
 import { prisma } from "@backend/common/database/prisma.service";
-import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token";
+import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token.server";
 
 export async function hashPassword(value: string) {
   return bcrypt.hash(value, 12);
@@ -68,6 +68,7 @@ export async function getCurrentUser() {
       phone: true,
       location: true,
       bio: true,
+      companyLogoUrl: true,
       avatarColor: true,
       createdAt: true,
       updatedAt: true,

@@ -39,6 +39,13 @@ export class UpdateSettingsDto {
   @MaxLength(280, { message: "Bio must be 280 characters or fewer." })
   bio?: string;
 
+  @Transform(({ value }) => toOptionalString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(3_000_000, { message: "Logo image is too large." })
+  @Matches(/^(https?:\/\/|\/|data:image\/[a-zA-Z0-9.+-]+;base64,)/, { message: "Use a valid logo URL or upload an image." })
+  companyLogoUrl?: string;
+
   @Transform(({ value }) => toTrimmedString(value))
   @Matches(/^#([A-Fa-f0-9]{6})$/, { message: "Choose a valid hex color." })
   avatarColor!: string;

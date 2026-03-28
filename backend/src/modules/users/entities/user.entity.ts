@@ -7,4 +7,5 @@ export class UserEntity {
   role!: Role;
   title!: string | null;
   roleLabel!: string | null;
+  companyLogoUrl!: string | null;
 }

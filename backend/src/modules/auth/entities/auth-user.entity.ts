@@ -6,4 +6,5 @@ export class AuthUserEntity {
   email!: string;
   role!: Role;
   title!: string | null;
+  companyLogoUrl!: string | null;
 }

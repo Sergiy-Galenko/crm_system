@@ -56,6 +56,7 @@ export default async function DashboardPage() {
           select: {
             name: true,
             avatarColor: true,
+            companyLogoUrl: true,
           },
         },
       },

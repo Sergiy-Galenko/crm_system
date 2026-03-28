@@ -1,5 +1,8 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { loadWorkspaceEnv } from "@backend/common/env/load-workspace-env";
+
+loadWorkspaceEnv();
 
 type GlobalPrisma = typeof globalThis & {
   prisma?: PrismaClient;

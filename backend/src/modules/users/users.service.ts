@@ -91,6 +91,7 @@ export class UsersService {
         phone: dto.phone || null,
         location: dto.location || null,
         bio: dto.bio || null,
+        companyLogoUrl: dto.companyLogoUrl || null,
         avatarColor: dto.avatarColor,
       },
     });

@@ -60,6 +60,7 @@ export async function updateSettingsAction(prevState: ActionResult, formData: Fo
       phone: ["phone"],
       location: ["location"],
       bio: ["bio"],
+      companyLogoUrl: ["logo"],
       avatarColor: ["color"],
     });
 

@@ -5,7 +5,7 @@ import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
 import { Public } from "@backend/common/auth/public.decorator";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
-import { signSessionToken } from "@backend/common/auth/session-token";
+import { signSessionToken } from "@backend/common/auth/session-token.server";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { AuthService } from "./auth.service";

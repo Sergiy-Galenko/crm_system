@@ -15,6 +15,7 @@ export function ActivityFeed({
     actor?: {
       name: string;
       avatarColor: string;
+      companyLogoUrl?: string | null;
     } | null;
   }>;
 }) {
@@ -37,6 +38,7 @@ export function ActivityFeed({
             <UserAvatar
               name={item.actor?.name ?? "System"}
               color={item.actor?.avatarColor ?? "#0F1728"}
+              imageUrl={item.actor?.companyLogoUrl}
               className="h-10 w-10"
             />
             <div className="min-w-0 flex-1">

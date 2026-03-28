@@ -1,11 +1,7 @@
-import { existsSync } from "node:fs";
 import { defineConfig, env } from "prisma/config";
+import { loadWorkspaceEnv } from "./src/common/env/load-workspace-env";
 
-for (const file of [".env.local", ".env"]) {
-  if (existsSync(file) && typeof process.loadEnvFile === "function") {
-    process.loadEnvFile(file);
-  }
-}
+loadWorkspaceEnv();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

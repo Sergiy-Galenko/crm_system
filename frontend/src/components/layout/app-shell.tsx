@@ -32,6 +32,7 @@ type UserSummary = {
   phone?: string | null;
   location?: string | null;
   bio?: string | null;
+  companyLogoUrl?: string | null;
   avatarColor?: string | null;
 };
 
@@ -116,7 +117,7 @@ export function AppShell({
           </nav>
           <div className="mt-auto border-t border-slate-100 pt-4">
             <div className="flex items-center gap-3">
-              <UserAvatar name={user.name} color={user.avatarColor} />
+              <UserAvatar name={user.name} color={user.avatarColor} imageUrl={user.companyLogoUrl} />
               <div>
                 <p className="text-sm font-semibold text-slate-950">{user.name}</p>
                 <p className="text-xs text-slate-500">{user.roleLabel ?? t(user.role)}</p>
@@ -180,7 +181,7 @@ export function AppShell({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50">
-                <UserAvatar name={user.name} color={user.avatarColor} className="h-9 w-9" />
+                <UserAvatar name={user.name} color={user.avatarColor} imageUrl={user.companyLogoUrl} className="h-9 w-9" />
                 <div className="hidden text-left sm:block">
                   <p className="text-sm font-semibold text-slate-950">{user.name}</p>
                   <p className="text-xs text-slate-500">{secondaryLine}</p>

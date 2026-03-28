@@ -1,4 +1,3 @@
-import { existsSync } from "node:fs";
 import {
   ActivityAction,
   ActivityEntity,
@@ -15,12 +14,9 @@ import {
 } from "@prisma/client";
 import { addDays, subDays } from "date-fns";
 import bcrypt from "bcryptjs";
+import { loadWorkspaceEnv } from "../src/common/env/load-workspace-env";
 
-for (const file of [".env.local", ".env"]) {
-  if (existsSync(file) && typeof process.loadEnvFile === "function") {
-    process.loadEnvFile(file);
-  }
-}
+loadWorkspaceEnv();
 
 const prisma = new PrismaClient();
 

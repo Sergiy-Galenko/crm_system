@@ -45,7 +45,12 @@ export default async function SettingsPage() {
       <div className="card p-6">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-4">
-            <UserAvatar name={currentUser.name} color={currentUser.avatarColor} className="h-20 w-20 rounded-[1.5rem]" />
+            <UserAvatar
+              name={currentUser.name}
+              color={currentUser.avatarColor}
+              imageUrl={currentUser.companyLogoUrl}
+              className="h-20 w-20 rounded-[1.5rem]"
+            />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{currentUser.name}</h2>

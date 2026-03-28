@@ -102,6 +102,7 @@ model User {
   location          String?
   bio               String?
   avatarColor       String           @default("#2154FF")
+  companyLogoUrl    String?
   createdById       String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt

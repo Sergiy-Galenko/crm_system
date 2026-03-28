@@ -2,8 +2,8 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from "@nestjs/core";
 import type { Request } from "express";
 import { SESSION_COOKIE } from "@backend/common/constants/app.constants";
+import { verifySessionToken } from "./session-token.server";
 import { IS_PUBLIC_KEY } from "./public.decorator";
-import { verifySessionToken } from "./session-token";
 
 type AuthenticatedRequest = Request & {
   user?: Awaited<ReturnType<typeof verifySessionToken>>;
