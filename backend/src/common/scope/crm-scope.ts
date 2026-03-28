@@ -33,6 +33,29 @@ export function visibleUsersWhere(user: ScopedUser): Prisma.UserWhereInput | und
       };
 }
 
+export function chatUsersWhere(user: ScopedUser & { createdById?: string | null }): Prisma.UserWhereInput | undefined {
+  const userId = getScopedUserId(user);
+
+  if (isAdmin(user)) {
+    return undefined;
+  }
+
+  const createdById = user.createdById ?? null;
+
+  return {
+    OR: [
+      { id: userId },
+      { createdById: userId },
+      ...(createdById
+        ? [
+            { id: createdById },
+            { createdById },
+          ]
+        : []),
+    ],
+  };
+}
+
 export function clientAccessWhere(user: ScopedUser): Prisma.ClientWhereInput {
   return isAdmin(user) ? {} : { owner: visibleUsersWhere(user)! };
 }

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { idleActionState, type ActionResult } from "@/lib/actions";
 
-export function ActionDialog({
+export function ActionDialog<T = undefined>({
   trigger,
   title,
   description,
@@ -17,13 +17,13 @@ export function ActionDialog({
   title: string;
   description: string;
   children: (close: () => void) => React.ReactNode;
-  state?: ActionResult;
+  state?: ActionResult<T>;
   contentClassName?: string;
 }) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const currentState = state ?? idleActionState;
+    const currentState = (state ?? idleActionState) as ActionResult<T>;
 
     if (!currentState.message) {
       return;

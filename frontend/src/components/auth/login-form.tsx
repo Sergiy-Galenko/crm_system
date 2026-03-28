@@ -9,12 +9,13 @@ import { SubmitButton } from "@/components/form/submit-button";
 import { Input } from "@/components/ui/input";
 import { idleActionState } from "@/lib/actions";
 
-export function LoginForm() {
+export function LoginForm({ inviteToken = "" }: { inviteToken?: string }) {
   const [state, formAction] = useActionState(loginAction, idleActionState);
   const { t } = useLocale();
 
   return (
     <form action={formAction} className="mt-8 grid gap-5">
+      <input type="hidden" name="inviteToken" value={inviteToken} />
       <FormField label={t("Work email")} error={state.fields?.email}>
         <Input name="email" type="email" placeholder="name@company.com" />
       </FormField>
@@ -25,7 +26,7 @@ export function LoginForm() {
       <SubmitButton className="w-full">{t("Sign in")}</SubmitButton>
       <p className="text-sm text-slate-500">
         {t("Need an account?")}{" "}
-        <Link href="/register" className="font-medium text-slate-950">
+        <Link href={inviteToken ? `/register?invite=${encodeURIComponent(inviteToken)}` : "/register"} className="font-medium text-slate-950">
           {t("Create one")}
         </Link>
       </p>

@@ -55,6 +55,7 @@ export function SettingsForm({
 }: {
   user: {
     name: string;
+    nickname?: string | null;
     title?: string | null;
     statusMessage?: string | null;
     phone?: string | null;
@@ -72,6 +73,7 @@ export function SettingsForm({
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState({
     name: user.name,
+    nickname: user.nickname ?? "",
     title: user.title ?? "",
     statusMessage: user.statusMessage ?? "",
     phone: user.phone ?? "",
@@ -191,6 +193,13 @@ export function SettingsForm({
         </div>
         <FormField label={t("Name")} error={state.fields?.name}>
           <Input name="name" value={preview.name} onChange={(event) => updateField("name", event.target.value)} />
+        </FormField>
+        <FormField
+          label={t("Nickname")}
+          error={state.fields?.nickname}
+          description={t("Used so teammates can find you by @nickname.")}
+        >
+          <Input name="nickname" value={preview.nickname} onChange={(event) => updateField("nickname", event.target.value)} placeholder="olivia" />
         </FormField>
         <FormField label={t("Title")} error={state.fields?.title}>
           <Input name="title" value={preview.title} onChange={(event) => updateField("title", event.target.value)} />

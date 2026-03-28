@@ -21,6 +21,9 @@ loadWorkspaceEnv();
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.chatMessage.deleteMany();
+  await prisma.chatParticipant.deleteMany();
+  await prisma.chatConversation.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.promoCodeUsage.deleteMany();
   await prisma.meeting.deleteMany();
@@ -39,6 +42,7 @@ async function main() {
     data: {
       name: "Olivia Hart",
       email: "admin@vercelcrm.dev",
+      nickname: "olivia",
       passwordHash,
       role: Role.ADMIN,
       title: "Revenue Operations Lead",
@@ -54,6 +58,7 @@ async function main() {
     data: {
       name: "Noah Bennett",
       email: "manager@vercelcrm.dev",
+      nickname: "noah",
       passwordHash: managerPasswordHash,
       role: Role.MANAGER,
       title: "Account Manager",
@@ -463,6 +468,58 @@ async function main() {
         action: ActivityAction.LOGIN,
         entityId: admin.id,
         description: "Admin user signed in from the internal dashboard.",
+      },
+    ],
+  });
+
+  const directConversation = await prisma.chatConversation.create({
+    data: {
+      type: "DIRECT",
+      createdById: admin.id,
+      lastMessageAt: subDays(new Date(), 1),
+      participants: {
+        create: [{ userId: admin.id }, { userId: manager.id }],
+      },
+    },
+  });
+
+  const groupConversation = await prisma.chatConversation.create({
+    data: {
+      type: "GROUP",
+      title: "Revenue standup",
+      createdById: admin.id,
+      lastMessageAt: new Date(),
+      participants: {
+        create: [{ userId: admin.id }, { userId: manager.id }],
+      },
+    },
+  });
+
+  await prisma.chatMessage.createMany({
+    data: [
+      {
+        conversationId: directConversation.id,
+        senderId: admin.id,
+        body: "Can you send the latest renewal notes for Northstar before noon?",
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        conversationId: directConversation.id,
+        senderId: manager.id,
+        body: "Yes, I have the summary and next-step timeline ready.",
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        conversationId: groupConversation.id,
+        senderId: admin.id,
+        body: "Team, let's keep today focused on renewals, deal follow-ups, and promo approvals.",
+        createdAt: subDays(new Date(), 1),
+      },
+      {
+        conversationId: groupConversation.id,
+        senderId: manager.id,
+        body: "I will cover the at-risk accounts and update the board after client calls.",
+        createdAt: new Date(),
       },
     ],
   });

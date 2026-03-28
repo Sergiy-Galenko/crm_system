@@ -62,6 +62,11 @@ enum MeetingStatus {
   NO_SHOW
 }
 
+enum ChatConversationType {
+  DIRECT
+  GROUP
+}
+
 enum DiscountType {
   PERCENT
   FIXED
@@ -93,6 +98,7 @@ model User {
   id                String           @id @default(cuid())
   name              String
   email             String           @unique
+  nickname          String?          @unique
   passwordHash      String
   role              Role             @default(MANAGER)
   roleLabel         String?
@@ -115,6 +121,9 @@ model User {
   createdTasks      Task[]           @relation("TaskCreator")
   assignedMeetings  Meeting[]        @relation("MeetingAssignee")
   createdMeetings   Meeting[]        @relation("MeetingCreator")
+  createdChatConversations ChatConversation[] @relation("ChatConversationCreator")
+  chatParticipations ChatParticipant[] @relation("ChatParticipantUser")
+  chatMessages      ChatMessage[]    @relation("ChatMessageSender")
   notes             Note[]           @relation("NoteAuthor")
   createdPromoCodes PromoCode[]      @relation("PromoCodeCreator")
   promoUsages       PromoCodeUsage[] @relation("PromoCodeAppliedBy")
@@ -253,6 +262,48 @@ model Meeting {
   @@index([status])
   @@index([clientId])
   @@index([assignedToId])
+}
+
+model ChatConversation {
+  id            String               @id @default(cuid())
+  type          ChatConversationType
+  title         String?
+  createdById   String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  lastMessageAt DateTime             @default(now())
+  createdBy     User                 @relation("ChatConversationCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  participants  ChatParticipant[]
+  messages      ChatMessage[]
+
+  @@index([type])
+  @@index([createdById])
+  @@index([lastMessageAt])
+}
+
+model ChatParticipant {
+  conversationId String
+  userId         String
+  joinedAt       DateTime         @default(now())
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User             @relation("ChatParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User             @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([conversationId, createdAt])
 }
 
 model PromoCode {

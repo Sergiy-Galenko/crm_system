@@ -3,14 +3,21 @@ import { BrandMark } from "@/components/brand-mark";
 import { LoginForm } from "@/components/auth/login-form";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getServerTranslator } from "@/lib/locale-server";
+import { getParam, type SearchParamsRecord } from "@/lib/query-params";
 import { getCurrentUser } from "@/lib/session";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsRecord>;
+}) {
   const user = await getCurrentUser();
   const { t } = await getServerTranslator();
+  const resolvedSearchParams = await searchParams;
+  const inviteToken = getParam(resolvedSearchParams, "invite");
 
   if (user) {
-    redirect("/dashboard");
+    redirect(inviteToken ? `/dashboard/settings?invite=${encodeURIComponent(inviteToken)}` : "/dashboard");
   }
 
   return (
@@ -27,7 +34,7 @@ export default async function LoginPage() {
           <p className="mt-3 text-sm leading-7 text-slate-500">
             {t("Continue with your existing CRM workspace and keep activity, deals, and promo performance in sync.")}
           </p>
-          <LoginForm />
+          <LoginForm inviteToken={inviteToken} />
         </section>
       </div>
     </main>

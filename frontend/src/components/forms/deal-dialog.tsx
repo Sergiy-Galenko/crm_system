@@ -138,6 +138,7 @@ export function DealDialog({
       title={t(deal ? "Edit deal" : "Create deal")}
       description={t("Keep discount logic server-authoritative and apply promo codes only after backend validation.")}
       state={state}
+      contentClassName="max-w-xl p-5 sm:p-6"
     >
       {() => (
         <form action={formAction} className="grid gap-4">

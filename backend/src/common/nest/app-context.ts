@@ -4,6 +4,7 @@ import type { Type } from "@nestjs/common";
 import { ActivityLogService } from "@backend/common/activity/activity-log.service";
 import { PrismaService } from "@backend/common/database/prisma.service";
 import { AuthService } from "@backend/modules/auth/auth.service";
+import { ChatService } from "@backend/modules/chat/chat.service";
 import { ClientsService } from "@backend/modules/clients/clients.service";
 import { DealsService } from "@backend/modules/deals/deals.service";
 import { LeadsService } from "@backend/modules/leads/leads.service";
@@ -15,6 +16,7 @@ type BackendProviders = {
   prismaService: PrismaService;
   activityLogService: ActivityLogService;
   authService: AuthService;
+  chatService: ChatService;
   clientsService: ClientsService;
   leadsService: LeadsService;
   promoCodesService: PromoCodesService;
@@ -33,6 +35,7 @@ async function createProviders(): Promise<BackendProviders> {
   const prismaService = new PrismaService();
   const activityLogService = new ActivityLogService();
   const authService = new AuthService(prismaService, activityLogService);
+  const chatService = new ChatService(prismaService);
   const clientsService = new ClientsService(prismaService, activityLogService);
   const leadsService = new LeadsService(prismaService, activityLogService);
   const promoCodesService = new PromoCodesService(prismaService, activityLogService);
@@ -44,6 +47,7 @@ async function createProviders(): Promise<BackendProviders> {
     prismaService,
     activityLogService,
     authService,
+    chatService,
     clientsService,
     leadsService,
     promoCodesService,
@@ -72,6 +76,7 @@ export async function resolveProvider<T>(provider: Type<T> | symbol | string) {
     [PrismaService, providers.prismaService],
     [ActivityLogService, providers.activityLogService],
     [AuthService, providers.authService],
+    [ChatService, providers.chatService],
     [ClientsService, providers.clientsService],
     [LeadsService, providers.leadsService],
     [PromoCodesService, providers.promoCodesService],

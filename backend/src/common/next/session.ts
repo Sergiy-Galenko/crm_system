@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE } from "@backend/common/constants/app.constants";
+import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { prisma } from "@backend/common/database/prisma.service";
 import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token.server";
 
@@ -55,25 +56,53 @@ export async function getCurrentUser() {
     return null;
   }
 
-  return prisma.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      roleLabel: true,
-      title: true,
-      statusMessage: true,
-      phone: true,
-      location: true,
-      bio: true,
-      companyLogoUrl: true,
-      avatarColor: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  try {
+    return await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        nickname: true,
+        role: true,
+        roleLabel: true,
+        title: true,
+        createdById: true,
+        statusMessage: true,
+        phone: true,
+        location: true,
+        bio: true,
+        companyLogoUrl: true,
+        avatarColor: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } catch (error) {
+    if (!isPrismaDatabaseUnavailableError(error)) {
+      throw error;
+    }
+
+    return {
+      id: session.userId,
+      name: session.email.split("@")[0] || session.email,
+      email: session.email,
+      nickname: null,
+      role: session.role,
+      roleLabel: null,
+      title: null,
+      createdById: null,
+      statusMessage: null,
+      phone: null,
+      location: null,
+      bio: null,
+      companyLogoUrl: null,
+      avatarColor: "#2154FF",
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      databaseUnavailable: true as const,
+    };
+  }
 }
 
 export async function requireUser() {

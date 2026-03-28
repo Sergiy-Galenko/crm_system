@@ -1,4 +1,6 @@
+import { JoinTeamDialog } from "@/components/forms/join-team-dialog";
 import { SettingsForm } from "@/components/forms/settings-form";
+import { TeamInviteLink } from "@/components/forms/team-invite-link";
 import { UserDialog } from "@/components/forms/user-dialog";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -8,11 +10,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } fro
 import { teamUsersWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
+import { getParam, type SearchParamsRecord } from "@/lib/query-params";
 import { requireUser } from "@/lib/session";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsRecord>;
+}) {
   const { locale, t } = await getServerTranslator();
   const currentUser = await requireUser();
+  const resolvedSearchParams = await searchParams;
+  const prefilledInviteValue = getParam(resolvedSearchParams, "invite");
   const canAssignAdmin = currentUser.role === "ADMIN";
   const teamDescription = canAssignAdmin
     ? t("Admins can create and update workspace members. Managers can create and update only the teammates they added.")
@@ -27,6 +36,7 @@ export default async function SettingsPage() {
       id: true,
       name: true,
       email: true,
+      nickname: true,
       role: true,
       roleLabel: true,
       title: true,
@@ -56,6 +66,7 @@ export default async function SettingsPage() {
                 <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{currentUser.name}</h2>
                 <StatusBadge value={currentUser.role} label={currentUser.roleLabel} />
               </div>
+              {currentUser.nickname ? <p className="mt-1 text-sm font-medium text-slate-500">@{currentUser.nickname}</p> : null}
               <p className="mt-1 text-base text-slate-600">{currentUser.title ?? t("No title")}</p>
               <p className="mt-2 text-sm text-slate-500">{currentUser.statusMessage ?? currentUser.email}</p>
             </div>
@@ -79,7 +90,7 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="profile">
+      <Tabs defaultValue={prefilledInviteValue ? "team" : "profile"}>
         <TabsList>
           <TabsTrigger value="profile">{t("Profile")}</TabsTrigger>
           <TabsTrigger value="team">{t("Team")}</TabsTrigger>
@@ -98,7 +109,11 @@ export default async function SettingsPage() {
                   {teamDescription}
                 </p>
               </div>
-              <UserDialog canAssignAdmin={canAssignAdmin} />
+              <div className="flex flex-wrap items-start gap-2">
+                {currentUser.role === "MANAGER" ? <JoinTeamDialog prefilledInviteValue={prefilledInviteValue} /> : null}
+                <TeamInviteLink />
+                <UserDialog canAssignAdmin={canAssignAdmin} />
+              </div>
             </div>
 
             <div className="card overflow-hidden rounded-[2rem] p-2">
@@ -118,6 +133,7 @@ export default async function SettingsPage() {
                       <TableRow key={member.id}>
                         <TableCell>
                           <p className="font-medium text-slate-950">{member.name}</p>
+                          {member.nickname ? <div className="mt-1 text-xs font-medium text-slate-500">@{member.nickname}</div> : null}
                           <div className="mt-1 text-xs text-slate-500">{member.email}</div>
                         </TableCell>
                         <TableCell>
@@ -132,6 +148,7 @@ export default async function SettingsPage() {
                               id: member.id,
                               name: member.name,
                               email: member.email,
+                              nickname: member.nickname,
                               role: member.role,
                               roleLabel: member.roleLabel,
                               title: member.title,

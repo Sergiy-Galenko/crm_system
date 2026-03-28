@@ -22,6 +22,7 @@ export function UserDialog({
     id: string;
     name: string;
     email: string;
+    nickname?: string | null;
     role: string;
     roleLabel?: string | null;
     title?: string | null;
@@ -48,6 +49,13 @@ export function UserDialog({
             </FormField>
             <FormField label={t("Work email")} error={state.fields?.email}>
               <Input name="email" type="email" defaultValue={user?.email} />
+            </FormField>
+            <FormField
+              label={t("Nickname")}
+              error={state.fields?.nickname}
+              description={t("Used so teammates can find this person by @nickname.")}
+            >
+              <Input name="nickname" defaultValue={user?.nickname ?? ""} placeholder="olivia" />
             </FormField>
             <FormField label={t("Role")} error={state.fields?.role}>
               <Select name="role" defaultValue={user?.role ?? "MANAGER"}>

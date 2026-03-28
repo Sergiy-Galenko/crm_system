@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/providers/locale-provider";
-import { fromNow } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/avatar";
 
 export function ActivityFeed({
@@ -11,7 +10,7 @@ export function ActivityFeed({
   items: Array<{
     id: string;
     description: string;
-    createdAt: Date;
+    createdAtLabel: string;
     actor?: {
       name: string;
       avatarColor: string;
@@ -19,7 +18,7 @@ export function ActivityFeed({
     } | null;
   }>;
 }) {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
 
   return (
     <div className="card p-5">
@@ -43,7 +42,7 @@ export function ActivityFeed({
             />
             <div className="min-w-0 flex-1">
               <p className="text-sm leading-6 text-slate-700">{item.description}</p>
-              <p className="mt-1 text-xs text-slate-400">{fromNow(item.createdAt, locale)}</p>
+              <p className="mt-1 text-xs text-slate-400">{item.createdAtLabel}</p>
             </div>
           </div>
         ))}

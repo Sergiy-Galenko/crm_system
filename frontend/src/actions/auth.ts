@@ -13,6 +13,7 @@ import { clearSessionCookie, createSessionCookie, getCurrentUser } from "@/lib/s
 
 export async function loginAction(prevState: ActionResult, formData: FormData) {
   const { t } = await getServerTranslator();
+  const inviteToken = String(formData.get("inviteToken") ?? "").trim();
 
   try {
     const dto = await validateDto(LoginDto, Object.fromEntries(formData.entries()));
@@ -25,7 +26,7 @@ export async function loginAction(prevState: ActionResult, formData: FormData) {
       email: user.email,
     });
 
-    redirect("/dashboard");
+    redirect(inviteToken ? `/dashboard/settings?invite=${encodeURIComponent(inviteToken)}` : "/dashboard");
   } catch (error) {
     const response = actionErrorFromException(error, t, {
       email: ["email"],
@@ -61,6 +62,7 @@ export async function registerAction(prevState: ActionResult, formData: FormData
   } catch (error) {
     const response = actionErrorFromException(error, t, {
       name: ["name"],
+      nickname: ["nickname"],
       email: ["email"],
       password: ["password"],
       confirmPassword: ["confirm password"],

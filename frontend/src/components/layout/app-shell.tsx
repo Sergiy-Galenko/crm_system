@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { Bell, CalendarClock, Menu, Search } from "lucide-react";
+import { AlertTriangle, Bell, CalendarClock, Menu, Search } from "lucide-react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/providers/locale-provider";
 import { dashboardNavigation } from "@/lib/constants";
-import { cn, fromNow } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +40,7 @@ type NotificationItem = {
   id: string;
   label: string;
   meta: string;
-  createdAt: Date;
+  createdAtLabel: string;
 };
 
 type MeetingReminder = {
@@ -49,24 +49,53 @@ type MeetingReminder = {
   href: string;
 };
 
+type SystemNotice = {
+  title: string;
+  description: string;
+};
+
+function BadgeCount({ count }: { count: number }) {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white shadow-sm">
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
 export function AppShell({
   user,
   notifications,
+  notificationIndicatorCount = 0,
+  chatIndicatorCount = 0,
   meetingReminder,
+  systemNotice,
   children,
 }: {
   user: UserSummary;
   notifications: NotificationItem[];
+  notificationIndicatorCount?: number;
+  chatIndicatorCount?: number;
   meetingReminder?: MeetingReminder;
+  systemNotice?: SystemNotice;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [notificationsOpen, setNotificationsOpen] = React.useState(false);
+  const [visibleNotificationCount, setVisibleNotificationCount] = React.useState(notificationIndicatorCount);
   const [isLoggingOut, startLogoutTransition] = React.useTransition();
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const secondaryLine = user.statusMessage || user.title || user.email;
   const sidebarMeta = user.statusMessage || user.location || null;
+
+  React.useEffect(() => {
+    setVisibleNotificationCount(notificationIndicatorCount);
+  }, [notificationIndicatorCount]);
 
   function handleLogout() {
     startLogoutTransition(async () => {
@@ -110,7 +139,19 @@ export function AppShell({
                   onClick={() => setOpen(false)}
                 >
                   <item.icon className="h-4 w-4" />
-                  {t(item.title)}
+                  <span className="flex min-w-0 items-center gap-2 truncate">
+                    <span className="truncate">{t(item.title)}</span>
+                    {item.href === "/dashboard/chat" && !active && chatIndicatorCount > 0 ? (
+                      <span
+                        className={cn(
+                          "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-none",
+                          active ? "bg-white/20 text-white" : "bg-rose-100 text-rose-600",
+                        )}
+                      >
+                        {chatIndicatorCount > 9 ? "9+" : chatIndicatorCount}
+                      </span>
+                    ) : null}
+                  </span>
                 </Link>
               );
             })}
@@ -155,10 +196,20 @@ export function AppShell({
 
           <LocaleSwitcher />
 
-          <DropdownMenu>
+          <DropdownMenu
+            open={notificationsOpen}
+            onOpenChange={(nextOpen) => {
+              setNotificationsOpen(nextOpen);
+
+              if (nextOpen) {
+                setVisibleNotificationCount(0);
+              }
+            }}
+          >
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon">
+              <Button variant="secondary" size="icon" className="relative">
                 <Bell className="h-4 w-4" />
+                <BadgeCount count={visibleNotificationCount} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[22rem]">
@@ -169,7 +220,7 @@ export function AppShell({
                   <DropdownMenuItem key={item.id} className="block rounded-2xl px-3 py-3">
                     <p className="font-medium text-slate-900">{item.label}</p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">{item.meta}</p>
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">{fromNow(item.createdAt, locale)}</p>
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">{item.createdAtLabel}</p>
                   </DropdownMenuItem>
                 ))
               ) : (
@@ -208,6 +259,18 @@ export function AppShell({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+
+        {systemNotice ? (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">
+            <div className="rounded-xl bg-amber-100 p-2 text-amber-700">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{systemNotice.title}</p>
+              <p className="mt-1 text-sm leading-6 text-amber-800">{systemNotice.description}</p>
+            </div>
+          </div>
+        ) : null}
 
         {meetingReminder ? (
           <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 md:flex-row md:items-center md:justify-between">

@@ -9,6 +9,15 @@ export class UpdateSettingsDto {
   @MaxLength(120, { message: "Name must be 120 characters or fewer." })
   name!: string;
 
+  @Transform(({ value }) => {
+    const normalized = toOptionalString(value)?.toLowerCase().replace(/^@+/, "");
+    return normalized || undefined;
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9_]{3,24}$/, { message: "Use 3-24 lowercase letters, numbers, or underscores for nicknames." })
+  nickname?: string;
+
   @Transform(({ value }) => toOptionalString(value))
   @IsOptional()
   @IsString()

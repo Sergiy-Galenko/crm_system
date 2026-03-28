@@ -1,3 +1,4 @@
+import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { ActivityFeed } from "@/components/activity-feed";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -13,11 +14,96 @@ import {
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
-import { decimalToNumber, formatCurrency, formatNumber, fromNow } from "@/lib/utils";
+import { decimalToNumber, formatCurrency, formatDate, formatNumber, fromNow } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const { locale, t } = await getServerTranslator();
+  const databaseUnavailableFromSession = "databaseUnavailable" in user && user.databaseUnavailable;
+  const dashboardData = databaseUnavailableFromSession
+    ? null
+    : await Promise.all([
+        prisma.lead.count({ where: leadAccessWhere(user) }),
+        prisma.client.count({ where: clientAccessWhere(user) }),
+        prisma.deal.count({ where: dealAccessWhere(user) }),
+        prisma.deal.aggregate({
+          where: { ...dealAccessWhere(user), stage: "WON" },
+          _sum: { netAmount: true },
+        }),
+        prisma.promoCode.aggregate({
+          where: promoCodeAccessWhere(user),
+          _sum: {
+            usedCount: true,
+          },
+          _count: {
+            _all: true,
+          },
+        }),
+        prisma.activityLog.findMany({
+          where: activityAccessWhere(user),
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 6,
+          include: {
+            actor: {
+              select: {
+                name: true,
+                avatarColor: true,
+                companyLogoUrl: true,
+              },
+            },
+          },
+        }),
+        prisma.deal.groupBy({
+          by: ["stage"],
+          where: dealAccessWhere(user),
+          _count: {
+            _all: true,
+          },
+          orderBy: {
+            stage: "asc",
+          },
+        }),
+        prisma.task.findMany({
+          where: {
+            ...taskAccessWhere(user),
+            status: {
+              not: "DONE",
+            },
+          },
+          orderBy: {
+            dueDate: "asc",
+          },
+          take: 4,
+          include: {
+            client: {
+              select: {
+                company: true,
+              },
+            },
+            assignedTo: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        }),
+        prisma.promoCode.findMany({
+          where: promoCodeAccessWhere(user),
+          orderBy: {
+            usedCount: "desc",
+          },
+          take: 4,
+        }),
+      ]).catch((error) => {
+        if (!isPrismaDatabaseUnavailableError(error)) {
+          throw error;
+        }
+
+        return null;
+      });
+
   const [
     leadsCount,
     clientsCount,
@@ -28,81 +114,17 @@ export default async function DashboardPage() {
     pipeline,
     upcomingTasks,
     topPromoCodes,
-  ] = await Promise.all([
-    prisma.lead.count({ where: leadAccessWhere(user) }),
-    prisma.client.count({ where: clientAccessWhere(user) }),
-    prisma.deal.count({ where: dealAccessWhere(user) }),
-    prisma.deal.aggregate({
-      where: { ...dealAccessWhere(user), stage: "WON" },
-      _sum: { netAmount: true },
-    }),
-    prisma.promoCode.aggregate({
-      where: promoCodeAccessWhere(user),
-      _sum: {
-        usedCount: true,
-      },
-      _count: {
-        _all: true,
-      },
-    }),
-    prisma.activityLog.findMany({
-      where: activityAccessWhere(user),
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 6,
-      include: {
-        actor: {
-          select: {
-            name: true,
-            avatarColor: true,
-            companyLogoUrl: true,
-          },
-        },
-      },
-    }),
-    prisma.deal.groupBy({
-      by: ["stage"],
-      where: dealAccessWhere(user),
-      _count: {
-        _all: true,
-      },
-      orderBy: {
-        stage: "asc",
-      },
-    }),
-    prisma.task.findMany({
-      where: {
-        ...taskAccessWhere(user),
-        status: {
-          not: "DONE",
-        },
-      },
-      orderBy: {
-        dueDate: "asc",
-      },
-      take: 4,
-      include: {
-        client: {
-          select: {
-            company: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    }),
-    prisma.promoCode.findMany({
-      where: promoCodeAccessWhere(user),
-      orderBy: {
-        usedCount: "desc",
-      },
-      take: 4,
-    }),
-  ]);
+  ] = dashboardData ?? [
+    0,
+    0,
+    0,
+    { _sum: { netAmount: 0 } },
+    { _sum: { usedCount: 0 }, _count: { _all: 0 } },
+    [],
+    [],
+    [],
+    [],
+  ];
 
   const pipelineMap = new Map<string, number>(pipeline.map((item) => [item.stage, item._count._all]));
   const totalPipeline = [...pipelineMap.values()].reduce((sum, value) => sum + value, 0);
@@ -129,7 +151,12 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <ActivityFeed items={recentActivity} />
+        <ActivityFeed
+          items={recentActivity.map((item) => ({
+            ...item,
+            createdAtLabel: formatDate(item.createdAt, locale, "MMM d, yyyy • HH:mm"),
+          }))}
+        />
 
         <div className="space-y-6">
           <section className="card p-5">
