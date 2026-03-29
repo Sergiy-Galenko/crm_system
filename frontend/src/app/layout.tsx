@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { LocaleProvider } from "@/components/providers/locale-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppToaster } from "@/components/ui/toaster";
 import { getCurrentLocale } from "@/lib/locale-server";
 import "@/app/globals.css";
+
+const themeInitScript = `
+(() => {
+  try {
+    const storedTheme = window.localStorage.getItem("nexora-theme");
+    const theme = storedTheme === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
+  }
+})();
+`;
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -27,8 +42,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={`${sans.variable} ${mono.variable} antialiased`}>
-        <LocaleProvider locale={locale}>{children}</LocaleProvider>
-        <AppToaster />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <ThemeProvider>
+          <LocaleProvider locale={locale}>
+            {children}
+            <AppToaster />
+          </LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { logoutAction } from "@/actions/auth";
 import { BrandMark } from "@/components/brand-mark";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type UserSummary = {
   id: string;
@@ -195,6 +196,7 @@ export function AppShell({
           </form>
 
           <LocaleSwitcher />
+          <ThemeToggle />
 
           <DropdownMenu
             open={notificationsOpen}
