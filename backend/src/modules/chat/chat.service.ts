@@ -137,12 +137,24 @@ export class ChatService {
       throw new ForbiddenException("This conversation is not available.");
     }
 
+    if (!dto.body && !dto.mediaUrl) {
+      throw new BadRequestException("Message cannot be empty.");
+    }
+
+    if (dto.mediaUrl && !dto.mediaType) {
+      throw new BadRequestException("Choose a valid chat attachment type.");
+    }
+
+    const now = new Date();
+
     const [message] = await this.prisma.$transaction([
       this.prisma.chatMessage.create({
         data: {
           conversationId: dto.conversationId,
           senderId: currentUser.userId,
-          body: dto.body,
+          body: dto.body ?? null,
+          mediaUrl: dto.mediaUrl ?? null,
+          mediaType: dto.mediaType ?? null,
         },
       }),
       this.prisma.chatConversation.update({
@@ -150,11 +162,42 @@ export class ChatService {
           id: dto.conversationId,
         },
         data: {
-          lastMessageAt: new Date(),
+          lastMessageAt: now,
         },
       }),
+      this.prisma.$executeRaw`
+        UPDATE "ChatParticipant"
+        SET "lastReadAt" = ${now}
+        WHERE "conversationId" = ${dto.conversationId}
+          AND "userId" = ${currentUser.userId}
+      `,
     ]);
 
     return message;
+  }
+
+  async markConversationRead(currentUser: RequestUser, conversationId: string) {
+    const participant = await this.prisma.chatParticipant.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: currentUser.userId,
+        },
+      },
+      select: {
+        conversationId: true,
+      },
+    });
+
+    if (!participant) {
+      throw new ForbiddenException("This conversation is not available.");
+    }
+
+    await this.prisma.$executeRaw`
+      UPDATE "ChatParticipant"
+      SET "lastReadAt" = ${new Date()}
+      WHERE "conversationId" = ${conversationId}
+        AND "userId" = ${currentUser.userId}
+    `;
   }
 }

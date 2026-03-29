@@ -60,8 +60,20 @@ export async function sendMessageAction(prevState: ActionResult, formData: FormD
     const response = actionErrorFromException(error, t, {
       conversationId: ["conversation"],
       body: ["message"],
+      mediaUrl: ["attachment", "image", "video"],
+      mediaType: ["attachment", "image", "video"],
     });
 
     return actionError(response.message, response.fields);
   }
+}
+
+export async function markConversationReadAction(conversationId: string) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.markConversationRead(toRequestUser(user), conversationId);
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/chat");
 }

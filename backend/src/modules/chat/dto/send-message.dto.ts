@@ -1,15 +1,30 @@
 import { Transform } from "class-transformer";
-import { IsString, MaxLength, MinLength } from "class-validator";
-import { toTrimmedString } from "@backend/common/validation/transforms";
+import { ChatMessageMediaType } from "@prisma/client";
+import { IsEnum, IsOptional, IsString, Matches, MaxLength } from "class-validator";
+import { toOptionalString, toTrimmedString } from "@backend/common/validation/transforms";
 
 export class SendMessageDto {
   @Transform(({ value }) => toTrimmedString(value))
   @IsString()
   conversationId!: string;
 
-  @Transform(({ value }) => toTrimmedString(value))
+  @Transform(({ value }) => toOptionalString(value))
+  @IsOptional()
   @IsString()
-  @MinLength(1, { message: "Message cannot be empty." })
   @MaxLength(2000, { message: "Messages must be 2000 characters or fewer." })
-  body!: string;
+  body?: string;
+
+  @Transform(({ value }) => toOptionalString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(16_000_000, { message: "Chat attachments must be 12 MB or smaller." })
+  @Matches(/^data:(image|video)\/[a-zA-Z0-9.+-]+;base64,/, {
+    message: "Upload a valid image or video file.",
+  })
+  mediaUrl?: string;
+
+  @Transform(({ value }) => toOptionalString(value)?.toUpperCase())
+  @IsOptional()
+  @IsEnum(ChatMessageMediaType, { message: "Choose a valid chat attachment type." })
+  mediaType?: ChatMessageMediaType;
 }

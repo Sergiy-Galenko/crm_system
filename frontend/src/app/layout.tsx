@@ -17,8 +17,8 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vercel CRM Suite",
-  description: "Modern full-stack CRM for clients, leads, deals, promo codes, and admin workflows.",
+  title: "Nexora CRM",
+  description: "Nexora CRM is a modern full-stack workspace for clients, leads, deals, promo codes, and admin workflows.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

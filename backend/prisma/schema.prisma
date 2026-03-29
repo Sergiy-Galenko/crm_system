@@ -67,6 +67,11 @@ enum ChatConversationType {
   GROUP
 }
 
+enum ChatMessageMediaType {
+  IMAGE
+  VIDEO
+}
+
 enum DiscountType {
   PERCENT
   FIXED
@@ -285,24 +290,29 @@ model ChatParticipant {
   conversationId String
   userId         String
   joinedAt       DateTime         @default(now())
+  lastReadAt     DateTime         @default(now())
   conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User             @relation("ChatParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([conversationId, userId])
   @@index([userId])
+  @@index([lastReadAt])
 }
 
 model ChatMessage {
   id             String           @id @default(cuid())
   conversationId String
   senderId       String
-  body           String
+  body           String?
+  mediaUrl       String?
+  mediaType      ChatMessageMediaType?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User             @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([senderId])
+  @@index([mediaType])
   @@index([conversationId, createdAt])
 }
 

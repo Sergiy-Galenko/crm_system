@@ -108,10 +108,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
               },
               select: {
                 senderId: true,
+                createdAt: true,
               },
             },
           },
         }),
+        prisma.$queryRaw<Array<{ conversationId: string; lastReadAt: Date }>>`
+          SELECT "conversationId", "lastReadAt"
+          FROM "ChatParticipant"
+          WHERE "userId" = ${user.id}
+        `,
       ]).catch((error) => {
         if (!isPrismaDatabaseUnavailableError(error)) {
           throw error;
@@ -121,8 +127,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         return null;
       });
 
-  const [upcomingTasks, expiringPromoCodes, myUpcomingMeetings, teamJoinNotifications, recentChatThreads] =
-    layoutData ?? [[], [], [], [], []];
+  const [upcomingTasks, expiringPromoCodes, myUpcomingMeetings, teamJoinNotifications, recentChatThreads, chatReadStates] =
+    layoutData ?? [[], [], [], [], [], []];
+  const chatReadStateByConversationId = new Map(chatReadStates.map((item) => [item.conversationId, item.lastReadAt]));
 
   const notifications = [
     ...teamJoinNotifications.map((activity) => ({
@@ -164,7 +171,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
       meta: item.meta,
       createdAtLabel: item.createdAtLabel,
     }));
-  const chatIndicatorCount = recentChatThreads.filter((conversation) => conversation.messages[0]?.senderId !== user.id).length;
+  const chatIndicatorCount = recentChatThreads.filter((conversation) => {
+    const lastMessage = conversation.messages[0];
+    const lastReadAt = chatReadStateByConversationId.get(conversation.id);
+
+    if (!lastMessage || !lastReadAt) {
+      return false;
+    }
+
+    return lastMessage.senderId !== user.id && lastMessage.createdAt > lastReadAt;
+  }).length;
 
   return (
     <AppShell
