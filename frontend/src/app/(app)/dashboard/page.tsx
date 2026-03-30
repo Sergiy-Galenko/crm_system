@@ -213,7 +213,7 @@ export default async function DashboardPage() {
                       <StatusBadge value={task.status} />
                     </div>
                     <p className="mt-2 text-sm text-slate-500">
-                      {task.client?.company ?? t("General task")} • {t("Assigned to {name}", { name: task.assignedTo.name })}
+                      {task.client?.company ?? t("General task")} • {t("Assigned to {name}", { name: task.assignedTo?.name ?? t("Unassigned") })}
                     </p>
                     <p className="mt-3 text-xs uppercase tracking-[0.14em] text-slate-400">
                       {t("Due {time}", { time: fromNow(task.dueDate, locale) })}

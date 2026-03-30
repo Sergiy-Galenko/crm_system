@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { PanelRightClose, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { markConversationReadAction } from "@/actions/chat";
+import { ChatBackgroundLayer } from "@/components/chat/chat-background-layer";
 import { ChatConversationDialog } from "@/components/forms/chat-conversation-dialog";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -13,26 +14,34 @@ import { ChatHeader } from "./chat-header";
 import { ChatSidebar } from "./chat-sidebar";
 import { MessageGroup } from "./message-group";
 import { MessageInput } from "./message-input";
-import type { ActiveConversation, ChatConversationListItem, ChatUser } from "./chat-types";
+import type { ActiveConversation, ChatBackgroundPreference, ChatConversationListItem, ChatMessageItem, ChatUser } from "./chat-types";
 import { UserProfilePanel } from "./user-profile-panel";
 
 function ActiveConversationPanel({
   conversation,
+  backgroundPreference,
   isProfileOpen,
   onOpenSidebar,
   onToggleProfile,
+  onBackgroundChange,
 }: {
   conversation: ActiveConversation;
+  backgroundPreference: ChatBackgroundPreference;
   isProfileOpen: boolean;
   onOpenSidebar: () => void;
   onToggleProfile: () => void;
+  onBackgroundChange: (value: ChatBackgroundPreference) => void;
 }) {
   const { t } = useLocale();
   const [messageSearchOpen, setMessageSearchOpen] = useState(false);
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
+  const [replyToMessage, setReplyToMessage] = useState<ChatMessageItem | null>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessageItem | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const deferredMessageSearchQuery = useDeferredValue(messageSearchQuery);
   const messageViewportRef = useRef<HTMLDivElement>(null);
   const lastSyncedConversationIdRef = useRef<string | null>(null);
+  const highlightTimeoutRef = useRef<number | null>(null);
   const router = useRouter();
   const filteredMessageGroups = useMemo(() => {
     const normalizedQuery = deferredMessageSearchQuery.trim().toLowerCase();
@@ -47,6 +56,7 @@ function ActiveConversationPanel({
         items: group.items.filter((message) =>
           [
             message.body ?? "",
+            message.replyTo?.preview ?? "",
             message.sender.name,
             message.sender.nickname ? `@${message.sender.nickname}` : "",
             message.mediaType === "IMAGE" ? t("Photo") : message.mediaType === "VIDEO" ? t("Video") : "",
@@ -72,6 +82,12 @@ function ActiveConversationPanel({
     });
   }, [conversation.hasUnread, conversation.id, router]);
 
+  useEffect(() => () => {
+    if (highlightTimeoutRef.current) {
+      window.clearTimeout(highlightTimeoutRef.current);
+    }
+  }, []);
+
   function scrollToLatestMessage() {
     const viewport = messageViewportRef.current;
 
@@ -85,9 +101,33 @@ function ActiveConversationPanel({
     });
   }
 
+  function jumpToMessage(messageId: string) {
+    const messageElement = document.getElementById(`chat-message-${messageId}`);
+
+    if (!messageElement) {
+      return;
+    }
+
+    messageElement.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    setHighlightedMessageId(messageId);
+
+    if (highlightTimeoutRef.current) {
+      window.clearTimeout(highlightTimeoutRef.current);
+    }
+
+    highlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightedMessageId((current) => (current === messageId ? null : current));
+    }, 1800);
+  }
+
   return (
     <div className="grid h-full min-h-[calc(100vh-11.5rem)] min-w-0 2xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <section className="relative flex min-h-0 min-w-0 flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(248,250,252,0.96))]">
+      <section className="relative flex min-h-0 min-w-0 flex-col">
+        <ChatBackgroundLayer preference={backgroundPreference} />
         <ChatHeader
           conversation={conversation}
           onOpenSidebar={onOpenSidebar}
@@ -104,11 +144,25 @@ function ActiveConversationPanel({
           searchResultCount={searchResultCount}
         />
 
-        <div ref={messageViewportRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
+        <div ref={messageViewportRef} className="relative min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
           {filteredMessageGroups.length ? (
             <div className="mx-auto flex max-w-4xl flex-col gap-6">
               {filteredMessageGroups.map((group) => (
-                <MessageGroup key={group.label} group={group} conversation={conversation} />
+                <MessageGroup
+                  key={group.label}
+                  group={group}
+                  conversation={conversation}
+                  highlightedMessageId={highlightedMessageId}
+                  onEditMessage={(message) => {
+                    setEditingMessage(message);
+                    setReplyToMessage(null);
+                  }}
+                  onJumpToMessage={jumpToMessage}
+                  onReplyToMessage={(message) => {
+                    setReplyToMessage(message);
+                    setEditingMessage(null);
+                  }}
+                />
               ))}
             </div>
           ) : messageSearchQuery.trim() ? (
@@ -124,7 +178,7 @@ function ActiveConversationPanel({
             <div className="flex h-full items-center justify-center py-12">
               <EmptyState
                 title={t("No messages yet")}
-                description={t("Send the first message to start this thread.")}
+                description={t("Send the first message, paste a link, or drop a file to start this thread with a cleaner workspace feel.")}
               />
             </div>
           )}
@@ -132,13 +186,25 @@ function ActiveConversationPanel({
 
         <div className="sticky bottom-0 z-10 border-t border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl">
-            <MessageInput conversationId={conversation.id} />
+            <MessageInput
+              key={editingMessage ? `${conversation.id}:edit:${editingMessage.id}` : `${conversation.id}:compose`}
+              conversationId={conversation.id}
+              editingMessage={editingMessage}
+              replyToMessage={replyToMessage}
+              onCancelEdit={() => setEditingMessage(null)}
+              onCancelReply={() => setReplyToMessage(null)}
+              onJumpToMessage={jumpToMessage}
+              onSubmitted={() => {
+                setReplyToMessage(null);
+                setEditingMessage(null);
+              }}
+            />
           </div>
         </div>
       </section>
 
       <div className="hidden min-h-0 border-l border-slate-200/80 bg-white/72 2xl:block">
-        <UserProfilePanel conversation={conversation} />
+        <UserProfilePanel conversation={conversation} backgroundPreference={backgroundPreference} onBackgroundChange={onBackgroundChange} />
       </div>
 
       <div
@@ -149,6 +215,8 @@ function ActiveConversationPanel({
       >
         <UserProfilePanel
           conversation={conversation}
+          backgroundPreference={backgroundPreference}
+          onBackgroundChange={onBackgroundChange}
           onClose={onToggleProfile}
           showMobileClose
         />
@@ -161,22 +229,29 @@ export function ChatWorkspace({
   conversations,
   activeConversation,
   teammates,
+  backgroundPreference,
 }: {
   conversations: ChatConversationListItem[];
   activeConversation: ActiveConversation | null;
   teammates: ChatUser[];
+  backgroundPreference: ChatBackgroundPreference;
 }) {
   const { t } = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [previewBackground, setPreviewBackground] = useState(backgroundPreference);
+
+  useEffect(() => {
+    setPreviewBackground(backgroundPreference);
+  }, [backgroundPreference]);
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.98))] shadow-[0_30px_90px_rgba(15,23,42,0.1)]">
+    <section className="relative overflow-hidden rounded-[2rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,var(--ui-surface-solid),var(--ui-surface-muted))] shadow-[var(--ui-shadow-strong)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(148,163,184,0.1),transparent_28%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.08),transparent_26%)]" />
 
       <div className="relative grid min-h-[calc(100vh-11.5rem)] xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <div className="hidden min-h-0 border-r border-slate-200/80 xl:block">
+        <div className="hidden min-h-0 border-r border-[var(--ui-border)] xl:block">
           <ChatSidebar
             chats={conversations}
             activeConversationId={activeConversation?.id}
@@ -191,7 +266,7 @@ export function ChatWorkspace({
 
         <div
           className={cn(
-            "absolute inset-y-0 left-0 z-30 w-[min(23rem,calc(100vw-1rem))] border-r border-slate-200/80 bg-white/95 shadow-[0_20px_80px_rgba(15,23,42,0.18)] backdrop-blur transition-transform duration-300 xl:hidden",
+            "absolute inset-y-0 left-0 z-30 w-[min(23rem,calc(100vw-1rem))] border-r border-[var(--ui-border)] bg-[var(--ui-surface-solid)] shadow-[var(--ui-shadow-strong)] backdrop-blur transition-transform duration-300 xl:hidden",
             isSidebarOpen ? "translate-x-0" : "-translate-x-[105%]",
           )}
         >
@@ -213,7 +288,7 @@ export function ChatWorkspace({
           <button
             type="button"
             aria-label={t("Close sidebar")}
-            className="absolute inset-0 z-20 bg-slate-950/35 xl:hidden"
+            className="absolute inset-0 z-20 bg-[var(--ui-overlay)] xl:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         ) : null}
@@ -224,23 +299,26 @@ export function ChatWorkspace({
               <ActiveConversationPanel
                 key={activeConversation.id}
                 conversation={activeConversation}
+                backgroundPreference={previewBackground}
                 isProfileOpen={isProfileOpen}
                 onOpenSidebar={() => setIsSidebarOpen(true)}
                 onToggleProfile={() => setIsProfileOpen((current) => !current)}
+                onBackgroundChange={setPreviewBackground}
               />
               {isProfileOpen ? (
                 <button
                   type="button"
                   aria-label={t("Close details")}
-                  className="absolute inset-0 z-20 bg-slate-950/30 2xl:hidden"
+                  className="absolute inset-0 z-20 bg-[var(--ui-overlay)] 2xl:hidden"
                   onClick={() => setIsProfileOpen(false)}
                 />
               ) : null}
             </div>
           ) : (
-            <div className="flex min-h-[calc(100vh-11.5rem)] items-center justify-center px-6 py-10">
-              <div className="w-full max-w-2xl rounded-[2rem] border border-slate-200 bg-white/88 p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-[1.5rem] bg-slate-950 text-white shadow-[0_18px_40px_rgba(15,23,42,0.22)]">
+            <div className="relative flex min-h-[calc(100vh-11.5rem)] items-center justify-center overflow-hidden px-6 py-10">
+              <ChatBackgroundLayer preference={previewBackground} />
+              <div className="relative w-full max-w-2xl rounded-[2rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-8 text-center shadow-[var(--ui-shadow-soft)] backdrop-blur">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-[1.5rem] bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]">
                   <Sparkles className="h-7 w-7" />
                 </div>
                 <h2 className="mt-6 text-2xl font-semibold tracking-tight text-slate-950">
@@ -250,7 +328,7 @@ export function ChatWorkspace({
                   {conversations.length
                     ? t("Choose a chat from the list or create a new one to start messaging your team.")
                     : teammates.length
-                      ? t("Start a direct chat or create a group to keep decisions and follow-ups in one place.")
+                      ? t("Start a direct chat or create a group, then keep drafts, replies, files, and link sharing in one premium thread.")
                       : t("No teammates available for chat yet.")}
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

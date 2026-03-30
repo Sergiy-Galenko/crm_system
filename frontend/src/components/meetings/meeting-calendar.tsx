@@ -18,6 +18,13 @@ const localeMap = {
   uk: ukLocale,
 } as const;
 
+const statusToneMap: Record<string, string> = {
+  SCHEDULED: "border-sky-200 bg-sky-50 text-sky-700",
+  COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  CANCELED: "border-rose-200 bg-rose-50 text-rose-700",
+  NO_SHOW: "border-amber-200 bg-amber-50 text-amber-700",
+};
+
 export function MeetingCalendar({
   month,
   locale,
@@ -39,13 +46,18 @@ export function MeetingCalendar({
   );
 
   return (
-    <div className="card p-5">
-      <div>
-        <h3 className="text-base font-semibold text-slate-950">{t("Meetings calendar")}</h3>
-        <p className="mt-1 text-sm text-slate-500">{t("Review scheduled calls, demos, and account meetings across the month.")}</p>
+    <section className="card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-950">{t("Calendar overview")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("A compact month view for spotting busy days and open space.")}</p>
+        </div>
+        <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+          {t("{count} meetings", { count: meetings.length })}
+        </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-7 gap-2 text-center text-[11px] font-medium tracking-[0.08em] text-slate-400">
+      <div className="mt-5 grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
         {weekDays.map((day) => (
           <div key={day} className="py-2">
             {day}
@@ -55,43 +67,50 @@ export function MeetingCalendar({
 
       <div className="mt-2 grid grid-cols-7 gap-2">
         {days.map((day) => {
+          const dayKey = format(day, "yyyy-MM-dd");
           const dayMeetings = meetings.filter(
-            (meeting) => format(meeting.startsAt, "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
+            (meeting) => format(meeting.startsAt, "yyyy-MM-dd") === dayKey,
           );
 
           return (
             <div
               key={day.toISOString()}
               className={cn(
-                "min-h-32 rounded-2xl border p-3",
-                isSameMonth(day, month) ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50/80",
-                isToday(day) ? "border-slate-950" : "",
+                "min-h-28 rounded-[1.35rem] border p-3",
+                isSameMonth(day, month) ? "border-slate-200 bg-[var(--ui-surface-solid)]" : "border-slate-200 bg-slate-50/75 opacity-70",
+                isToday(day) ? "border-[var(--ui-border-strong)] shadow-[var(--ui-shadow-xs)]" : "",
               )}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span
                   className={cn(
                     "text-sm font-semibold",
                     isSameMonth(day, month) ? "text-slate-900" : "text-slate-400",
-                    isToday(day) ? "rounded-full bg-slate-950 px-2 py-1 text-white" : "",
+                    isToday(day) ? "rounded-full bg-[var(--ui-brand)] px-2 py-1 text-[var(--ui-brand-foreground)]" : "",
                   )}
                 >
                   {format(day, "d")}
                 </span>
                 {dayMeetings.length ? <span className="text-[11px] text-slate-400">{dayMeetings.length}</span> : null}
               </div>
+
               <div className="mt-3 space-y-2">
-                {dayMeetings.slice(0, 3).map((meeting) => (
-                  <div key={meeting.id} className="rounded-xl border border-slate-200 px-2.5 py-2">
-                    <p className="truncate text-[11px] font-semibold text-slate-900">{meeting.title}</p>
-                    <p className="mt-1 truncate text-[11px] text-slate-500">
-                      {format(meeting.startsAt, "HH:mm")} • {meeting.client.company}
-                    </p>
+                {dayMeetings.slice(0, 2).map((meeting) => (
+                  <div
+                    key={meeting.id}
+                    className={cn(
+                      "rounded-xl border px-2.5 py-2",
+                      statusToneMap[meeting.status] ?? "border-slate-200 bg-slate-50 text-slate-700",
+                    )}
+                  >
+                    <p className="truncate text-[11px] font-semibold">{format(meeting.startsAt, "HH:mm")} • {meeting.title}</p>
+                    <p className="mt-1 truncate text-[11px] opacity-80">{meeting.client.company}</p>
                   </div>
                 ))}
-                {dayMeetings.length > 3 ? (
+
+                {dayMeetings.length > 2 ? (
                   <p className="text-[11px] text-slate-400">
-                    {t("+{count} more", { count: dayMeetings.length - 3 })}
+                    {t("+{count} more", { count: dayMeetings.length - 2 })}
                   </p>
                 ) : null}
               </div>
@@ -99,6 +118,6 @@ export function MeetingCalendar({
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

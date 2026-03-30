@@ -20,7 +20,14 @@ function applyTheme(theme: Theme) {
 
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
-  document.body.dataset.theme = theme;
+}
+
+function getDocumentTheme(): Theme {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
 function getStoredTheme(): Theme {
@@ -37,13 +44,7 @@ function getStoredTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    if (typeof document !== "undefined") {
-      return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-    }
-
-    return "light";
-  });
+  const [theme, setThemeState] = React.useState<Theme>("light");
 
   const setTheme = React.useCallback((nextTheme: Theme) => {
     setThemeState(nextTheme);
@@ -61,9 +62,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [setTheme, theme]);
 
   React.useEffect(() => {
-    const initialTheme = getStoredTheme();
+    const initialTheme = typeof window === "undefined" ? "light" : getDocumentTheme() ?? getStoredTheme();
     setThemeState(initialTheme);
     applyTheme(initialTheme);
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== themeStorageKey) {
+        return;
+      }
+
+      const nextTheme = event.newValue === "dark" ? "dark" : "light";
+      setThemeState(nextTheme);
+      applyTheme(nextTheme);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const value = React.useMemo(

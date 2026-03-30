@@ -1,12 +1,22 @@
+"use client";
+
 import { MessageBubble } from "@/components/chat/message-bubble";
-import type { ActiveConversation, ChatMessageGroup } from "./chat-types";
+import type { ActiveConversation, ChatMessageGroup, ChatMessageItem } from "./chat-types";
 
 export function MessageGroup({
   group,
   conversation,
+  highlightedMessageId,
+  onEditMessage,
+  onJumpToMessage,
+  onReplyToMessage,
 }: {
   group: ChatMessageGroup;
   conversation: ActiveConversation;
+  highlightedMessageId?: string | null;
+  onEditMessage: (message: ChatMessageItem) => void;
+  onJumpToMessage: (messageId: string) => void;
+  onReplyToMessage: (message: ChatMessageItem) => void;
 }) {
   return (
     <section className="space-y-4">
@@ -21,6 +31,10 @@ export function MessageGroup({
           <MessageBubble
             key={message.id}
             message={message}
+            highlighted={highlightedMessageId === message.id}
+            onEditMessage={onEditMessage}
+            onJumpToMessage={onJumpToMessage}
+            onReplyToMessage={onReplyToMessage}
             showSenderName={conversation.type === "GROUP" && !message.isCurrentUser}
           />
         ))}

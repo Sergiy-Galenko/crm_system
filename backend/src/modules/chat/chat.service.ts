@@ -1,13 +1,35 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
+import { ChatMessageStatus } from "@prisma/client";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
 import { PrismaService } from "@backend/common/database/prisma.service";
 import { chatUsersWhere } from "@backend/common/scope/crm-scope";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
 import { SendMessageDto } from "./dto/send-message.dto";
+import { UpdateMessageDto } from "./dto/update-message.dto";
 
 @Injectable()
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async ensureParticipant(currentUser: RequestUser, conversationId: string) {
+    const participant = await this.prisma.chatParticipant.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: currentUser.userId,
+        },
+      },
+      select: {
+        conversationId: true,
+      },
+    });
+
+    if (!participant) {
+      throw new ForbiddenException("This conversation is not available.");
+    }
+
+    return participant;
+  }
 
   async createConversation(currentUser: RequestUser, dto: CreateConversationDto) {
     const currentUserRecord = await this.prisma.user.findUnique({
@@ -121,21 +143,7 @@ export class ChatService {
   }
 
   async sendMessage(currentUser: RequestUser, dto: SendMessageDto) {
-    const participant = await this.prisma.chatParticipant.findUnique({
-      where: {
-        conversationId_userId: {
-          conversationId: dto.conversationId,
-          userId: currentUser.userId,
-        },
-      },
-      select: {
-        conversationId: true,
-      },
-    });
-
-    if (!participant) {
-      throw new ForbiddenException("This conversation is not available.");
-    }
+    const participant = await this.ensureParticipant(currentUser, dto.conversationId);
 
     if (!dto.body && !dto.mediaUrl) {
       throw new BadRequestException("Message cannot be empty.");
@@ -143,6 +151,22 @@ export class ChatService {
 
     if (dto.mediaUrl && !dto.mediaType) {
       throw new BadRequestException("Choose a valid chat attachment type.");
+    }
+
+    if (dto.replyToMessageId) {
+      const replyTarget = await this.prisma.chatMessage.findFirst({
+        where: {
+          id: dto.replyToMessageId,
+          conversationId: dto.conversationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!replyTarget) {
+        throw new BadRequestException("Choose a message from this conversation.");
+      }
     }
 
     const now = new Date();
@@ -155,6 +179,8 @@ export class ChatService {
           body: dto.body ?? null,
           mediaUrl: dto.mediaUrl ?? null,
           mediaType: dto.mediaType ?? null,
+          replyToMessageId: dto.replyToMessageId ?? null,
+          status: ChatMessageStatus.SENT,
         },
       }),
       this.prisma.chatConversation.update({
@@ -176,28 +202,72 @@ export class ChatService {
     return message;
   }
 
-  async markConversationRead(currentUser: RequestUser, conversationId: string) {
-    const participant = await this.prisma.chatParticipant.findUnique({
+  async updateMessage(currentUser: RequestUser, messageId: string, dto: UpdateMessageDto) {
+    const message = await this.prisma.chatMessage.findFirst({
       where: {
-        conversationId_userId: {
-          conversationId,
-          userId: currentUser.userId,
+        id: messageId,
+        conversation: {
+          participants: {
+            some: {
+              userId: currentUser.userId,
+            },
+          },
         },
       },
       select: {
+        id: true,
+        senderId: true,
         conversationId: true,
       },
     });
 
-    if (!participant) {
+    if (!message) {
       throw new ForbiddenException("This conversation is not available.");
     }
 
-    await this.prisma.$executeRaw`
-      UPDATE "ChatParticipant"
-      SET "lastReadAt" = ${new Date()}
-      WHERE "conversationId" = ${conversationId}
-        AND "userId" = ${currentUser.userId}
-    `;
+    if (message.senderId !== currentUser.userId) {
+      throw new ForbiddenException("You can only edit your own messages.");
+    }
+
+    return this.prisma.chatMessage.update({
+      where: {
+        id: messageId,
+      },
+      data: {
+        body: dto.body,
+        editedAt: new Date(),
+      },
+      select: {
+        id: true,
+        conversationId: true,
+      },
+    });
+  }
+
+  async markConversationRead(currentUser: RequestUser, conversationId: string) {
+    await this.ensureParticipant(currentUser, conversationId);
+
+    await this.prisma.$transaction([
+      this.prisma.$executeRaw`
+        UPDATE "ChatParticipant"
+        SET "lastReadAt" = ${new Date()}
+        WHERE "conversationId" = ${conversationId}
+          AND "userId" = ${currentUser.userId}
+      `,
+      this.prisma.chatMessage.updateMany({
+        where: {
+          conversationId,
+          senderId: {
+            not: currentUser.userId,
+          },
+          status: {
+            not: ChatMessageStatus.READ,
+          },
+        },
+        data: {
+          status: ChatMessageStatus.READ,
+        },
+      }),
+    ]);
   }
 }

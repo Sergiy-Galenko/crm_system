@@ -15,12 +15,12 @@ export function MetricCard({
     <div
       className={cn(
         "card p-5",
-        tone === "brand" && "border-slate-950 bg-slate-950 text-white",
+        tone === "brand" && "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]",
       )}
     >
-      <p className={cn("text-sm font-medium text-slate-500", tone === "brand" && "text-white/60")}>{label}</p>
-      <p className={cn("mt-4 metric-value", tone === "brand" && "text-white")}>{value}</p>
-      <p className={cn("mt-2 text-sm", tone === "brand" ? "text-white/65" : "text-slate-500")}>{meta}</p>
+      <p className={cn("text-sm font-medium text-slate-500", tone === "brand" && "text-[var(--ui-brand-foreground)] opacity-70")}>{label}</p>
+      <p className={cn("mt-4 metric-value", tone === "brand" && "text-[var(--ui-brand-foreground)]")}>{value}</p>
+      <p className={cn("mt-2 text-sm", tone === "brand" ? "text-[var(--ui-brand-foreground)] opacity-75" : "text-slate-500")}>{meta}</p>
     </div>
   );
 }

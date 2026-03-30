@@ -41,7 +41,7 @@ export function ChatHeader({
   const { t } = useLocale();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/85 px-5 py-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-10 border-b border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-5 py-4 backdrop-blur sm:px-6">
       <div className="flex items-center gap-3">
         <Button type="button" variant="ghost" size="icon" className="xl:hidden" onClick={onOpenSidebar} aria-label={t("All chats")}>
           <Menu className="h-4 w-4" />
@@ -59,7 +59,7 @@ export function ChatHeader({
             type="button"
             variant="secondary"
             size="icon"
-            className={searchOpen ? "rounded-2xl border-slate-950 bg-slate-950 text-white shadow-sm hover:bg-slate-800" : "rounded-2xl shadow-sm"}
+            className={searchOpen ? "rounded-2xl border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-brand-hover)]" : "rounded-2xl shadow-[var(--ui-shadow-xs)]"}
             onClick={onToggleSearch}
             aria-label={searchOpen ? t("Close search") : t("Search messages")}
           >
@@ -69,7 +69,7 @@ export function ChatHeader({
             type="button"
             variant="secondary"
             size="icon"
-            className={profileOpen ? "rounded-2xl border-slate-950 bg-slate-950 text-white shadow-sm hover:bg-slate-800" : "rounded-2xl shadow-sm"}
+            className={profileOpen ? "rounded-2xl border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-brand-hover)]" : "rounded-2xl shadow-[var(--ui-shadow-xs)]"}
             onClick={onToggleProfile}
             aria-label={profileOpen ? t("Close details") : t("Open details")}
           >
@@ -98,22 +98,22 @@ export function ChatHeader({
       </div>
 
       {searchOpen ? (
-        <div className="mt-4 flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-3 shadow-sm sm:flex-row sm:items-center">
+        <div className="mt-4 flex flex-col gap-3 rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-muted)] p-3 shadow-[var(--ui-shadow-xs)] sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ui-text-soft)]" />
             <Input
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder={t("Type to filter this conversation")}
               autoFocus
-              className="rounded-2xl border-slate-200 bg-white pl-10 pr-10 shadow-none"
+              className="rounded-2xl border-[var(--ui-border)] bg-[var(--ui-surface-solid)] pl-10 pr-10 shadow-none"
             />
             {searchQuery ? (
               <button
                 type="button"
                 onClick={onClearSearch}
                 aria-label={t("Clear search")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--ui-text-soft)] transition hover:bg-[var(--ui-surface-muted)] hover:text-[var(--ui-text)]"
               >
                 <X className="h-4 w-4" />
               </button>

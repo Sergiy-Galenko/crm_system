@@ -139,4 +139,36 @@ export class MeetingsService {
 
     return meeting;
   }
+
+  async deleteMeeting(user: RequestUser, meetingId: string) {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        id: meetingId,
+        ...meetingAccessWhere(user),
+      },
+      select: {
+        id: true,
+        title: true,
+        clientId: true,
+      },
+    });
+
+    if (!meeting) {
+      throw new ForbiddenException("You can only delete meetings in your workspace.");
+    }
+
+    await this.prisma.meeting.delete({
+      where: { id: meetingId },
+    });
+
+    await this.activityLogService.log(this.prisma, {
+      actorId: user.userId,
+      entity: ActivityEntity.MEETING,
+      action: ActivityAction.UPDATED,
+      entityId: meeting.id,
+      description: `Deleted meeting ${meeting.title}.`,
+    });
+
+    return meeting;
+  }
 }

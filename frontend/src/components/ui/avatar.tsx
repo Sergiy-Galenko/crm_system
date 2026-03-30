@@ -25,7 +25,7 @@ export function UserAvatar({
         <AvatarImage
           src={imageUrl}
           alt={name}
-          className="h-full w-full bg-white object-contain p-2"
+          className="h-full w-full bg-[var(--ui-surface-muted)] object-contain p-2"
           referrerPolicy="no-referrer"
         />
       ) : null}

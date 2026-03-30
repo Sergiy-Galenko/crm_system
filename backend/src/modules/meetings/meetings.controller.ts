@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { MeetingStatus } from "@prisma/client";
 import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
@@ -36,6 +36,14 @@ export class MeetingsController {
     return {
       success: true,
       data: await this.meetingsService.updateMeetingStatus(user, id, status),
+    };
+  }
+
+  @Delete(":id")
+  async deleteMeeting(@CurrentUser() user: RequestUser, @Param("id") id: string) {
+    return {
+      success: true,
+      data: await this.meetingsService.deleteMeeting(user, id),
     };
   }
 }

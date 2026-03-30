@@ -14,7 +14,7 @@ export function AppToaster() {
       closeButton
       toastOptions={{
         classNames: {
-          toast: "!rounded-3xl !border !border-white/80 !bg-white/95 !text-slate-900 !shadow-[0_20px_70px_rgba(15,23,40,0.14)]",
+          toast: "!rounded-3xl !border !border-[var(--ui-border)] !bg-[var(--ui-surface-solid)] !text-[var(--ui-text-strong)] !shadow-[var(--ui-shadow-strong)]",
         },
       }}
     />

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { CheckCheck } from "lucide-react";
-import { markTaskDoneAction } from "@/actions/deals";
 import { updateMeetingStatusAction } from "@/actions/meetings";
+import { markTaskDoneAction } from "@/actions/tasks";
 import { NoteForm } from "@/components/forms/note-form";
 import { TaskDialog } from "@/components/forms/task-dialog";
 import { DealDialog } from "@/components/forms/deal-dialog";
@@ -98,6 +98,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       select: {
         id: true,
         name: true,
+        email: true,
       },
       orderBy: {
         name: "asc",
@@ -338,7 +339,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                 <h3 className="text-lg font-semibold text-slate-950">{t("Follow-ups")}</h3>
                 <p className="mt-1 text-sm text-slate-500">{t("Tasks keeping the account moving forward.")}</p>
               </div>
-              <TaskDialog users={users} defaults={{ clientId: client.id }} />
+              <TaskDialog users={users} defaults={{ clientId: client.id, assignedToId: client.ownerId }} />
             </div>
             <div className="mt-6 space-y-3">
               {client.tasks.length ? (
@@ -348,7 +349,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                       <div>
                         <p className="font-medium text-slate-950">{task.title}</p>
                         <p className="mt-1 text-sm text-slate-500">
-                          {task.assignedTo.name} • {t("due")} {formatDate(task.dueDate, locale)}
+                          {task.assignedTo?.name ?? t("Unassigned")} • {t("due")} {formatDate(task.dueDate, locale)}
                         </p>
                       </div>
                       <StatusBadge value={task.status} />

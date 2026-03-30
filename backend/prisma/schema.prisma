@@ -72,6 +72,19 @@ enum ChatMessageMediaType {
   VIDEO
 }
 
+enum ChatMessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum ChatBackgroundType {
+  ABSTRACT
+  SOLID
+  GRADIENT
+  IMAGE
+}
+
 enum DiscountType {
   PERCENT
   FIXED
@@ -114,6 +127,9 @@ model User {
   bio               String?
   avatarColor       String           @default("#2154FF")
   companyLogoUrl    String?
+  chatBackgroundType ChatBackgroundType @default(ABSTRACT)
+  chatBackgroundColor String?
+  chatBackgroundImageUrl String?
   createdById       String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -228,20 +244,27 @@ model Task {
   description  String?
   status       TaskStatus   @default(TODO)
   priority     TaskPriority @default(MEDIUM)
+  tags         String[]     @default([])
   dueDate      DateTime
   completedAt  DateTime?
-  assignedToId String
+  assignedToId String?
   createdById  String
   clientId     String?
   leadId       String?
   dealId       String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
-  assignedTo   User         @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdBy    User         @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
   client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   deal         Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([assignedToId])
+  @@index([createdById])
 }
 
 model Meeting {
@@ -306,13 +329,20 @@ model ChatMessage {
   body           String?
   mediaUrl       String?
   mediaType      ChatMessageMediaType?
+  status         ChatMessageStatus @default(SENT)
+  editedAt       DateTime?
+  replyToMessageId String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User             @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyToMessage ChatMessage?     @relation("ChatMessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies        ChatMessage[]    @relation("ChatMessageReplies")
 
   @@index([senderId])
   @@index([mediaType])
+  @@index([status])
+  @@index([replyToMessageId])
   @@index([conversationId, createdAt])
 }
 

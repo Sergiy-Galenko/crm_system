@@ -60,3 +60,14 @@ export async function updateMeetingStatusAction(meetingId: string, status: Meeti
   revalidatePath("/dashboard/meetings");
   revalidatePath(`/dashboard/clients/${meeting.clientId}`);
 }
+
+export async function deleteMeetingAction(meetingId: string) {
+  const user = await requireUser();
+  const meetingsService = await resolveProvider(MeetingsService);
+  const meeting = await meetingsService.deleteMeeting(toRequestUser(user), meetingId);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/clients");
+  revalidatePath("/dashboard/meetings");
+  revalidatePath(`/dashboard/clients/${meeting.clientId}`);
+}

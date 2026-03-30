@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { resolveProvider } from "@backend/common/nest/app-context";
 import { validateDto } from "@backend/common/validation/validate-dto";
 import { JoinTeamDto } from "@backend/modules/users/dto/join-team.dto";
+import { UpdateChatAppearanceDto } from "@backend/modules/users/dto/update-chat-appearance.dto";
 import { UpsertUserDto } from "@backend/modules/users/dto/upsert-user.dto";
 import { UpdateSettingsDto } from "@backend/modules/users/dto/update-settings.dto";
 import { UsersService } from "@backend/modules/users/users.service";
@@ -76,6 +77,31 @@ export async function updateSettingsAction(prevState: ActionResult, formData: Fo
       bio: ["bio"],
       companyLogoUrl: ["logo"],
       avatarColor: ["color"],
+    });
+
+    return actionError(response.message, response.fields);
+  }
+}
+
+export async function updateChatAppearanceAction(prevState: ActionResult, formData: FormData) {
+  const { t } = await getServerTranslator();
+  const user = await requireUser();
+
+  try {
+    const dto = await validateDto(UpdateChatAppearanceDto, Object.fromEntries(formData.entries()));
+    const usersService = await resolveProvider(UsersService);
+    await usersService.updateChatAppearance(toRequestUser(user), dto);
+
+    revalidatePath("/dashboard", "layout");
+    revalidatePath("/dashboard/chat");
+    revalidatePath("/dashboard/settings");
+
+    return actionSuccess(t("Chat appearance updated."));
+  } catch (error) {
+    const response = actionErrorFromException(error, t, {
+      chatBackgroundType: ["background"],
+      chatBackgroundColor: ["background", "color"],
+      chatBackgroundImageUrl: ["background", "image"],
     });
 
     return actionError(response.message, response.fields);

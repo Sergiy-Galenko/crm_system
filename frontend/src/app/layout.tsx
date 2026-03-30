@@ -34,6 +34,11 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Nexora CRM",
   description: "Nexora CRM is a modern full-stack workspace for clients, leads, deals, promo codes, and admin workflows.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

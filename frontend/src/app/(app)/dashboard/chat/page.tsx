@@ -5,7 +5,7 @@ import { getParam, createPageHref, type SearchParamsRecord } from "@/lib/query-p
 import { formatDate, fromNow } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { ChatWorkspace } from "@/components/chat/chat-workspace";
-import type { ActiveConversation, ChatConversationListItem, ChatMessageItem, ChatUser } from "@/components/chat/chat-types";
+import type { ActiveConversation, ChatBackgroundPreference, ChatConversationListItem, ChatMessageItem, ChatUser } from "@/components/chat/chat-types";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { chatUsersWhere } from "@/lib/crm-scope";
@@ -63,6 +63,16 @@ const conversationDetailInclude = {
     include: {
       sender: {
         select: chatUserSelect,
+      },
+      replyToMessage: {
+        select: {
+          id: true,
+          body: true,
+          mediaType: true,
+          sender: {
+            select: chatUserSelect,
+          },
+        },
       },
     },
   },
@@ -199,6 +209,25 @@ function getMessageGroupLabel(
   return formatDate(value, locale, locale === "uk" ? "d MMMM" : "MMM d");
 }
 
+function getReplyPreview(
+  message: NonNullable<ConversationDetail["messages"][number]["replyToMessage"]>,
+  t: (key: string, values?: Record<string, string | number>) => string,
+) {
+  if (message.body) {
+    return message.body;
+  }
+
+  if (message.mediaType === "IMAGE") {
+    return t("Photo");
+  }
+
+  if (message.mediaType === "VIDEO") {
+    return t("Video");
+  }
+
+  return t("Message");
+}
+
 function mapConversationListItem(
   conversation: ConversationListItem,
   currentUserId: string,
@@ -231,6 +260,7 @@ function mapActiveConversation(
   currentUserId: string,
   locale: "en" | "uk",
   lastReadAtByConversationId: Map<string, Date>,
+  backgroundPreference: ChatBackgroundPreference,
   t: (key: string, values?: Record<string, string | number>) => string,
 ): ActiveConversation {
   const participants = conversation.participants.map((participant) => mapChatUser(participant.user));
@@ -251,6 +281,16 @@ function mapActiveConversation(
       body: message.body,
       mediaUrl: message.mediaUrl,
       mediaType: message.mediaType,
+      status: message.status,
+      isEdited: Boolean(message.editedAt),
+      replyTo: message.replyToMessage
+        ? {
+            id: message.replyToMessage.id,
+            senderName: message.replyToMessage.sender.name,
+            preview: getReplyPreview(message.replyToMessage, t),
+            mediaType: message.replyToMessage.mediaType,
+          }
+        : null,
       timeLabel: formatDate(message.createdAt, locale, "HH:mm"),
     };
 
@@ -296,6 +336,7 @@ function mapActiveConversation(
     ),
     participants: conversation.type === "DIRECT" ? avatarParticipants : participants,
     messageGroups,
+    backgroundPreference,
     sharedMedia,
     participantDirectory: participants,
   };
@@ -306,6 +347,30 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   const { locale, t } = await getServerTranslator();
   const resolvedSearchParams = await searchParams;
   const requestedConversationId = getParam(resolvedSearchParams, "conversation");
+  const backgroundPreference: ChatBackgroundPreference = {
+    type: currentUser.chatBackgroundType,
+    color: currentUser.chatBackgroundColor,
+    imageUrl: currentUser.chatBackgroundImageUrl,
+  };
+
+  await prisma.chatMessage.updateMany({
+    where: {
+      senderId: {
+        not: currentUser.id,
+      },
+      status: "SENT",
+      conversation: {
+        participants: {
+          some: {
+            userId: currentUser.id,
+          },
+        },
+      },
+    },
+    data: {
+      status: "DELIVERED",
+    },
+  });
 
   const [visibleUsers, conversations, chatReadStates] = await Promise.all([
     prisma.user.findMany({
@@ -368,9 +433,12 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       <ChatWorkspace
         conversations={conversationItems}
         activeConversation={
-          activeConversation ? mapActiveConversation(activeConversation, currentUser.id, locale, lastReadAtByConversationId, t) : null
+          activeConversation
+            ? mapActiveConversation(activeConversation, currentUser.id, locale, lastReadAtByConversationId, backgroundPreference, t)
+            : null
         }
         teammates={teammates}
+        backgroundPreference={backgroundPreference}
       />
     </div>
   );

@@ -1,19 +1,24 @@
 "use client";
 
-import { Download, ImageIcon, Settings2, Star, Users, X } from "lucide-react";
+import { ImageIcon, Users, X } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/avatar";
 import { ChatImageLightbox } from "@/components/chat/chat-image-lightbox";
+import { ChatAppearanceControls } from "@/components/chat/chat-appearance-controls";
 import type { ActiveConversation } from "./chat-types";
 
 export function UserProfilePanel({
   conversation,
+  backgroundPreference,
+  onBackgroundChange,
   onClose,
   showMobileClose = false,
 }: {
   conversation: ActiveConversation;
+  backgroundPreference: ActiveConversation["backgroundPreference"];
+  onBackgroundChange: (value: ActiveConversation["backgroundPreference"]) => void;
   onClose?: () => void;
   showMobileClose?: boolean;
 }) {
@@ -110,23 +115,7 @@ export function UserProfilePanel({
           )}
         </section>
 
-        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4">
-          <h4 className="text-sm font-semibold text-slate-900">{t("Actions")}</h4>
-          <div className="mt-4 grid gap-2">
-            <Button type="button" variant="secondary" className="justify-start rounded-2xl">
-              <Star className="h-4 w-4" />
-              {t("Favorite chat")}
-            </Button>
-            <Button type="button" variant="secondary" className="justify-start rounded-2xl">
-              <Download className="h-4 w-4" />
-              {t("Download media")}
-            </Button>
-            <Button type="button" variant="secondary" className="justify-start rounded-2xl">
-              <Settings2 className="h-4 w-4" />
-              {t("Conversation settings")}
-            </Button>
-          </div>
-        </section>
+        <ChatAppearanceControls value={backgroundPreference} onPreviewChange={onBackgroundChange} />
       </div>
     </aside>
   );

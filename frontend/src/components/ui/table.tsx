@@ -13,18 +13,18 @@ export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTabl
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b border-slate-100 last:border-none", className)} {...props} />;
+  return <tr className={cn("border-b border-[var(--ui-border)] last:border-none", className)} {...props} />;
 }
 
 export function TableHeaderCell({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={cn("px-4 pb-3 text-[12px] font-medium text-slate-500", className)}
+      className={cn("px-4 pb-3 text-[12px] font-medium text-[var(--ui-text-muted)]", className)}
       {...props}
     />
   );
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-4 py-3.5 align-top text-sm text-slate-700", className)} {...props} />;
+  return <td className={cn("px-4 py-3.5 align-top text-sm text-[var(--ui-text)]", className)} {...props} />;
 }

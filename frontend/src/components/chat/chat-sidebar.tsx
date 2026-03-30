@@ -37,8 +37,8 @@ export function ChatSidebar({
     : chats;
 
   return (
-    <aside className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.88))]">
-      <div className="border-b border-slate-200/80 px-5 py-5">
+    <aside className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,var(--ui-surface-muted),var(--ui-surface-solid))]">
+      <div className="border-b border-[var(--ui-border)] px-5 py-5">
         <div className="flex items-center justify-between gap-3">
           <BrandMark href="/dashboard/chat" />
           {showMobileClose ? (
@@ -54,7 +54,7 @@ export function ChatSidebar({
           <SearchBar value={searchQuery} onChange={onSearchChange} placeholder={t("Search chats")} />
         </div>
         <div className="mt-4">
-          <div className="[&_button]:w-full [&_button]:justify-center [&_button]:rounded-2xl [&_button]:border-slate-950 [&_button]:bg-slate-950 [&_button]:px-4 [&_button]:text-white [&_button]:shadow-[0_18px_40px_rgba(15,23,42,0.18)] [&_button]:hover:bg-slate-800 [&_svg]:h-4 [&_svg]:w-4">
+          <div className="[&_button]:w-full [&_button]:justify-center [&_button]:rounded-2xl [&_button]:border-transparent [&_button]:bg-[var(--ui-brand)] [&_button]:px-4 [&_button]:text-[var(--ui-brand-foreground)] [&_button]:shadow-[var(--ui-shadow-strong)] [&_button]:hover:bg-[var(--ui-brand-hover)] [&_svg]:h-4 [&_svg]:w-4">
             {newChatAction}
           </div>
         </div>
@@ -71,7 +71,7 @@ export function ChatSidebar({
             />
           ))
         ) : (
-          <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm leading-6 text-slate-500">
+          <div className="rounded-[1.5rem] border border-dashed border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-4 py-8 text-center text-sm leading-6 text-slate-500">
             {t("No chats match this search.")}
           </div>
         )}

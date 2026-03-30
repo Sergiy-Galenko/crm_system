@@ -20,7 +20,7 @@ export const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[14rem] rounded-xl border border-slate-200 bg-white p-1 shadow-[0_16px_40px_rgba(15,23,42,0.1)]",
+        "z-50 min-w-[14rem] rounded-xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-1 shadow-[var(--ui-shadow-strong)] backdrop-blur-xl",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ export const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none transition hover:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--ui-text)] outline-none transition hover:bg-[var(--ui-surface-muted)] focus:bg-[var(--ui-surface-muted)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className,
     )}
@@ -50,11 +50,11 @@ export const DropdownMenuItem = React.forwardRef<
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
 export function DropdownMenuLabel({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-3 py-2 text-xs font-medium text-slate-500", className)} {...props} />;
+  return <div className={cn("px-3 py-2 text-xs font-medium text-[var(--ui-text-muted)]", className)} {...props} />;
 }
 
 export function DropdownMenuSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("my-1 h-px bg-slate-100", className)} {...props} />;
+  return <div className={cn("my-1 h-px bg-[var(--ui-border)]", className)} {...props} />;
 }
 
 export const DropdownMenuCheckboxItem = React.forwardRef<
@@ -63,7 +63,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
 >(({ className, children, checked, ...props }, ref) => (
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
-    className={cn("relative flex items-center rounded-lg py-2 pl-8 pr-3 text-sm text-slate-700 outline-none hover:bg-slate-100", className)}
+    className={cn("relative flex items-center rounded-lg py-2 pl-8 pr-3 text-sm text-[var(--ui-text)] outline-none hover:bg-[var(--ui-surface-muted)] focus:bg-[var(--ui-surface-muted)]", className)}
     checked={checked}
     {...props}
   >
@@ -85,7 +85,7 @@ export const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-default items-center rounded-lg px-3 py-2 text-sm text-slate-700 outline-none hover:bg-slate-100",
+      "flex cursor-default items-center rounded-lg px-3 py-2 text-sm text-[var(--ui-text)] outline-none hover:bg-[var(--ui-surface-muted)] focus:bg-[var(--ui-surface-muted)]",
       inset && "pl-8",
       className,
     )}
@@ -105,7 +105,7 @@ export const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-50 min-w-[12rem] rounded-xl border border-slate-200 bg-white p-1 shadow-[0_16px_40px_rgba(15,23,42,0.1)]",
+      "z-50 min-w-[12rem] rounded-xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-1 shadow-[var(--ui-shadow-strong)] backdrop-blur-xl",
       className,
     )}
     {...props}

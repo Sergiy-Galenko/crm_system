@@ -8,6 +8,7 @@ import { PrismaService } from "@backend/common/database/prisma.service";
 import { hashPassword } from "@backend/common/next/session";
 import { JoinTeamDto } from "./dto/join-team.dto";
 import { teamUsersWhere } from "@backend/common/scope/crm-scope";
+import { UpdateChatAppearanceDto } from "./dto/update-chat-appearance.dto";
 import { UpdateSettingsDto } from "./dto/update-settings.dto";
 import { UpsertUserDto } from "./dto/upsert-user.dto";
 
@@ -270,6 +271,27 @@ export class UsersService {
       action: ActivityAction.UPDATED,
       entityId: currentUser.userId,
       description: `${dto.name} updated profile settings.`,
+    });
+  }
+
+  async updateChatAppearance(currentUser: RequestUser, dto: UpdateChatAppearanceDto) {
+    await this.prisma.user.update({
+      where: {
+        id: currentUser.userId,
+      },
+      data: {
+        chatBackgroundType: dto.chatBackgroundType,
+        chatBackgroundColor: dto.chatBackgroundType === "SOLID" ? dto.chatBackgroundColor ?? "#CBD5E1" : null,
+        chatBackgroundImageUrl: dto.chatBackgroundType === "IMAGE" ? dto.chatBackgroundImageUrl ?? null : null,
+      },
+    });
+
+    await this.activityLogService.log(this.prisma, {
+      actorId: currentUser.userId,
+      entity: ActivityEntity.USER,
+      action: ActivityAction.UPDATED,
+      entityId: currentUser.userId,
+      description: "Updated chat appearance settings.",
     });
   }
 }

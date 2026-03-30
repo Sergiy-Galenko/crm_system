@@ -15,7 +15,7 @@ import { meetingStatuses } from "@/lib/constants";
 import { toDateTimeInputValue } from "@/lib/utils";
 
 type MeetingDialogProps = {
-  users: Array<{ id: string; name: string }>;
+  users: Array<{ id: string; name: string; email?: string | null }>;
   clients: Array<{ id: string; company: string }>;
   defaults?: {
     clientId?: string;
@@ -58,9 +58,9 @@ export function MeetingDialog({
         </Button>
       }
       title={t(meeting ? "Edit meeting" : "Schedule meeting")}
-      description={t("Only the core scheduling fields are shown first. Add extra context only when you need it.")}
+      description={t("Plan the slot first. Links, notes, and outcome stay tucked away until you actually need them.")}
       state={state}
-      contentClassName="max-w-xl p-5 sm:p-6"
+      contentClassName="max-w-2xl p-5 sm:p-6"
     >
       {() => (
         <form action={formAction} className="grid gap-5">
@@ -68,9 +68,18 @@ export function MeetingDialog({
           {!meeting ? <input type="hidden" name="status" value="SCHEDULED" /> : null}
           {hideClientField ? <input type="hidden" name="clientId" value={meeting?.clientId ?? defaults?.clientId ?? ""} /> : null}
 
-          <div className="grid gap-4 rounded-2xl border border-slate-200 p-4 md:grid-cols-2">
+          <div className="grid gap-4 rounded-[1.75rem] border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
             <FormField label={t("Meeting title")} error={state.fields?.title} className="md:col-span-2">
               <Input name="title" defaultValue={meeting?.title ?? ""} placeholder={t("Quarterly renewal sync")} />
+            </FormField>
+
+            <FormField label={t("Short description")} className="md:col-span-2">
+              <Textarea
+                name="description"
+                defaultValue={meeting?.description ?? ""}
+                className="min-h-24"
+                placeholder={t("What should this meeting help unblock or decide?")}
+              />
             </FormField>
 
             {!hideClientField ? (
@@ -89,7 +98,7 @@ export function MeetingDialog({
               <Select name="assignedToId" defaultValue={meeting?.assignedToId ?? defaults?.assignedToId ?? users[0]?.id}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.name}
+                    {user.email ? `${user.name} · ${user.email}` : user.name}
                   </option>
                 ))}
               </Select>
@@ -104,12 +113,12 @@ export function MeetingDialog({
             </FormField>
           </div>
 
-          <details className="rounded-2xl border border-slate-200 px-4 py-3" open={hasOptionalContent}>
+          <details className="rounded-[1.75rem] border border-slate-200 bg-[var(--ui-surface-solid)] px-4 py-3" open={hasOptionalContent}>
             <summary className="cursor-pointer list-none text-sm font-medium text-slate-900">
-              {t("Optional details")}
+              {t("Advanced settings")}
             </summary>
             <p className="mt-2 text-sm text-slate-500">
-              {t("Add location, link, internal notes, or a post-meeting outcome only when needed.")}
+              {t("Add location, meeting link, status changes, or outcome notes only when they add real context.")}
             </p>
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -133,10 +142,6 @@ export function MeetingDialog({
                 <Input name="meetingLink" defaultValue={meeting?.meetingLink ?? ""} placeholder="https://meet.google.com/..." />
               </FormField>
 
-              <FormField label={t("Description")} className="md:col-span-2">
-                <Textarea name="description" defaultValue={meeting?.description ?? ""} className="min-h-24" />
-              </FormField>
-
               {meeting ? (
                 <FormField label={t("Outcome")} className="md:col-span-2">
                   <Textarea
@@ -151,7 +156,7 @@ export function MeetingDialog({
           </details>
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">{t("Only required fields are visible by default for faster scheduling.")}</p>
+            <p className="text-sm text-slate-500">{t("Core scheduling stays visible first so new meetings take only a few seconds to set up.")}</p>
             <SubmitButton>{t(meeting ? "Save changes" : "Create meeting")}</SubmitButton>
           </div>
         </form>

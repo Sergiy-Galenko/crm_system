@@ -21,8 +21,8 @@ export function ChatListItem({
       className={cn(
         "grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-[1.6rem] border px-4 py-3.5 transition duration-200",
         active
-          ? "border-slate-900 bg-slate-950 text-white shadow-[0_24px_48px_rgba(15,23,42,0.2)]"
-          : "border-transparent bg-white/80 hover:border-slate-200 hover:bg-white",
+          ? "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]"
+          : "border-transparent bg-[var(--ui-surface-solid)] hover:border-[var(--ui-border)] hover:bg-[var(--ui-surface-hover)]",
       )}
     >
       <ChatAvatarStack participants={conversation.participants} type={conversation.type} className="shrink-0" />
@@ -30,19 +30,19 @@ export function ChatListItem({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{conversation.title}</p>
-            <p className={cn("truncate text-xs leading-5", active ? "text-slate-300" : "text-slate-500")}>
+            <p className={cn("truncate text-xs leading-5", active ? "text-[var(--ui-brand-foreground)] opacity-70" : "text-slate-500")}>
               {conversation.subtitle}
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <span className={cn("text-[11px]", active ? "text-slate-300" : "text-slate-400")}>
+            <span className={cn("text-[11px]", active ? "text-[var(--ui-brand-foreground)] opacity-70" : "text-slate-400")}>
               {conversation.lastMessageTimeLabel}
             </span>
             {conversation.unreadCount > 0 ? (
               <span
                 className={cn(
                   "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none",
-                  active ? "bg-white/15 text-white" : "bg-sky-100 text-sky-700",
+                  active ? "bg-black/10 text-current" : "bg-sky-500/14 text-sky-600",
                 )}
               >
                 {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
@@ -50,7 +50,7 @@ export function ChatListItem({
             ) : null}
           </div>
         </div>
-        <p className={cn("mt-2 truncate text-sm", active ? "text-slate-100" : "text-slate-500")}>
+        <p className={cn("mt-2 truncate text-sm", active ? "text-[var(--ui-brand-foreground)] opacity-85" : "text-slate-500")}>
           {conversation.lastMessagePreview}
         </p>
       </div>

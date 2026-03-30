@@ -109,7 +109,7 @@ export function AppShell({
     <div className="page-shell flex min-h-screen gap-5 py-4 md:py-5">
       <aside
         className={cn(
-          "fixed inset-y-4 left-4 z-40 w-[272px] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_48px_rgba(15,23,42,0.08)] transition duration-300 lg:static lg:flex lg:translate-x-0",
+          "fixed inset-y-4 left-4 z-40 w-[272px] rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-4 shadow-[var(--ui-shadow-soft)] backdrop-blur-xl transition duration-300 lg:static lg:flex lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-[120%] lg:translate-x-0",
         )}
       >
@@ -134,8 +134,8 @@ export function AppShell({
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition",
                     active
-                      ? "bg-slate-950 text-white"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+                      ? "bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)]"
+                      : "text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-muted)] hover:text-[var(--ui-text-strong)]",
                   )}
                   onClick={() => setOpen(false)}
                 >
@@ -146,7 +146,7 @@ export function AppShell({
                       <span
                         className={cn(
                           "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-none",
-                          active ? "bg-white/20 text-white" : "bg-rose-100 text-rose-600",
+                          active ? "bg-black/10 text-current" : "bg-rose-500/14 text-rose-500",
                         )}
                       >
                         {chatIndicatorCount > 9 ? "9+" : chatIndicatorCount}
@@ -174,22 +174,25 @@ export function AppShell({
       {open ? (
         <button
           aria-label={t("Close sidebar")}
-          className="fixed inset-0 z-30 bg-slate-950/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-[var(--ui-overlay)] backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
         />
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col gap-4 lg:pl-0">
-        <header className="sticky top-4 z-20 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <header className="sticky top-4 z-20 flex items-center gap-3 rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-4 py-3 shadow-[var(--ui-shadow-xs)] backdrop-blur-xl">
           <Button variant="secondary" size="icon" className="lg:hidden" onClick={() => setOpen(true)}>
             <Menu className="h-4 w-4" />
           </Button>
 
-          <form action="/dashboard/clients" className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5">
-            <Search className="h-4 w-4 text-slate-400" />
+          <form
+            action="/dashboard/clients"
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-surface-muted)] px-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+          >
+            <Search className="h-4 w-4 text-[var(--ui-text-soft)]" />
             <input
               aria-label={t("Search CRM records")}
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-[var(--ui-text-strong)] outline-none placeholder:text-[var(--ui-text-soft)]"
               name="q"
               placeholder={t("Search clients, leads, or companies")}
             />
@@ -233,7 +236,7 @@ export function AppShell({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50">
+              <button className="flex items-center gap-3 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-3 py-2 shadow-[var(--ui-shadow-xs)] transition hover:bg-[var(--ui-surface-hover)]">
                 <UserAvatar name={user.name} color={user.avatarColor} imageUrl={user.companyLogoUrl} className="h-9 w-9" />
                 <div className="hidden text-left sm:block">
                   <p className="text-sm font-semibold text-slate-950">{user.name}</p>
@@ -263,8 +266,8 @@ export function AppShell({
         </header>
 
         {systemNotice ? (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">
-            <div className="rounded-xl bg-amber-100 p-2 text-amber-700">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-300/70 bg-amber-50/90 px-4 py-3 text-amber-900 shadow-[var(--ui-shadow-xs)] backdrop-blur-xl">
+            <div className="rounded-xl bg-amber-100/90 p-2 text-amber-700">
               <AlertTriangle className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -275,9 +278,9 @@ export function AppShell({
         ) : null}
 
         {meetingReminder ? (
-          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-4 py-3 shadow-[var(--ui-shadow-xs)] md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-slate-100 p-2.5 text-slate-700">
+              <div className="rounded-xl bg-[var(--ui-surface-muted)] p-2.5 text-[var(--ui-text)]">
                 <CalendarClock className="h-4 w-4" />
               </div>
               <div>

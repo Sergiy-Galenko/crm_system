@@ -19,11 +19,125 @@ const uk: TranslationDictionary = {
   "Clients": "Клієнти",
   "Leads": "Ліди",
   "Deals": "Угоди",
+  "Tasks": "Задачі",
   "Meetings": "Міти",
   "Promo Codes": "Промокоди",
   "Analytics": "Аналітика",
   "Settings": "Налаштування",
+  "Task Manager": "Менеджер задач",
+  "Execution desk": "Панель виконання",
+  "Keep follow-ups, internal work, and client delivery in one clean execution queue with real task ownership and due dates.": "Тримай follow-up, внутрішню роботу й клієнтське виконання в одній чистій черзі з реальними виконавцями та дедлайнами.",
+  "Add task": "Додати задачу",
+  "Create task": "Створити задачу",
+  "Edit task": "Редагувати задачу",
+  "Assign ownership, due dates, and related records so execution stays visible across the workspace.": "Призначай виконавців, дедлайни та пов'язані записи, щоб виконання залишалося видимим у всьому workspace.",
+  "Keep task setup lightweight. The core execution fields stay up front, while extra context is tucked away until you need it.": "Залишай створення задачі легким. Основні поля винесені наперед, а додатковий контекст схований доти, доки він справді не потрібен.",
+  "All tasks": "Усі задачі",
+  "In progress": "У процесі",
+  "Completed": "Завершено",
+  "Overdue": "Прострочено",
+  "Every task visible in your workspace.": "Усі задачі, видимі у твоєму робочому просторі.",
+  "Tasks actively moving right now.": "Задачі, над якими зараз активно працюють.",
+  "Finished tasks across the team.": "Завершені задачі по всій команді.",
+  "Active tasks past their due date.": "Активні задачі, дедлайн яких уже минув.",
+  "Search": "Пошук",
+  "Filter": "Фільтр",
+  "Status": "Статус",
+  "Priority": "Пріоритет",
+  "Task title": "Назва задачі",
+  "Short description": "Короткий опис",
+  "Description": "Опис",
+  "Assignee": "Виконавець",
+  "Client": "Клієнт",
+  "Lead": "Лід",
+  "Deal": "Угода",
+  "Delete": "Видалити",
+  "Save changes": "Зберегти зміни",
+  "Search task title or description": "Пошук за назвою або описом задачі",
+  "All statuses": "Усі статуси",
+  "All priorities": "Усі пріоритети",
+  "All assignees": "Усі виконавці",
+  "Sort by": "Сортувати за",
+  "Nearest due date": "Найближчий дедлайн",
+  "Newest created": "Спочатку новіші",
+  "Highest priority": "Найвищий пріоритет",
+  "Clear filters": "Скинути фільтри",
+  "Assigned to {name}": "Виконавець: {name}",
+  "Unassigned": "Без виконавця",
+  "Assign an owner when this work is ready to route.": "Признач виконавця, коли цю роботу буде готово віддати в роботу.",
+  "Updated {time}": "Оновлено {time}",
+  "Start work": "Почати роботу",
+  "Complete": "Завершити",
+  "Return to active": "Повернути в активні",
+  "No tasks yet": "Задач поки немає",
+  "No tasks matched your filters": "Жодна задача не відповідає фільтрам",
+  "Try a broader search, different filters, or create a task with a different owner or priority.": "Спробуй ширший пошук, інші фільтри або створи задачу з іншим виконавцем чи пріоритетом.",
+  "Create the first task to start tracking follow-ups, internal work, and delivery deadlines in one place.": "Створи першу задачу, щоб відстежувати follow-up, внутрішню роботу та дедлайни виконання в одному місці.",
+  "Task Manager is temporarily unavailable.": "Менеджер задач тимчасово недоступний.",
+  "Reload this section to try fetching tasks again.": "Перезавантаж цей розділ, щоб спробувати знову завантажити задачі.",
+  "Tags": "Теги",
+  "Add tags separated by commas": "Додай теги через кому",
+  "Advanced settings": "Додаткові налаштування",
+  "Add just enough context so the assignee knows the next move.": "Додай лише стільки контексту, щоб виконавець одразу розумів наступний крок.",
+  "Tags and linked records stay here so the core task flow remains clear and fast.": "Теги й пов'язані записи залишаються тут, щоб основний сценарій роботи із задачею був чистим і швидким.",
+  "No client": "Без клієнта",
+  "No lead": "Без ліда",
+  "No deal": "Без угоди",
+  "Due": "Дедлайн",
+  "Task actions": "Дії із задачею",
+  "Move to TODO": "Перевести в «До виконання»",
+  "Move to IN_PROGRESS": "Перевести в «У процесі»",
+  "Mark as done": "Позначити виконаною",
+  "Delete task": "Видалити задачу",
+  "TODO": "До виконання",
+  "IN_PROGRESS": "У процесі",
+  "DONE": "Виконано",
+  "LOW": "Низький",
+  "MEDIUM": "Середній",
+  "HIGH": "Високий",
   "Calendar": "Календар",
+  "Keep live calls, demos, and follow-ups in one cleaner schedule view with faster actions and less clutter.": "Тримай дзвінки, демо й follow-up в одному чистішому розкладі з швидкими діями та без зайвого шуму.",
+  "Upcoming this month": "Заплановано на цей місяць",
+  "Scheduled meetings that still need to happen.": "Заплановані міти, які ще мають відбутися.",
+  "Needs follow-up": "Потребують follow-up",
+  "Scheduled meetings whose time has passed without a final status.": "Заплановані міти, час яких уже минув без фінального статусу.",
+  "Completed this month": "Завершено цього місяця",
+  "Meetings that were already wrapped up.": "Міти, які вже були закриті.",
+  "My next meeting": "Мій найближчий міт",
+  "No upcoming meeting": "Найближчих мітів немає",
+  "No meeting is assigned to you yet.": "На тебе ще не призначено жодного міту.",
+  "Month in focus": "Місяць у фокусі",
+  "Use the month switcher to review upcoming commitments, wrapped calls, and schedule density at a glance.": "Перемикай місяці, щоб з одного погляду бачити майбутні зустрічі, завершені дзвінки й щільність розкладу.",
+  "Previous month": "Попередній місяць",
+  "Current month": "Поточний місяць",
+  "Next month": "Наступний місяць",
+  "Upcoming meetings": "Найближчі міти",
+  "The next scheduled calls and demos in the current month.": "Найближчі заплановані дзвінки й демо в межах поточного місяця.",
+  "{count} scheduled": "{count} заплановано",
+  "No upcoming meetings in this month": "У цьому місяці немає майбутніх мітів",
+  "Your forward-looking schedule is clear here for now. Add a new meeting or move to another month.": "Твій розклад наперед поки вільний. Додай новий міт або перемкнись на інший місяць.",
+  "Past and resolved": "Минулі та закриті",
+  "Everything already handled, canceled, missed, or left without a final follow-up.": "Усе, що вже завершено, скасовано, пропущено або лишилося без фінального follow-up.",
+  "{count} meetings": "{count} мітів",
+  "No past meetings here yet": "Минулі міти тут ще не з'явилися",
+  "Completed, canceled, and older meetings will collect here once the month starts filling up.": "Завершені, скасовані та старіші міти збиратимуться тут, щойно місяць почне наповнюватися.",
+  "Next focus": "Наступний фокус",
+  "Your nearest scheduled client conversation is ready here with quick join and reschedule actions.": "Твоя найближча запланована розмова з клієнтом уже тут, зі швидким входом і перенесенням.",
+  "Nothing is assigned to your schedule yet. Create the next call, demo, or review from here.": "У твоєму розкладі поки нічого не призначено. Створи звідси наступний дзвінок, демо або рев'ю.",
+  "Join meeting": "Приєднатися до міту",
+  "Open client": "Відкрити клієнта",
+  "Upcoming": "Незабаром",
+  "Time": "Час",
+  "No location": "Без локації",
+  "No extra notes were added for this meeting.": "Для цього міту не додали додаткових нотаток.",
+  "Meeting actions": "Дії з мітом",
+  "Move back to scheduled": "Повернути в заплановані",
+  "Delete meeting": "Видалити міт",
+  "Calendar overview": "Огляд календаря",
+  "A compact month view for spotting busy days and open space.": "Компактний вигляд місяця, щоб швидко бачити завантажені та вільні дні.",
+  "+{count} more": "+{count} ще",
+  "Meetings are temporarily unavailable.": "Розділ мітів тимчасово недоступний.",
+  "Reload this section to try fetching the schedule again.": "Перезавантаж цей розділ, щоб спробувати знову отримати розклад.",
   "Search CRM records": "Пошук записів CRM",
   "Search clients, leads, or companies": "Пошук клієнтів, лідів або компаній",
   "Premium workflow system": "Преміальна CRM-система",
@@ -90,6 +204,8 @@ const uk: TranslationDictionary = {
   "That lead is not available in your workspace.": "Цей лід недоступний у вашому просторі.",
   "Choose a lead from your workspace.": "Виберіть ліда зі свого простору.",
   "That assignee is not in your team.": "Цей виконавець не у вашій команді.",
+  "Task not found.": "Задачу не знайдено.",
+  "You can only delete tasks in your workspace.": "Ти можеш видаляти лише задачі у своєму робочому просторі.",
   "Only admins can manage promo codes.": "Лише адміністратори можуть керувати промокодами.",
   "Only admins and managers can manage users.": "Лише адміністратори та менеджери можуть керувати користувачами.",
   "Managers cannot create admin accounts.": "Менеджери не можуть створювати акаунти адміністраторів.",
@@ -101,11 +217,38 @@ const uk: TranslationDictionary = {
   "Password must be at least 8 characters.": "Пароль має містити щонайменше 8 символів.",
   "Confirm your password.": "Підтвердіть пароль.",
   "Passwords do not match.": "Паролі не збігаються.",
+  "Task title is required.": "Назва задачі обов'язкова.",
+  "Task title must be 120 characters or fewer.": "Назва задачі має містити не більше 120 символів.",
+  "Description must be 280 characters or fewer.": "Опис має містити не більше 280 символів.",
+  "Search must be 120 characters or fewer.": "Пошук має містити не більше 120 символів.",
+  "Assignee is required.": "Виконавець обов'язковий.",
+  "Use up to 8 tags per task.": "Використовуй до 8 тегів на задачу.",
+  "Task tags must be 24 characters or fewer.": "Теги задачі мають містити не більше 24 символів.",
   "Enter a valid amount.": "Введіть коректну суму.",
   "Enter a valid date.": "Введіть коректну дату.",
   "Enter a whole number.": "Введіть ціле число.",
   "Percent discounts cannot exceed 100.": "Відсоткова знижка не може перевищувати 100.",
   "Meeting end must be after the start time.": "Завершення міту має бути пізніше початку.",
+  "Schedule meeting": "Запланувати міт",
+  "Create meeting": "Створити міт",
+  "Edit meeting": "Редагувати міт",
+  "Plan the slot first. Links, notes, and outcome stay tucked away until you actually need them.": "Спершу заплануй слот. Посилання, нотатки й результат залишаються прихованими, доки вони справді не знадобляться.",
+  "Meeting title": "Назва міту",
+  "Quarterly renewal sync": "Квартальний sync по продовженню",
+  "What should this meeting help unblock or decide?": "Що цей міт має розблокувати або допомогти вирішити?",
+  "Start time": "Час початку",
+  "End time": "Час завершення",
+  "Add location, meeting link, status changes, or outcome notes only when they add real context.": "Додавай локацію, посилання, зміну статусу чи підсумки лише тоді, коли вони реально додають контекст.",
+  "Location": "Локація",
+  "Google Meet / Kyiv office": "Google Meet / офіс у Києві",
+  "Meeting link": "Посилання на міт",
+  "Outcome": "Підсумок",
+  "Add notes after the meeting, outcomes, blockers, or next steps.": "Додай нотатки після міту, підсумки, блокери або наступні кроки.",
+  "Core scheduling stays visible first so new meetings take only a few seconds to set up.": "Основні поля планування завжди видно першими, щоб новий міт створювався за кілька секунд.",
+  "Open meeting link": "Відкрити посилання на міт",
+  "Mark completed": "Позначити завершеним",
+  "Mark no-show": "Позначити як no-show",
+  "Cancel meeting": "Скасувати міт",
   "Enter a short note.": "Введіть коротку нотатку.",
   "Note is too long.": "Нотатка занадто довга.",
   "Custom role name must be 60 characters or fewer.": "Кастомна назва ролі має містити не більше 60 символів.",
@@ -275,6 +418,48 @@ const uk: TranslationDictionary = {
   "Try another keyword or clear the message search to see the whole conversation.": "Спробуй інше ключове слово або очисть пошук, щоб побачити всю розмову.",
   "Open image fullscreen": "Відкрити зображення на весь екран",
   "Choose a valid hex color.": "Виберіть коректний hex-колір."
+  ,"Choose a valid chat background.": "Обери коректний фон чату."
+  ,"Choose a valid background color.": "Обери коректний колір фону."
+  ,"Chat background image is too large.": "Зображення фону чату завелике."
+  ,"Use a valid chat background image.": "Вкажи коректне зображення фону чату."
+  ,"You can only edit your own messages.": "Ти можеш редагувати лише власні повідомлення."
+  ,"Choose a message from this conversation.": "Обери повідомлення саме з цієї розмови."
+  ,"Message updated.": "Повідомлення оновлено."
+  ,"Message actions": "Дії з повідомленням"
+  ,"Reply": "Відповісти"
+  ,"Edit": "Редагувати"
+  ,"Edited": "Редаговано"
+  ,"Sent": "Надіслано"
+  ,"Delivered": "Доставлено"
+  ,"Read": "Прочитано"
+  ,"Replying to {name}": "Відповідь для {name}"
+  ,"Editing message": "Редагування повідомлення"
+  ,"Cancel editing": "Скасувати редагування"
+  ,"Cancel reply": "Скасувати відповідь"
+  ,"Refine your message...": "Уточни своє повідомлення..."
+  ,"Save a cleaner version without breaking the original message order.": "Збережи чистішу версію, не ламаючи порядок повідомлень у розмові."
+  ,"Saving...": "Збереження..."
+  ,"Sending...": "Надсилання..."
+  ,"Save": "Зберегти"
+  ,"Send the first message, paste a link, or drop a file to start this thread with a cleaner workspace feel.": "Надішли перше повідомлення, встав посилання або кинь файл, щоб почати цей тред у більш преміальному робочому стилі."
+  ,"Start a direct chat or create a group, then keep drafts, replies, files, and link sharing in one premium thread.": "Почни особистий чат або створи групу, а далі тримай чернетки, відповіді, файли й посилання в одному преміальному треді."
+  ,"Chat appearance": "Зовнішній вигляд чату"
+  ,"Switch between a premium abstract canvas, a soft gradient, a solid tone, or your own uploaded image.": "Перемикайся між преміальним абстрактним фоном, м'яким градієнтом, суцільним тоном або власним завантаженим зображенням."
+  ,"Abstract": "Абстрактний"
+  ,"Premium blurred shapes with calm depth by default.": "Преміальні розмиті форми зі спокійною глибиною за замовчуванням."
+  ,"Gradient": "Градієнт"
+  ,"Soft layered tones for a slightly richer workspace feel.": "М'які багатошарові тони для трохи глибшого відчуття робочого простору."
+  ,"Solid": "Суцільний"
+  ,"A flatter background that keeps the thread extra calm.": "Більш плаский фон, який робить тред ще спокійнішим."
+  ,"Custom image": "Власне зображення"
+  ,"Upload a light, low-noise background for a personal workspace.": "Завантаж світлий, ненав'язливий фон для більш персонального простору."
+  ,"Use {color} as chat background color": "Використати {color} як фон чату"
+  ,"Replace image": "Замінити зображення"
+  ,"Use default": "Використати стандартний"
+  ,"Upload background": "Завантажити фон"
+  ,"Save appearance": "Зберегти вигляд"
+  ,"Reset to abstract": "Скинути до абстрактного"
+  ,"Chat appearance updated.": "Оформлення чату оновлено."
 };
 
 const dictionaries: Record<Locale, TranslationDictionary> = {

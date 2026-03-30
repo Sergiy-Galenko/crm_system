@@ -1,16 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Check, MessageSquareQuote, Paperclip, PencilLine, SendHorizontal, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Paperclip, SendHorizontal, X } from "lucide-react";
-import { sendMessageAction } from "@/actions/chat";
-import { SubmitButton } from "@/components/form/submit-button";
+import { sendMessageAction, updateMessageAction } from "@/actions/chat";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { idleActionState, type ActionResult } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import type { ChatMessageItem } from "./chat-types";
 
 const supportedImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml", "image/gif", "image/avif"]);
 const supportedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime", "video/ogg"]);
@@ -51,15 +51,80 @@ function fileToDataUrl(file: File) {
   });
 }
 
-export function ChatComposer({ conversationId }: { conversationId: string }) {
+function getDraftStorageKey(conversationId: string) {
+  return `nexora-chat-draft:${conversationId}`;
+}
+
+function getInitialMessageBody(conversationId: string, editingMessage?: ChatMessageItem | null) {
+  if (editingMessage) {
+    return editingMessage.body ?? "";
+  }
+
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(getDraftStorageKey(conversationId)) ?? "";
+}
+
+function getReplyPreview(message: ChatMessageItem, t: (key: string, values?: Record<string, string | number>) => string) {
+  if (message.body) {
+    return message.body;
+  }
+
+  if (message.mediaType === "IMAGE") {
+    return t("Photo");
+  }
+
+  if (message.mediaType === "VIDEO") {
+    return t("Video");
+  }
+
+  return t("Message");
+}
+
+export function ChatComposer({
+  conversationId,
+  editingMessage,
+  replyToMessage,
+  onCancelEdit,
+  onCancelReply,
+  onJumpToMessage,
+  onSubmitted,
+}: {
+  conversationId: string;
+  editingMessage?: ChatMessageItem | null;
+  replyToMessage?: ChatMessageItem | null;
+  onCancelEdit: () => void;
+  onCancelReply: () => void;
+  onJumpToMessage: (messageId: string) => void;
+  onSubmitted?: () => void;
+}) {
   const [state, setState] = useState<ActionResult>(idleActionState);
+  const [messageBody, setMessageBody] = useState(() => getInitialMessageBody(conversationId, editingMessage));
   const [attachment, setAttachment] = useState<AttachmentPreview | null>(null);
   const [isDraggingAttachment, setIsDraggingAttachment] = useState(false);
   const [attachmentError, setAttachmentError] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { t } = useLocale();
+
+  useEffect(() => {
+    if (editingMessage || typeof window === "undefined") {
+      return;
+    }
+
+    const storageKey = getDraftStorageKey(conversationId);
+    const nextValue = messageBody.trim();
+
+    if (!nextValue) {
+      window.localStorage.removeItem(storageKey);
+      return;
+    }
+
+    window.localStorage.setItem(storageKey, messageBody);
+  }, [conversationId, editingMessage, messageBody]);
 
   async function prepareAttachment(file: File) {
     if (!isSupportedAttachment(file)) {
@@ -111,34 +176,86 @@ export function ChatComposer({ conversationId }: { conversationId: string }) {
     await prepareAttachment(file);
   }
 
-  async function handleSendMessage(formData: FormData) {
-    const nextState = await sendMessageAction(idleActionState, formData);
-    setState(nextState);
+  function handleSubmit() {
+    setIsSubmitting(true);
 
-    if (!nextState.success) {
-      return;
-    }
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set("body", messageBody);
 
-    formRef.current?.reset();
-    setAttachment(null);
-    setAttachmentError("");
-    router.refresh();
+      if (editingMessage) {
+        formData.set("messageId", editingMessage.id);
+      } else {
+        formData.set("conversationId", conversationId);
+
+        if (attachment?.mediaUrl) {
+          formData.set("mediaUrl", attachment.mediaUrl);
+          formData.set("mediaType", attachment.mediaType);
+        }
+
+        if (replyToMessage) {
+          formData.set("replyToMessageId", replyToMessage.id);
+        }
+      }
+
+      const nextState = editingMessage
+        ? await updateMessageAction(idleActionState, formData)
+        : await sendMessageAction(idleActionState, formData);
+
+      setState(nextState);
+      setIsSubmitting(false);
+
+      if (!nextState.success) {
+        return;
+      }
+
+      if (editingMessage) {
+        onCancelEdit();
+      } else {
+        setMessageBody("");
+        setAttachment(null);
+        setAttachmentError("");
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(getDraftStorageKey(conversationId));
+        }
+      }
+
+      onSubmitted?.();
+      router.refresh();
+    });
   }
 
   return (
-    <form ref={formRef} action={handleSendMessage} className="grid gap-3">
-      <input type="hidden" name="conversationId" value={conversationId} />
-      <input type="hidden" name="mediaUrl" value={attachment?.mediaUrl ?? ""} />
-      <input type="hidden" name="mediaType" value={attachment?.mediaType ?? ""} />
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={attachmentAccept}
-        className="hidden"
-        onChange={(event) => {
-          void handleAttachmentSelection(event);
-        }}
-      />
+    <div className="grid gap-3">
+      {editingMessage ? (
+        <div className="flex items-start justify-between gap-3 rounded-[1.35rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-4 py-3 shadow-[var(--ui-shadow-xs)]">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <PencilLine className="h-4 w-4" />
+              {t("Editing message")}
+            </div>
+            <p className="mt-1 truncate text-xs text-slate-500">{editingMessage.body}</p>
+          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={onCancelEdit} aria-label={t("Cancel editing")}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : null}
+
+      {!editingMessage && replyToMessage ? (
+        <div className="flex items-start justify-between gap-3 rounded-[1.35rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-4 py-3 shadow-[var(--ui-shadow-xs)]">
+          <button type="button" className="min-w-0 text-left" onClick={() => onJumpToMessage(replyToMessage.id)}>
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <MessageSquareQuote className="h-4 w-4" />
+              {t("Replying to {name}", { name: replyToMessage.sender.name })}
+            </div>
+            <p className="mt-1 truncate text-xs text-slate-500">{getReplyPreview(replyToMessage, t)}</p>
+          </button>
+          <Button type="button" variant="ghost" size="icon" onClick={onCancelReply} aria-label={t("Cancel reply")}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : null}
 
       {attachment ? (
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm">
@@ -168,48 +285,112 @@ export function ChatComposer({ conversationId }: { conversationId: string }) {
         </div>
       ) : null}
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={attachmentAccept}
+        className="hidden"
+        onChange={(event) => {
+          void handleAttachmentSelection(event);
+        }}
+      />
+
       <div
         className={cn(
           "rounded-[1.75rem] border border-slate-200 bg-white p-3 shadow-sm transition",
           isDraggingAttachment ? "border-sky-500 bg-sky-50" : "hover:border-slate-300",
+          editingMessage ? "border-[var(--ui-border-strong)]" : "",
         )}
         onDragEnter={(event) => {
+          if (editingMessage) {
+            return;
+          }
+
           event.preventDefault();
           setIsDraggingAttachment(true);
         }}
         onDragOver={(event) => {
+          if (editingMessage) {
+            return;
+          }
+
           event.preventDefault();
           event.dataTransfer.dropEffect = "copy";
           setIsDraggingAttachment(true);
         }}
         onDragLeave={(event) => {
+          if (editingMessage) {
+            return;
+          }
+
           event.preventDefault();
           setIsDraggingAttachment(false);
         }}
         onDrop={(event) => {
+          if (editingMessage) {
+            return;
+          }
+
           void handleAttachmentDrop(event);
         }}
       >
         <div className="flex items-end gap-3">
-          <Button type="button" variant="secondary" size="icon" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
-            <Paperclip className="h-4 w-4" />
-          </Button>
+          {!editingMessage ? (
+            <Button type="button" variant="secondary" size="icon" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
+              <Paperclip className="h-4 w-4" />
+            </Button>
+          ) : null}
 
           <div className="min-w-0 flex-1">
             <Textarea
               name="body"
-              placeholder={t("Write a message or add a caption...")}
+              value={messageBody}
+              onChange={(event) => setMessageBody(event.target.value)}
+              placeholder={t(editingMessage ? "Refine your message..." : "Write a message or add a caption...")}
               className="min-h-24 resize-none rounded-[1.4rem] border-0 bg-transparent px-2 py-2 shadow-none focus:border-0 focus:ring-0"
             />
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-2 text-xs text-slate-500">
-              <span>{t("Drag and drop a photo or video here, or choose a file.")}</span>
-              <span>{t("Photos and videos up to 12 MB.")}</span>
+              {editingMessage ? (
+                <>
+                  <span>{t("Save a cleaner version without breaking the original message order.")}</span>
+                  {isSubmitting ? (
+                    <span className="inline-flex items-center gap-1 font-medium text-slate-600">
+                      <LoaderIcon />
+                      {t("Saving...")}
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <span>{t("Drag and drop a photo or video here, or choose a file.")}</span>
+                  <span>{t("Photos and videos up to 12 MB.")}</span>
+                  {isSubmitting ? (
+                    <span className="inline-flex items-center gap-1 font-medium text-slate-600">
+                      <LoaderIcon />
+                      {t("Sending...")}
+                    </span>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
 
-          <SubmitButton className="h-12 w-12 rounded-full p-0" aria-label={t("Send")}>
-            <SendHorizontal className="h-4 w-4" />
-          </SubmitButton>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || (editingMessage ? !messageBody.trim() : !messageBody.trim() && !attachment)}
+            className={cn("h-12 rounded-full px-4", editingMessage ? "min-w-[6.75rem]" : "w-12 p-0")}
+            aria-label={t(editingMessage ? "Save" : "Send")}
+          >
+            {editingMessage ? (
+              <>
+                <Check className="h-4 w-4" />
+                {t("Save")}
+              </>
+            ) : (
+              <SendHorizontal className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </div>
 
@@ -217,6 +398,10 @@ export function ChatComposer({ conversationId }: { conversationId: string }) {
       {state.message && !state.success ? <p className="text-xs font-medium text-rose-500">{state.message}</p> : null}
       {state.fields?.body ? <p className="text-xs font-medium text-rose-500">{state.fields.body}</p> : null}
       {state.fields?.mediaUrl ? <p className="text-xs font-medium text-rose-500">{state.fields.mediaUrl}</p> : null}
-    </form>
+    </div>
   );
+}
+
+function LoaderIcon() {
+  return <span className="h-2 w-2 animate-pulse rounded-full bg-current" />;
 }

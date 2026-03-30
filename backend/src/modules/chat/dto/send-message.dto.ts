@@ -27,4 +27,9 @@ export class SendMessageDto {
   @IsOptional()
   @IsEnum(ChatMessageMediaType, { message: "Choose a valid chat attachment type." })
   mediaType?: ChatMessageMediaType;
+
+  @Transform(({ value }) => toOptionalString(value))
+  @IsOptional()
+  @IsString()
+  replyToMessageId?: string;
 }

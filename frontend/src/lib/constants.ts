@@ -4,6 +4,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   LayoutDashboard,
+  ListTodo,
   MessageSquareMore,
   Settings,
   Users,
@@ -42,6 +43,11 @@ export const dashboardNavigation = [
     title: "Deals",
     href: "/dashboard/deals",
     icon: BriefcaseBusiness,
+  },
+  {
+    title: "Tasks",
+    href: "/dashboard/tasks",
+    icon: ListTodo,
   },
   {
     title: "Meetings",

@@ -15,9 +15,9 @@ export function FormField({
 }) {
   return (
     <label className={cn("grid gap-2.5", className)}>
-      <span className="text-sm font-medium text-slate-800">{label}</span>
+      <span className="text-sm font-medium text-[var(--ui-text)]">{label}</span>
       {children}
-      {description ? <span className="text-xs leading-5 text-slate-500">{description}</span> : null}
+      {description ? <span className="text-xs leading-5 text-[var(--ui-text-muted)]">{description}</span> : null}
       {error ? <span className="text-xs font-medium text-rose-500">{error}</span> : null}
     </label>
   );

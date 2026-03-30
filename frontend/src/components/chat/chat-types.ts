@@ -11,6 +11,12 @@ export type ChatUser = {
   companyLogoUrl?: string | null;
 };
 
+export type ChatBackgroundPreference = {
+  type: "ABSTRACT" | "SOLID" | "GRADIENT" | "IMAGE";
+  color?: string | null;
+  imageUrl?: string | null;
+};
+
 export type ChatConversationListItem = {
   id: string;
   href: UrlObject;
@@ -30,6 +36,14 @@ export type ChatMessageItem = {
   body?: string | null;
   mediaUrl?: string | null;
   mediaType?: "IMAGE" | "VIDEO" | null;
+  status?: "SENT" | "DELIVERED" | "READ";
+  isEdited?: boolean;
+  replyTo?: {
+    id: string;
+    senderName: string;
+    preview: string;
+    mediaType?: "IMAGE" | "VIDEO" | null;
+  } | null;
   timeLabel: string;
 };
 
@@ -48,6 +62,7 @@ export type ActiveConversation = {
   participants: ChatUser[];
   participantDirectory: ChatUser[];
   messageGroups: ChatMessageGroup[];
+  backgroundPreference: ChatBackgroundPreference;
   sharedMedia: Array<{
     id: string;
     mediaUrl: string;

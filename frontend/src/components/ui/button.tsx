@@ -6,19 +6,19 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ui-background-canvas)] disabled:pointer-events-none disabled:opacity-55",
   {
     variants: {
       variant: {
         primary:
-          "border-slate-950 bg-slate-950 text-white hover:bg-slate-800",
+          "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-brand-hover)]",
         secondary:
-          "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+          "border-[var(--ui-border)] bg-[var(--ui-surface-solid)] text-[var(--ui-text)] shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-surface-hover)]",
         subtle:
-          "border-transparent bg-slate-100 text-slate-700 hover:bg-slate-200",
-        ghost: "border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+          "border-transparent bg-[var(--ui-surface-muted)] text-[var(--ui-text)] hover:bg-[var(--ui-surface-hover)]",
+        ghost: "border-transparent text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-muted)] hover:text-[var(--ui-text-strong)]",
         danger:
-          "border-rose-500 bg-rose-500 text-white hover:bg-rose-600",
+          "border-transparent bg-[var(--ui-danger)] text-white shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-danger-hover)]",
       },
       size: {
         default: "h-11 px-4 text-sm",

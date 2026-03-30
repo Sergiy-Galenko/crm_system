@@ -6,6 +6,7 @@ import { validateDto } from "@backend/common/validation/validate-dto";
 import { ChatService } from "@backend/modules/chat/chat.service";
 import { CreateConversationDto } from "@backend/modules/chat/dto/create-conversation.dto";
 import { SendMessageDto } from "@backend/modules/chat/dto/send-message.dto";
+import { UpdateMessageDto } from "@backend/modules/chat/dto/update-message.dto";
 import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
 import { actionErrorFromException, toRequestUser } from "@/lib/backend-actions";
 import { getServerTranslator } from "@/lib/locale-server";
@@ -62,6 +63,30 @@ export async function sendMessageAction(prevState: ActionResult, formData: FormD
       body: ["message"],
       mediaUrl: ["attachment", "image", "video"],
       mediaType: ["attachment", "image", "video"],
+    });
+
+    return actionError(response.message, response.fields);
+  }
+}
+
+export async function updateMessageAction(prevState: ActionResult, formData: FormData) {
+  const { t } = await getServerTranslator();
+  const user = await requireUser();
+
+  try {
+    const messageId = String(formData.get("messageId") ?? "");
+    const dto = await validateDto(UpdateMessageDto, {
+      body: formData.get("body"),
+    });
+    const chatService = await resolveProvider(ChatService);
+    await chatService.updateMessage(toRequestUser(user), messageId, dto);
+
+    revalidatePath("/dashboard/chat");
+
+    return actionSuccess(t("Message updated."));
+  } catch (error) {
+    const response = actionErrorFromException(error, t, {
+      body: ["message"],
     });
 
     return actionError(response.message, response.fields);

@@ -2,6 +2,7 @@ import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common"
 import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
+import { UpdateChatAppearanceDto } from "./dto/update-chat-appearance.dto";
 import { UpdateSettingsDto } from "./dto/update-settings.dto";
 import { UpsertUserDto } from "./dto/upsert-user.dto";
 import { UsersService } from "./users.service";
@@ -30,6 +31,12 @@ export class UsersController {
   @Patch("settings/profile")
   async updateSettings(@CurrentUser() user: RequestUser, @Body() dto: UpdateSettingsDto) {
     await this.usersService.updateSettings(user, dto);
+    return { success: true };
+  }
+
+  @Patch("settings/chat-appearance")
+  async updateChatAppearance(@CurrentUser() user: RequestUser, @Body() dto: UpdateChatAppearanceDto) {
+    await this.usersService.updateChatAppearance(user, dto);
     return { success: true };
   }
 }
