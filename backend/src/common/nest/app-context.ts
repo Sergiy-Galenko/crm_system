@@ -5,6 +5,7 @@ import { ActivityLogService } from "@backend/common/activity/activity-log.servic
 import { PrismaService } from "@backend/common/database/prisma.service";
 import { AuthService } from "@backend/modules/auth/auth.service";
 import { ChatService } from "@backend/modules/chat/chat.service";
+import { CommentsService } from "@backend/modules/comments/comments.service";
 import { ClientsService } from "@backend/modules/clients/clients.service";
 import { DealsService } from "@backend/modules/deals/deals.service";
 import { LeadsService } from "@backend/modules/leads/leads.service";
@@ -17,6 +18,7 @@ type BackendProviders = {
   activityLogService: ActivityLogService;
   authService: AuthService;
   chatService: ChatService;
+  commentsService: CommentsService;
   clientsService: ClientsService;
   leadsService: LeadsService;
   promoCodesService: PromoCodesService;
@@ -36,6 +38,7 @@ async function createProviders(): Promise<BackendProviders> {
   const activityLogService = new ActivityLogService();
   const authService = new AuthService(prismaService, activityLogService);
   const chatService = new ChatService(prismaService);
+  const commentsService = new CommentsService(prismaService, activityLogService);
   const clientsService = new ClientsService(prismaService, activityLogService);
   const leadsService = new LeadsService(prismaService, activityLogService);
   const promoCodesService = new PromoCodesService(prismaService, activityLogService);
@@ -48,6 +51,7 @@ async function createProviders(): Promise<BackendProviders> {
     activityLogService,
     authService,
     chatService,
+    commentsService,
     clientsService,
     leadsService,
     promoCodesService,
@@ -77,6 +81,7 @@ export async function resolveProvider<T>(provider: Type<T> | symbol | string) {
     [ActivityLogService, providers.activityLogService],
     [AuthService, providers.authService],
     [ChatService, providers.chatService],
+    [CommentsService, providers.commentsService],
     [ClientsService, providers.clientsService],
     [LeadsService, providers.leadsService],
     [PromoCodesService, providers.promoCodesService],

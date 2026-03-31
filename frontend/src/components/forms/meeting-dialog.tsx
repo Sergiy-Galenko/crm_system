@@ -36,6 +36,7 @@ type MeetingDialogProps = {
   };
   triggerLabel?: string;
   hideClientField?: boolean;
+  onSuccess?: () => void;
 };
 
 export function MeetingDialog({
@@ -45,6 +46,7 @@ export function MeetingDialog({
   meeting,
   triggerLabel = "New meeting",
   hideClientField = false,
+  onSuccess,
 }: MeetingDialogProps) {
   const [state, formAction] = useActionState(upsertMeetingAction, idleActionState);
   const { t } = useLocale();
@@ -61,6 +63,7 @@ export function MeetingDialog({
       description={t("Plan the slot first. Links, notes, and outcome stay tucked away until you actually need them.")}
       state={state}
       contentClassName="max-w-[52rem] p-6 sm:p-7"
+      onSuccess={onSuccess}
     >
       {() => (
         <form action={formAction} className="grid gap-6">

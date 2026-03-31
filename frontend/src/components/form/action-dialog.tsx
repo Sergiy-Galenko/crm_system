@@ -12,6 +12,7 @@ export function ActionDialog<T = undefined>({
   children,
   state,
   contentClassName,
+  onSuccess,
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -19,6 +20,7 @@ export function ActionDialog<T = undefined>({
   children: (close: () => void) => React.ReactNode;
   state?: ActionResult<T>;
   contentClassName?: string;
+  onSuccess?: (state: ActionResult<T>) => void;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -31,12 +33,13 @@ export function ActionDialog<T = undefined>({
 
     if (currentState.success) {
       toast.success(currentState.message);
+      onSuccess?.(currentState);
       setOpen(false);
       return;
     }
 
     toast.error(currentState.message);
-  }, [state]);
+  }, [onSuccess, state]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

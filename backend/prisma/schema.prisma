@@ -146,6 +146,7 @@ model User {
   chatParticipations ChatParticipant[] @relation("ChatParticipantUser")
   chatMessages      ChatMessage[]    @relation("ChatMessageSender")
   notes             Note[]           @relation("NoteAuthor")
+  recordComments    RecordComment[]
   createdPromoCodes PromoCode[]      @relation("PromoCodeCreator")
   promoUsages       PromoCodeUsage[] @relation("PromoCodeAppliedBy")
   activities        ActivityLog[]    @relation("ActivityActor")
@@ -259,6 +260,7 @@ model Task {
   client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   deal         Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  comments     RecordComment[]
 
   @@index([status])
   @@index([priority])
@@ -285,11 +287,31 @@ model Meeting {
   client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assignedTo   User          @relation("MeetingAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
   createdBy    User          @relation("MeetingCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  comments     RecordComment[]
 
   @@index([startsAt])
   @@index([status])
   @@index([clientId])
   @@index([assignedToId])
+}
+
+model RecordComment {
+  id             String   @id @default(cuid())
+  body           String
+  editedAt       DateTime?
+  mentionUserIds String[] @default([])
+  authorId       String
+  taskId         String?
+  meetingId      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  author         User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  task           Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  meeting        Meeting? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([taskId, createdAt])
+  @@index([meetingId, createdAt])
 }
 
 model ChatConversation {

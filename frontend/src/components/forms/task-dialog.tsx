@@ -6,13 +6,13 @@ import { ActionDialog } from "@/components/form/action-dialog";
 import { FormField } from "@/components/form/form-field";
 import { SubmitButton } from "@/components/form/submit-button";
 import { useLocale } from "@/components/providers/locale-provider";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { idleActionState } from "@/lib/actions";
 import { taskPriorities, taskStatuses } from "@/lib/constants";
-import { toDateInputValue } from "@/lib/utils";
+import { cn, toDateInputValue } from "@/lib/utils";
 
 export function TaskDialog({
   users,
@@ -24,6 +24,10 @@ export function TaskDialog({
   task,
   showLinkedRecords = false,
   triggerLabel = "Add task",
+  triggerVariant,
+  triggerSize,
+  triggerClassName,
+  onSuccess,
 }: {
   users: Array<{ id: string; name: string; email?: string | null }>;
   clients?: Array<{ id: string; company: string }>;
@@ -51,6 +55,10 @@ export function TaskDialog({
   };
   showLinkedRecords?: boolean;
   triggerLabel?: string;
+  triggerVariant?: ButtonProps["variant"];
+  triggerSize?: ButtonProps["size"];
+  triggerClassName?: string;
+  onSuccess?: () => void;
 }) {
   const [state, formAction] = useActionState(upsertTaskAction, idleActionState);
   const { t } = useLocale();
@@ -69,7 +77,12 @@ export function TaskDialog({
   return (
     <ActionDialog
       trigger={
-        <Button type="button" variant={task ? "secondary" : "primary"} className={task ? "rounded-xl" : "rounded-2xl"}>
+        <Button
+          type="button"
+          variant={triggerVariant ?? (task ? "secondary" : "primary")}
+          size={triggerSize ?? (task ? "sm" : "default")}
+          className={cn(task ? "rounded-xl" : "rounded-2xl", triggerClassName)}
+        >
           {t(triggerLabel)}
         </Button>
       }
@@ -77,6 +90,7 @@ export function TaskDialog({
       description={t("Keep task setup lightweight. The core execution fields stay up front, while extra context is tucked away until you need it.")}
       state={state}
       contentClassName="max-w-2xl"
+      onSuccess={onSuccess}
     >
       {() => (
         <form action={formAction} className="grid gap-4">
