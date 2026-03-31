@@ -176,12 +176,12 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
         <MetricCard label={t("Status")} value={t(client.status)} meta={client.segment ?? t("No segment set")} />
         <MetricCard
           label={t("Monthly value")}
-          value={formatCurrency(decimalToNumber(client.monthlyValue))}
+          value={formatCurrency(decimalToNumber(client.monthlyValue), "USD", locale)}
           meta={t("Current recurring account value.")}
         />
         <MetricCard
           label={t("Total revenue")}
-          value={formatCurrency(decimalToNumber(client.totalRevenue))}
+          value={formatCurrency(decimalToNumber(client.totalRevenue), "USD", locale)}
           meta={t("Won revenue attached to this client.")}
           tone="brand"
         />
@@ -210,8 +210,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                       <StatusBadge value={deal.stage} />
                     </div>
                     <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
-                      <span>{t("Gross")} {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency)}</span>
-                      <span>{t("Net")} {formatCurrency(decimalToNumber(deal.netAmount), deal.currency)}</span>
+                      <span>{t("Gross")} {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency, locale)}</span>
+                      <span>{t("Net")} {formatCurrency(decimalToNumber(deal.netAmount), deal.currency, locale)}</span>
                       <span>{deal.promoCode?.code ? `${t("Promo")} ${deal.promoCode.code}` : t("No promo")}</span>
                       <span>{deal.closeDate ? formatDate(deal.closeDate, locale) : t("No close date")}</span>
                     </div>
@@ -396,7 +396,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                       <StatusBadge value={lead.status} />
                     </div>
                     <p className="mt-3 text-sm text-slate-500">
-                      {t("Source")} {t(lead.source)} • {t("est.")} {formatCurrency(decimalToNumber(lead.estimatedValue))}
+                      {t("Source")} {t(lead.source)} • {t("est.")} {formatCurrency(decimalToNumber(lead.estimatedValue), "USD", locale)}
                     </p>
                   </div>
                 ))

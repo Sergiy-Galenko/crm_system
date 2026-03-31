@@ -153,7 +153,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     <TableCell>
                       <StatusBadge value={lead.status} />
                     </TableCell>
-                    <TableCell>{formatCurrency(decimalToNumber(lead.estimatedValue))}</TableCell>
+                    <TableCell>{formatCurrency(decimalToNumber(lead.estimatedValue), "USD", locale)}</TableCell>
                     <TableCell>{lead.owner.name}</TableCell>
                     <TableCell>{lead.nextFollowUpAt ? formatDate(lead.nextFollowUpAt, locale) : t("Not scheduled")}</TableCell>
                     <TableCell className="text-right">

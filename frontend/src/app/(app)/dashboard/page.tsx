@@ -139,12 +139,12 @@ export default async function DashboardPage() {
       />
 
       <div className="grid gap-4 xl:grid-cols-4">
-        <MetricCard label={t("Leads")} value={formatNumber(leadsCount)} meta={t("Active inbound and outbound opportunities.")} />
-        <MetricCard label={t("Clients")} value={formatNumber(clientsCount)} meta={t("Accounts under active management.")} />
-        <MetricCard label={t("Deals")} value={formatNumber(dealsCount)} meta={t("Full pipeline including won and lost.")} />
+        <MetricCard label={t("Leads")} value={formatNumber(leadsCount, locale)} meta={t("Active inbound and outbound opportunities.")} />
+        <MetricCard label={t("Clients")} value={formatNumber(clientsCount, locale)} meta={t("Accounts under active management.")} />
+        <MetricCard label={t("Deals")} value={formatNumber(dealsCount, locale)} meta={t("Full pipeline including won and lost.")} />
         <MetricCard
           label={t("Revenue")}
-          value={formatCurrency(revenueValue)}
+          value={formatCurrency(revenueValue, "USD", locale)}
           meta={t("Net value from won deals.")}
           tone="brand"
         />
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
                 <p className="text-2xl font-semibold tracking-tight text-slate-950">
-                  {formatNumber(promoUsageAggregate._sum.usedCount ?? 0)}
+                  {formatNumber(promoUsageAggregate._sum.usedCount ?? 0, locale)}
                 </p>
               </div>
             </div>
@@ -249,8 +249,8 @@ export default async function DashboardPage() {
                 <span>{promoCode.usedCount} {t("usages")}</span>
                 <span>
                   {promoCode.discountType === "PERCENT"
-                    ? `${decimalToNumber(promoCode.discountValue)}% off`
-                    : formatCurrency(decimalToNumber(promoCode.discountValue))}
+                    ? `${decimalToNumber(promoCode.discountValue)}%`
+                    : formatCurrency(decimalToNumber(promoCode.discountValue), "USD", locale)}
                 </span>
               </div>
             </div>

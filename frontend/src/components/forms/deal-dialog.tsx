@@ -59,7 +59,7 @@ export function DealDialog({
   triggerLabel?: string;
 }) {
   const [state, formAction] = useActionState(upsertDealAction, idleActionState);
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [promoCode, setPromoCode] = React.useState(deal?.promoCode ?? "");
   const [grossAmount, setGrossAmount] = React.useState(String(deal?.grossAmount ?? ""));
   const [promoPreview, setPromoPreview] = React.useState<PromoPreview>(null);
@@ -231,14 +231,14 @@ export function DealDialog({
                         discount:
                           promoPreview.type === "PERCENT"
                             ? `${promoPreview.value}%`
-                            : formatCurrency(promoPreview.value),
+                            : formatCurrency(promoPreview.value, "USD", locale),
                       })}
                     </p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <Badge variant="success">
-                        {t("Discount {amount}", { amount: formatCurrency(promoPreview.discountAmount) })}
+                        {t("Discount {amount}", { amount: formatCurrency(promoPreview.discountAmount, "USD", locale) })}
                       </Badge>
-                      <Badge variant="info">{t("Net {amount}", { amount: formatCurrency(promoPreview.finalAmount) })}</Badge>
+                      <Badge variant="info">{t("Net {amount}", { amount: formatCurrency(promoPreview.finalAmount, "USD", locale) })}</Badge>
                     </div>
                   </div>
                 ) : (

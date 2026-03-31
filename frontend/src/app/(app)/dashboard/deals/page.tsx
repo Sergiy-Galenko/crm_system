@@ -164,10 +164,10 @@ export default async function DealsPage({ searchParams }: DealsPageProps) {
                       <StatusBadge value={deal.stage} />
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium text-slate-950">{formatCurrency(decimalToNumber(deal.netAmount), deal.currency)}</p>
+                      <p className="font-medium text-slate-950">{formatCurrency(decimalToNumber(deal.netAmount), deal.currency, locale)}</p>
                       <div className="mt-1 text-xs text-slate-500">
-                        {t("Gross")} {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency)} • {t("Discount")}{" "}
-                        {formatCurrency(decimalToNumber(deal.discountAmount), deal.currency)}
+                        {t("Gross")} {formatCurrency(decimalToNumber(deal.grossAmount), deal.currency, locale)} • {t("Discount")}{" "}
+                        {formatCurrency(decimalToNumber(deal.discountAmount), deal.currency, locale)}
                       </div>
                     </TableCell>
                     <TableCell>{deal.promoCode?.code ?? t("No promo")}</TableCell>

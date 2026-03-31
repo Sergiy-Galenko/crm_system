@@ -10,6 +10,7 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "prisma generate --config backend/prisma.config.ts && next build frontend",
     "build:backend": "prisma generate --config backend/prisma.config.ts && tsc -p backend/tsconfig.build.json",
+    "i18n:check": "node scripts/i18n-check.mjs",
     "start": "next start frontend",
     "start:frontend": "next start frontend",
     "start:backend": "node backend/dist/main.js",

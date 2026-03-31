@@ -1,6 +1,5 @@
 import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
-import { enUS, uk as ukLocale } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, getDateLocale } from "@/lib/utils";
 import type { Locale } from "@/lib/locale";
 
 type MeetingCalendarItem = {
@@ -12,11 +11,6 @@ type MeetingCalendarItem = {
     company: string;
   };
 };
-
-const localeMap = {
-  en: enUS,
-  uk: ukLocale,
-} as const;
 
 const statusToneMap: Record<string, string> = {
   SCHEDULED: "border-[var(--ui-badge-info-border)] bg-[var(--ui-badge-info-bg)] text-[var(--ui-badge-info-text)]",
@@ -42,7 +36,7 @@ export function MeetingCalendar({
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const weekDays = Array.from({ length: 7 }, (_, index) =>
-    format(days[index]!, "EEE", { locale: localeMap[locale] }),
+    format(days[index]!, "EEE", { locale: getDateLocale(locale) }),
   );
 
   return (

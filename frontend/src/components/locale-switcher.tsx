@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Locale } from "@/lib/locale";
+import { localeLabelKeys, supportedLocales, type Locale } from "@/lib/locale";
 
 export function LocaleSwitcher() {
   const router = useRouter();
@@ -46,12 +46,11 @@ export function LocaleSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleChange("en")}>
-          {t("English")} {locale === "en" ? "•" : ""}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleChange("uk")}>
-          {t("Українська")} {locale === "uk" ? "•" : ""}
-        </DropdownMenuItem>
+        {supportedLocales.map((item) => (
+          <DropdownMenuItem key={item} onClick={() => handleChange(item)}>
+            {t(localeLabelKeys[item])} {locale === item ? "•" : ""}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

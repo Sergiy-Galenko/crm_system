@@ -2,11 +2,12 @@ import type { Prisma } from "@prisma/client";
 import { isToday, isYesterday } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getParam, createPageHref, type SearchParamsRecord } from "@/lib/query-params";
-import { formatDate, fromNow } from "@/lib/utils";
+import { formatDate, formatMonthDay, fromNow } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { ChatWorkspace } from "@/components/chat/chat-workspace";
 import type { ActiveConversation, ChatBackgroundPreference, ChatConversationListItem, ChatMessageItem, ChatUser } from "@/components/chat/chat-types";
 import { getServerTranslator } from "@/lib/locale-server";
+import type { Locale } from "@/lib/locale";
 import { requireUser } from "@/lib/session";
 import { chatUsersWhere } from "@/lib/crm-scope";
 
@@ -145,7 +146,7 @@ function getConversationSubtitle(
 function getConversationStatus(
   conversation: ConversationLike,
   currentUserId: string,
-  locale: "en" | "uk",
+  locale: Locale,
   t: (key: string, values?: Record<string, string | number>) => string,
 ) {
   if (conversation.type === "GROUP") {
@@ -195,7 +196,7 @@ function getMessagePreview(
 
 function getMessageGroupLabel(
   value: Date,
-  locale: "en" | "uk",
+  locale: Locale,
   t: (key: string, values?: Record<string, string | number>) => string,
 ) {
   if (isToday(value)) {
@@ -206,7 +207,7 @@ function getMessageGroupLabel(
     return t("Yesterday");
   }
 
-  return formatDate(value, locale, locale === "uk" ? "d MMMM" : "MMM d");
+  return formatMonthDay(value, locale);
 }
 
 function getReplyPreview(
@@ -231,7 +232,7 @@ function getReplyPreview(
 function mapConversationListItem(
   conversation: ConversationListItem,
   currentUserId: string,
-  locale: "en" | "uk",
+  locale: Locale,
   searchParams: SearchParamsRecord,
   lastReadAtByConversationId: Map<string, Date>,
   t: (key: string, values?: Record<string, string | number>) => string,
@@ -258,7 +259,7 @@ function mapConversationListItem(
 function mapActiveConversation(
   conversation: ConversationDetail,
   currentUserId: string,
-  locale: "en" | "uk",
+  locale: Locale,
   lastReadAtByConversationId: Map<string, Date>,
   backgroundPreference: ChatBackgroundPreference,
   t: (key: string, values?: Record<string, string | number>) => string,

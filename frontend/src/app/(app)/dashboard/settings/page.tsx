@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { getParam, type SearchParamsRecord } from "@/lib/query-params";
 import { requireUser } from "@/lib/session";
+import { formatIntlDate } from "@/lib/utils";
 
 export default async function SettingsPage({
   searchParams,
@@ -140,7 +141,7 @@ export default async function SettingsPage({
                           <StatusBadge value={member.role} label={member.roleLabel} />
                         </TableCell>
                         <TableCell>{member.title ?? t("No title")}</TableCell>
-                        <TableCell>{member.createdAt.toLocaleDateString(locale === "uk" ? "uk-UA" : "en-US", { month: "short", day: "numeric", year: "numeric" })}</TableCell>
+                        <TableCell>{formatIntlDate(member.createdAt, locale, { month: "short", day: "numeric", year: "numeric" })}</TableCell>
                         <TableCell className="text-right">
                           <UserDialog
                             canAssignAdmin={canAssignAdmin}

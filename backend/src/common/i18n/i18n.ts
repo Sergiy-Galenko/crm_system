@@ -1,7 +1,23 @@
 import type { Locale } from "./locale";
+import { de, fr, pl, ukExtra } from "./translation-catalogs";
 
 type TranslationValues = Record<string, string | number>;
 type TranslationDictionary = Record<string, string>;
+
+const ukFixed: TranslationDictionary = {
+  "Abstract": "Абстрактний",
+  "Admin": "Адмін",
+  "Bio": "Біо",
+  "Company A-Z": "Компанії від A до Z",
+  "Connected leads": "Пов'язані ліди",
+  "Open meetings": "Заплановані міти",
+  "Open work": "Активна робота",
+  "Profile settings": "Налаштування профілю",
+  "Recent activity": "Остання активність",
+  "Revenue": "Виручка",
+  "Value": "Вартість",
+  "View analytics": "Переглянути аналітику",
+};
 
 const uk: TranslationDictionary = {
   "English": "English",
@@ -513,7 +529,14 @@ const uk: TranslationDictionary = {
 
 const dictionaries: Record<Locale, TranslationDictionary> = {
   en: {},
-  uk,
+  uk: {
+    ...uk,
+    ...ukExtra,
+    ...ukFixed,
+  },
+  pl,
+  de,
+  fr,
 };
 
 export function translate(locale: Locale, key: string, values?: TranslationValues) {

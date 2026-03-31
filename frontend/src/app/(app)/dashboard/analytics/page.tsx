@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
-import { decimalToNumber, formatCurrency, formatNumber } from "@/lib/utils";
+import { decimalToNumber, formatCurrency, formatIntlDate, formatNumber } from "@/lib/utils";
 
 export default async function AnalyticsPage() {
   const user = await requireUser();
@@ -78,10 +78,10 @@ export default async function AnalyticsPage() {
       />
 
       <div className="grid gap-4 xl:grid-cols-4">
-        <MetricCard label={t("Won revenue")} value={formatCurrency(wonDeals.reduce((sum, deal) => sum + decimalToNumber(deal.netAmount), 0))} meta={t("Net value from won deals.")} />
+        <MetricCard label={t("Won revenue")} value={formatCurrency(wonDeals.reduce((sum, deal) => sum + decimalToNumber(deal.netAmount), 0), "USD", locale)} meta={t("Net value from won deals.")} />
         <MetricCard label={t("Win rate")} value={`${Math.round(winRate)}%`} meta={t("Leads converted to won.")} />
-        <MetricCard label={t("Average deal")} value={formatCurrency(averageDealSize)} meta={t("Mean net size of won deals.")} tone="brand" />
-        <MetricCard label={t("Promo usages")} value={formatNumber(promoCodes.reduce((sum, promoCode) => sum + promoCode.usedCount, 0))} meta={t("Tracked discount applications.")} />
+        <MetricCard label={t("Average deal")} value={formatCurrency(averageDealSize, "USD", locale)} meta={t("Mean net size of won deals.")} tone="brand" />
+        <MetricCard label={t("Promo usages")} value={formatNumber(promoCodes.reduce((sum, promoCode) => sum + promoCode.usedCount, 0), locale)} meta={t("Tracked discount applications.")} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -140,9 +140,9 @@ export default async function AnalyticsPage() {
                   <StatusBadge value="ACTIVE" />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
-                  <span>{t("Deal amount")} {formatCurrency(decimalToNumber(usage.dealAmount))}</span>
-                  <span>{t("Discount")} {formatCurrency(decimalToNumber(usage.discountAmount))}</span>
-                  <span>{usage.usedAt.toLocaleDateString(locale === "uk" ? "uk-UA" : "en-US", { month: "short", day: "numeric" })}</span>
+                  <span>{t("Deal amount")} {formatCurrency(decimalToNumber(usage.dealAmount), "USD", locale)}</span>
+                  <span>{t("Discount")} {formatCurrency(decimalToNumber(usage.discountAmount), "USD", locale)}</span>
+                  <span>{formatIntlDate(usage.usedAt, locale, { month: "short", day: "numeric" })}</span>
                 </div>
               </div>
             ))}
@@ -165,7 +165,7 @@ export default async function AnalyticsPage() {
                   <span>
                     {promoCode.discountType === "PERCENT"
                       ? `${decimalToNumber(promoCode.discountValue)}%`
-                      : formatCurrency(decimalToNumber(promoCode.discountValue))}
+                      : formatCurrency(decimalToNumber(promoCode.discountValue), "USD", locale)}
                   </span>
                 </div>
               </div>

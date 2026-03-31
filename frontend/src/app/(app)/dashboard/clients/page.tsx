@@ -149,9 +149,9 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                       <StatusBadge value={client.status} />
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium text-slate-950">{formatCurrency(decimalToNumber(client.monthlyValue))}/mo</p>
+                      <p className="font-medium text-slate-950">{formatCurrency(decimalToNumber(client.monthlyValue), "USD", locale)}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {formatCurrency(decimalToNumber(client.totalRevenue))} {t("total")}
+                        {formatCurrency(decimalToNumber(client.totalRevenue), "USD", locale)} {t("total")}
                       </p>
                     </TableCell>
                     <TableCell>

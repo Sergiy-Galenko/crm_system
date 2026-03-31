@@ -120,7 +120,7 @@ export default async function PromoCodesPage({ searchParams }: PromoCodesPagePro
                     <TableCell>
                       {promoCode.discountType === "PERCENT"
                         ? `${decimalToNumber(promoCode.discountValue)}%`
-                        : formatCurrency(decimalToNumber(promoCode.discountValue))}
+                        : formatCurrency(decimalToNumber(promoCode.discountValue), "USD", locale)}
                     </TableCell>
                     <TableCell>
                       <StatusBadge value={promoCode.active ? "ACTIVE" : "INACTIVE"} />
