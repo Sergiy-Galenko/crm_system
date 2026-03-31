@@ -52,7 +52,7 @@ function fileToDataUrl(file: File) {
 }
 
 function getDraftStorageKey(conversationId: string) {
-  return `nexora-chat-draft:${conversationId}`;
+  return `koru-chat-draft:${conversationId}`;
 }
 
 function getInitialMessageBody(conversationId: string, editingMessage?: ChatMessageItem | null) {

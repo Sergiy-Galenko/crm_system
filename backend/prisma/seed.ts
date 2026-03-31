@@ -41,7 +41,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       name: "Olivia Hart",
-      email: "admin@nexoracrm.dev",
+      email: "admin@korucrm.dev",
       nickname: "olivia",
       passwordHash,
       role: Role.ADMIN,
@@ -57,7 +57,7 @@ async function main() {
   const manager = await prisma.user.create({
     data: {
       name: "Noah Bennett",
-      email: "manager@nexoracrm.dev",
+      email: "manager@korucrm.dev",
       nickname: "noah",
       passwordHash: managerPasswordHash,
       role: Role.MANAGER,
@@ -525,8 +525,8 @@ async function main() {
   });
 
   console.log("Seed complete.");
-  console.log("Admin login: admin@nexoracrm.dev / Admin@12345");
-  console.log("Manager login: manager@nexoracrm.dev / Manager@12345");
+  console.log("Admin login: admin@korucrm.dev / Admin@12345");
+  console.log("Manager login: manager@korucrm.dev / Manager@12345");
 }
 
 main()

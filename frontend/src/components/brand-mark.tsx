@@ -19,7 +19,7 @@ export function BrandMark({
       <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] shadow-[var(--ui-shadow-xs)]">
         <Image
           src="/icon.svg"
-          alt="Nexora CRM logo"
+          alt="Koru logo"
           width={40}
           height={40}
           className="h-full w-full"
@@ -27,7 +27,7 @@ export function BrandMark({
         />
       </div>
       <div>
-        <p className="text-sm font-semibold tracking-[0.08em] text-[var(--ui-text-strong)]">NEXORA CRM</p>
+        <p className="text-sm font-semibold tracking-[0.12em] text-[var(--ui-text-strong)]">KORU</p>
         <p className="text-xs text-[var(--ui-text-muted)]">{t("Workspace")}</p>
       </div>
     </Link>

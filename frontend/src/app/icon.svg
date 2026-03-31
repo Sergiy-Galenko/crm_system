@@ -1,17 +1,45 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#18233A" />
-      <stop offset="1" stop-color="#0A1221" />
+    <linearGradient id="bg" x1="72" y1="56" x2="432" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#173D38" />
+      <stop offset="0.52" stop-color="#0F2D2A" />
+      <stop offset="1" stop-color="#081918" />
     </linearGradient>
-    <linearGradient id="shine" x1="112" y1="88" x2="384" y2="424" gradientUnits="userSpaceOnUse">
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(206 182) rotate(46.1) scale(242.576 219.297)">
+      <stop stop-color="#8FF6CF" stop-opacity="0.28" />
+      <stop offset="1" stop-color="#8FF6CF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="leaf" x1="173" y1="152" x2="389" y2="385" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4FFF8" />
+      <stop offset="1" stop-color="#B6F1D1" />
+    </linearGradient>
+    <linearGradient id="edge" x1="120" y1="76" x2="388" y2="428" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF" stop-opacity="0.24" />
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
     </linearGradient>
   </defs>
 
   <rect width="512" height="512" rx="136" fill="url(#bg)" />
-  <rect x="28" y="28" width="456" height="456" rx="108" stroke="url(#shine)" stroke-width="8" />
-  <path d="M144 150H192L320 309.5V150H368V362H320L192 202.5V362H144V150Z" fill="white" />
-  <path d="M312 150H368L231.5 362H176L312 150Z" fill="#C7D2FE" fill-opacity="0.92" />
+  <rect width="512" height="512" rx="136" fill="url(#glow)" />
+  <rect x="28" y="28" width="456" height="456" rx="108" stroke="url(#edge)" stroke-width="8" />
+
+  <path
+    d="M170 198C214 146 296 124 372 148C386 223 368 307 310 372C256 433 189 437 156 393C130 357 134 282 170 198Z"
+    fill="#D8FFF0"
+    fill-opacity="0.12"
+  />
+  <path
+    d="M334 154C278 131 219 144 181 186C145 225 134 280 152 330C173 385 223 422 281 422C330 422 373 394 390 351C404 316 397 279 372 252C349 228 313 219 282 231C256 242 237 266 233 292C229 318 241 343 262 357C281 370 305 370 323 358C338 347 349 329 349 312C349 297 342 284 330 276"
+    stroke="url(#leaf)"
+    stroke-width="34"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M309 168C280 163 251 170 228 187C200 208 185 240 186 273"
+    stroke="#8FF6CF"
+    stroke-opacity="0.72"
+    stroke-width="12"
+    stroke-linecap="round"
+  />
 </svg>

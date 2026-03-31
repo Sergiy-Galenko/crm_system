@@ -1,4 +1,4 @@
-# Nexora CRM
+# Koru
 
 Minimalist full-stack CRM built with Next.js App Router, TypeScript, Tailwind CSS, Prisma, PostgreSQL, and secure JWT auth with HTTP-only cookies.
 
@@ -29,8 +29,8 @@ It includes:
 
 ## Demo credentials
 
-- Admin: `admin@nexoracrm.dev` / `Admin@12345`
-- Manager: `manager@nexoracrm.dev` / `Manager@12345`
+- Admin: `admin@korucrm.dev` / `Admin@12345`
+- Manager: `manager@korucrm.dev` / `Manager@12345`
 
 ## Environment variables
 
@@ -49,9 +49,9 @@ Required variables:
 Example:
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nexora_crm?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_crm?schema=public"
 JWT_SECRET="replace-with-a-long-random-string"
-NEXT_PUBLIC_APP_NAME="Nexora CRM"
+NEXT_PUBLIC_APP_NAME="Koru"
 ```
 
 ## Local setup
