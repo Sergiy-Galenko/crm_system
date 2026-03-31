@@ -13,9 +13,9 @@ const buttonVariants = cva(
         primary:
           "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-brand-hover)]",
         secondary:
-          "border-[var(--ui-border)] bg-[var(--ui-surface-solid)] text-[var(--ui-text)] shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-surface-hover)]",
+          "border-[var(--ui-border)] bg-[var(--ui-surface-elevated)] text-[var(--ui-text)] shadow-[var(--ui-shadow-xs)] hover:border-[var(--ui-border-strong)] hover:bg-[var(--ui-surface-hover)]",
         subtle:
-          "border-transparent bg-[var(--ui-surface-muted)] text-[var(--ui-text)] hover:bg-[var(--ui-surface-hover)]",
+          "border-transparent bg-[var(--ui-surface-soft)] text-[var(--ui-text)] hover:bg-[var(--ui-surface-hover)]",
         ghost: "border-transparent text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-muted)] hover:text-[var(--ui-text-strong)]",
         danger:
           "border-transparent bg-[var(--ui-danger)] text-white shadow-[var(--ui-shadow-xs)] hover:bg-[var(--ui-danger-hover)]",

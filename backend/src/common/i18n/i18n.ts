@@ -23,6 +23,7 @@ const uk: TranslationDictionary = {
   "Revenue cockpit": "Панель виручки",
   "Clean pipeline visibility, promo performance, and account execution in one place.": "Чиста видимість пайплайну, ефективність промокодів і робота з акаунтами в одному місці.",
   "Dashboard": "Дашборд",
+  "Main menu": "Головне меню",
   "Clients": "Клієнти",
   "Leads": "Ліди",
   "Deals": "Угоди",

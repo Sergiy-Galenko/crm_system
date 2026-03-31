@@ -16,7 +16,7 @@ export const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-50 bg-[var(--ui-overlay)] backdrop-blur-sm", className)}
+    className={cn("fixed inset-0 z-50 bg-[var(--ui-overlay)] backdrop-blur-md", className)}
     {...props}
   />
 ));
@@ -32,13 +32,13 @@ export const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-6 shadow-[var(--ui-shadow-strong)] backdrop-blur-xl",
+        "fixed left-1/2 top-1/2 z-50 grid max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-[2rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,var(--ui-surface-elevated),var(--ui-surface-solid))] p-6 shadow-[var(--ui-shadow-strong)] backdrop-blur-xl sm:p-7",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-2 text-[var(--ui-text-soft)] transition hover:bg-[var(--ui-surface-muted)] hover:text-[var(--ui-text)]">
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full border border-transparent p-2 text-[var(--ui-text-soft)] transition hover:border-[var(--ui-border)] hover:bg-[var(--ui-surface-soft)] hover:text-[var(--ui-text)]">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -49,7 +49,7 @@ export const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("space-y-1", className)} {...props} />;
+  return <div className={cn("space-y-2", className)} {...props} />;
 }
 
 export const DialogTitle = React.forwardRef<
@@ -58,7 +58,7 @@ export const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold tracking-tight text-[var(--ui-text-strong)]", className)}
+    className={cn("text-2xl font-semibold tracking-tight text-[var(--ui-text-strong)] sm:text-[2rem]", className)}
     {...props}
   />
 ));
@@ -71,7 +71,7 @@ export const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm leading-6 text-[var(--ui-text-muted)]", className)}
+    className={cn("max-w-3xl text-base leading-8 text-[var(--ui-text-muted)]", className)}
     {...props}
   />
 ));

@@ -44,10 +44,12 @@ export class TasksService {
   async getTasks(user: RequestUser, dto: ListTasksDto) {
     const page = dto.page ?? 1;
     const limit = dto.limit ?? 12;
-    let assigneeWhere: Prisma.TaskWhereInput = {};
+    const where: Prisma.TaskWhereInput = {
+      ...taskAccessWhere(user),
+    };
 
     if (dto.assignedTo === "unassigned") {
-      assigneeWhere = { assignedToId: null };
+      where.assignedTo = null;
     } else if (dto.assignedTo) {
       const assignee = await this.prisma.user.findFirst({
         where: {
@@ -61,23 +63,23 @@ export class TasksService {
         throw new BadRequestException("That assignee is not in your team.");
       }
 
-      assigneeWhere = { assignedToId: dto.assignedTo };
+      where.assignedToId = dto.assignedTo;
     }
 
-    const where: Prisma.TaskWhereInput = {
-      ...taskAccessWhere(user),
-      ...assigneeWhere,
-      ...(dto.status ? { status: dto.status } : {}),
-      ...(dto.priority ? { priority: dto.priority } : {}),
-      ...(dto.search
-        ? {
-            OR: [
-              { title: { contains: dto.search, mode: "insensitive" } },
-              { description: { contains: dto.search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    };
+    if (dto.status) {
+      where.status = dto.status;
+    }
+
+    if (dto.priority) {
+      where.priority = dto.priority;
+    }
+
+    if (dto.search) {
+      where.OR = [
+        { title: { contains: dto.search, mode: "insensitive" } },
+        { description: { contains: dto.search, mode: "insensitive" } },
+      ];
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.task.findMany({

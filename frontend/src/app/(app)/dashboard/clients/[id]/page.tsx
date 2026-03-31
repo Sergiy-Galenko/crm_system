@@ -15,7 +15,7 @@ import { clientAccessWhere, leadAccessWhere, visibleUsersWhere } from "@/lib/crm
 import { prisma } from "@/lib/db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
-import { decimalToNumber, formatCurrency, formatDate, fromNow } from "@/lib/utils";
+import { decimalToNumber, formatCurrency, formatDate, fromNow, toDateInputValue } from "@/lib/utils";
 
 type ClientDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -25,6 +25,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   const { id } = await params;
   const user = await requireUser();
   const { locale, t } = await getServerTranslator();
+  const defaultDueDate = new Date();
+  defaultDueDate.setDate(defaultDueDate.getDate() + 1);
 
   const [client, users, leads, allClients] = await Promise.all([
     prisma.client.findFirst({
@@ -339,7 +341,11 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                 <h3 className="text-lg font-semibold text-slate-950">{t("Follow-ups")}</h3>
                 <p className="mt-1 text-sm text-slate-500">{t("Tasks keeping the account moving forward.")}</p>
               </div>
-              <TaskDialog users={users} defaults={{ clientId: client.id, assignedToId: client.ownerId }} />
+              <TaskDialog
+                users={users}
+                defaults={{ clientId: client.id, assignedToId: client.ownerId }}
+                defaultDueDate={toDateInputValue(defaultDueDate)}
+              />
             </div>
             <div className="mt-6 space-y-3">
               {client.tasks.length ? (

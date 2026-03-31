@@ -20,6 +20,7 @@ export function TaskDialog({
   leads,
   deals,
   defaults,
+  defaultDueDate,
   task,
   showLinkedRecords = false,
   triggerLabel = "Add task",
@@ -34,6 +35,7 @@ export function TaskDialog({
     leadId?: string;
     dealId?: string;
   };
+  defaultDueDate?: string;
   task?: {
     id: string;
     title: string;
@@ -53,6 +55,7 @@ export function TaskDialog({
   const [state, formAction] = useActionState(upsertTaskAction, idleActionState);
   const { t } = useLocale();
   const tagsValue = task?.tags?.join(", ") ?? "";
+  const dueDateValue = task?.dueDate ? toDateInputValue(task.dueDate) : defaultDueDate ?? "";
   const hasAdvancedFields = Boolean(
     task?.tags?.length
     || task?.clientId
@@ -65,7 +68,11 @@ export function TaskDialog({
 
   return (
     <ActionDialog
-      trigger={<Button variant={task ? "secondary" : "primary"}>{t(triggerLabel)}</Button>}
+      trigger={
+        <Button type="button" variant={task ? "secondary" : "primary"} className={task ? "rounded-xl" : "rounded-2xl"}>
+          {t(triggerLabel)}
+        </Button>
+      }
       title={t(task ? "Edit task" : "Create task")}
       description={t("Keep task setup lightweight. The core execution fields stay up front, while extra context is tucked away until you need it.")}
       state={state}
@@ -77,20 +84,31 @@ export function TaskDialog({
           {!showLinkedRecords ? <input type="hidden" name="clientId" value={task?.clientId ?? defaults?.clientId ?? ""} /> : null}
           {!showLinkedRecords ? <input type="hidden" name="leadId" value={task?.leadId ?? defaults?.leadId ?? ""} /> : null}
           {!showLinkedRecords ? <input type="hidden" name="dealId" value={task?.dealId ?? defaults?.dealId ?? ""} /> : null}
-          <div className="grid gap-4 rounded-[1.75rem] border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
+          {state.message && !state.success ? (
+            <div className="rounded-[1.35rem] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+              {state.message}
+            </div>
+          ) : null}
+          <div className="grid gap-4 rounded-[1.9rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,var(--ui-surface-elevated),var(--ui-surface-soft))] p-4 shadow-[var(--ui-shadow-xs)] md:grid-cols-2 md:p-5">
             <FormField label={t("Task title")} error={state.fields?.title} className="md:col-span-2">
-              <Input name="title" defaultValue={task?.title} placeholder={t("Prepare proposal review")} />
+              <Input
+                name="title"
+                defaultValue={task?.title}
+                placeholder={t("Prepare proposal review")}
+                className="rounded-[1.1rem] shadow-none"
+                required
+              />
             </FormField>
             <FormField label={t("Short description")} className="md:col-span-2">
               <Textarea
                 name="description"
                 defaultValue={task?.description ?? ""}
-                className="min-h-24"
+                className="min-h-28 rounded-[1.1rem] shadow-none"
                 placeholder={t("Add just enough context so the assignee knows the next move.")}
               />
             </FormField>
             <FormField label={t("Status")}>
-              <Select name="status" defaultValue={task?.status ?? "TODO"}>
+              <Select name="status" defaultValue={task?.status ?? "TODO"} className="rounded-[1.1rem] shadow-none">
                 {taskStatuses.map((status) => (
                   <option key={status} value={status}>
                     {t(status)}
@@ -99,7 +117,7 @@ export function TaskDialog({
               </Select>
             </FormField>
             <FormField label={t("Priority")}>
-              <Select name="priority" defaultValue={task?.priority ?? "MEDIUM"}>
+              <Select name="priority" defaultValue={task?.priority ?? "MEDIUM"} className="rounded-[1.1rem] shadow-none">
                 {taskPriorities.map((priority) => (
                   <option key={priority} value={priority}>
                     {t(priority)}
@@ -108,10 +126,20 @@ export function TaskDialog({
               </Select>
             </FormField>
             <FormField label={t("Due date")} error={state.fields?.dueDate}>
-              <Input name="dueDate" type="date" defaultValue={toDateInputValue(task?.dueDate)} />
+              <Input
+                name="dueDate"
+                type="date"
+                defaultValue={dueDateValue}
+                className="rounded-[1.1rem] shadow-none"
+                required
+              />
             </FormField>
             <FormField label={t("Assignee")} error={state.fields?.assignedToId}>
-              <Select name="assignedToId" defaultValue={task?.assignedToId ?? defaults?.assignedToId ?? ""}>
+              <Select
+                name="assignedToId"
+                defaultValue={task?.assignedToId ?? defaults?.assignedToId ?? ""}
+                className="rounded-[1.1rem] shadow-none"
+              >
                 <option value="">{t("Unassigned")}</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
@@ -123,11 +151,14 @@ export function TaskDialog({
           </div>
 
           {(showLinkedRecords || hasAdvancedFields) ? (
-            <details className="rounded-[1.75rem] border border-slate-200 bg-[var(--ui-surface-solid)] px-4 py-3" open={hasAdvancedFields}>
-              <summary className="cursor-pointer list-none text-sm font-medium text-slate-900">
+            <details
+              className="rounded-[1.75rem] border border-[var(--ui-border)] bg-[var(--ui-surface-soft)] px-4 py-3 shadow-[var(--ui-shadow-xs)]"
+              open={hasAdvancedFields}
+            >
+              <summary className="cursor-pointer list-none text-sm font-medium text-[var(--ui-text-strong)]">
                 {t("Advanced settings")}
               </summary>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-[var(--ui-text-muted)]">
                 {t("Tags and linked records stay here so the core task flow remains clear and fast.")}
               </p>
 
@@ -137,12 +168,17 @@ export function TaskDialog({
                     name="tags"
                     defaultValue={tagsValue}
                     placeholder={t("Add tags separated by commas")}
+                    className="rounded-[1.1rem] shadow-none"
                   />
                 </FormField>
                 {showLinkedRecords ? (
                   <>
                     <FormField label={t("Client")}>
-                      <Select name="clientId" defaultValue={task?.clientId ?? defaults?.clientId ?? ""}>
+                      <Select
+                        name="clientId"
+                        defaultValue={task?.clientId ?? defaults?.clientId ?? ""}
+                        className="rounded-[1.1rem] shadow-none"
+                      >
                         <option value="">{t("No client")}</option>
                         {clients?.map((client) => (
                           <option key={client.id} value={client.id}>
@@ -152,7 +188,11 @@ export function TaskDialog({
                       </Select>
                     </FormField>
                     <FormField label={t("Lead")}>
-                      <Select name="leadId" defaultValue={task?.leadId ?? defaults?.leadId ?? ""}>
+                      <Select
+                        name="leadId"
+                        defaultValue={task?.leadId ?? defaults?.leadId ?? ""}
+                        className="rounded-[1.1rem] shadow-none"
+                      >
                         <option value="">{t("No lead")}</option>
                         {leads?.map((lead) => (
                           <option key={lead.id} value={lead.id}>
@@ -162,7 +202,11 @@ export function TaskDialog({
                       </Select>
                     </FormField>
                     <FormField label={t("Deal")} className="md:col-span-2">
-                      <Select name="dealId" defaultValue={task?.dealId ?? defaults?.dealId ?? ""}>
+                      <Select
+                        name="dealId"
+                        defaultValue={task?.dealId ?? defaults?.dealId ?? ""}
+                        className="rounded-[1.1rem] shadow-none"
+                      >
                         <option value="">{t("No deal")}</option>
                         {deals?.map((deal) => (
                           <option key={deal.id} value={deal.id}>
@@ -176,7 +220,7 @@ export function TaskDialog({
               </div>
             </details>
           ) : null}
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-1">
             <SubmitButton>{t(task ? "Save changes" : "Create task")}</SubmitButton>
           </div>
         </form>
