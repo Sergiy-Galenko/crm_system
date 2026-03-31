@@ -1,24 +1,13 @@
 import type { Metadata } from "next";
+import Script from "next/script";
+import { cookies } from "next/headers";
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppToaster } from "@/components/ui/toaster";
 import { getCurrentLocale } from "@/lib/locale-server";
+import { getThemeInitScript, normalizeThemePreference, THEME_ATTRIBUTE, THEME_COOKIE_KEY, THEME_PREFERENCE_ATTRIBUTE } from "@/lib/theme";
 import "@/app/globals.css";
-
-const themeInitScript = `
-(() => {
-  try {
-    const storedTheme = window.localStorage.getItem("nexora-theme");
-    const theme = storedTheme === "dark" ? "dark" : "light";
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-  } catch {
-    document.documentElement.dataset.theme = "light";
-    document.documentElement.style.colorScheme = "light";
-  }
-})();
-`;
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -42,13 +31,18 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
   const locale = await getCurrentLocale();
+  const themePreference = normalizeThemePreference(cookieStore.get(THEME_COOKIE_KEY)?.value);
+  const serverTheme = themePreference === "dark" ? "dark" : "light";
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} {...{ [THEME_ATTRIBUTE]: serverTheme, [THEME_PREFERENCE_ATTRIBUTE]: themePreference }} suppressHydrationWarning>
       <body className={`${sans.variable} ${mono.variable} antialiased`}>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <ThemeProvider>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {getThemeInitScript(themePreference)}
+        </Script>
+        <ThemeProvider defaultTheme={themePreference}>
           <LocaleProvider locale={locale}>
             {children}
             <AppToaster />

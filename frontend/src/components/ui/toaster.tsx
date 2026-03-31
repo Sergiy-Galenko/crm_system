@@ -4,11 +4,11 @@ import { Toaster } from "sonner";
 import { useTheme } from "@/components/providers/theme-provider";
 
 export function AppToaster() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <Toaster
-      theme={theme}
+      theme={resolvedTheme}
       position="top-right"
       richColors
       closeButton
