@@ -60,71 +60,109 @@ export function MeetingDialog({
       title={t(meeting ? "Edit meeting" : "Schedule meeting")}
       description={t("Plan the slot first. Links, notes, and outcome stay tucked away until you actually need them.")}
       state={state}
-      contentClassName="max-w-2xl p-5 sm:p-6"
+      contentClassName="max-w-[52rem] p-6 sm:p-7"
     >
       {() => (
-        <form action={formAction} className="grid gap-5">
+        <form action={formAction} className="grid gap-6">
           <input type="hidden" name="id" value={meeting?.id ?? ""} />
           {!meeting ? <input type="hidden" name="status" value="SCHEDULED" /> : null}
           {hideClientField ? <input type="hidden" name="clientId" value={meeting?.clientId ?? defaults?.clientId ?? ""} /> : null}
 
-          <div className="grid gap-4 rounded-[1.75rem] border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
-            <FormField label={t("Meeting title")} error={state.fields?.title} className="md:col-span-2">
-              <Input name="title" defaultValue={meeting?.title ?? ""} placeholder={t("Quarterly renewal sync")} />
-            </FormField>
-
-            <FormField label={t("Short description")} className="md:col-span-2">
-              <Textarea
-                name="description"
-                defaultValue={meeting?.description ?? ""}
-                className="min-h-24"
-                placeholder={t("What should this meeting help unblock or decide?")}
-              />
-            </FormField>
-
-            {!hideClientField ? (
-              <FormField label={t("Client")} error={state.fields?.clientId}>
-                <Select name="clientId" defaultValue={meeting?.clientId ?? defaults?.clientId ?? clients[0]?.id}>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.company}
-                    </option>
-                  ))}
-                </Select>
+          <div className="space-y-5 rounded-[1.9rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_94%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] p-5 shadow-[var(--ui-shadow-xs)] sm:p-6">
+            <div className="grid gap-4">
+              <FormField label={t("Meeting title")} error={state.fields?.title} className="gap-3">
+                <Input
+                  name="title"
+                  defaultValue={meeting?.title ?? ""}
+                  placeholder={t("Quarterly renewal sync")}
+                  className="h-12 rounded-[1.15rem] shadow-none"
+                />
               </FormField>
-            ) : null}
 
-            <FormField label={t("Assignee")} error={state.fields?.assignedToId}>
-              <Select name="assignedToId" defaultValue={meeting?.assignedToId ?? defaults?.assignedToId ?? users[0]?.id}>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.email ? `${user.name} · ${user.email}` : user.name}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
+              <FormField label={t("Short description")} className="gap-3">
+                <Textarea
+                  name="description"
+                  defaultValue={meeting?.description ?? ""}
+                  className="min-h-32 rounded-[1.35rem] resize-none shadow-none"
+                  placeholder={t("What should this meeting help unblock or decide?")}
+                />
+              </FormField>
+            </div>
 
-            <FormField label={t("Start time")} error={state.fields?.startsAt}>
-              <Input name="startsAt" type="datetime-local" defaultValue={toDateTimeInputValue(meeting?.startsAt)} />
-            </FormField>
+            <div className="grid gap-4 md:grid-cols-2">
+              {!hideClientField ? (
+                <div className="rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-4 shadow-[var(--ui-shadow-xs)]">
+                  <FormField label={t("Client")} error={state.fields?.clientId} className="gap-3">
+                    <Select
+                      name="clientId"
+                      defaultValue={meeting?.clientId ?? defaults?.clientId ?? clients[0]?.id}
+                      className="h-12 rounded-[1.15rem] shadow-none"
+                    >
+                      {clients.map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {client.company}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+                </div>
+              ) : null}
 
-            <FormField label={t("End time")} error={state.fields?.endsAt}>
-              <Input name="endsAt" type="datetime-local" defaultValue={toDateTimeInputValue(meeting?.endsAt)} />
-            </FormField>
+              <div className="rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-4 shadow-[var(--ui-shadow-xs)]">
+                <FormField label={t("Assignee")} error={state.fields?.assignedToId} className="gap-3">
+                  <Select
+                    name="assignedToId"
+                    defaultValue={meeting?.assignedToId ?? defaults?.assignedToId ?? users[0]?.id}
+                    className="h-12 rounded-[1.15rem] shadow-none"
+                  >
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.email ? `${user.name} · ${user.email}` : user.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-4 shadow-[var(--ui-shadow-xs)]">
+                <FormField label={t("Start time")} error={state.fields?.startsAt} className="gap-3">
+                  <Input
+                    name="startsAt"
+                    type="datetime-local"
+                    defaultValue={toDateTimeInputValue(meeting?.startsAt)}
+                    className="h-12 rounded-[1.15rem] shadow-none"
+                  />
+                </FormField>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-4 shadow-[var(--ui-shadow-xs)]">
+                <FormField label={t("End time")} error={state.fields?.endsAt} className="gap-3">
+                  <Input
+                    name="endsAt"
+                    type="datetime-local"
+                    defaultValue={toDateTimeInputValue(meeting?.endsAt)}
+                    className="h-12 rounded-[1.15rem] shadow-none"
+                  />
+                </FormField>
+              </div>
+            </div>
           </div>
 
-          <details className="rounded-[1.75rem] border border-slate-200 bg-[var(--ui-surface-solid)] px-4 py-3" open={hasOptionalContent}>
-            <summary className="cursor-pointer list-none text-sm font-medium text-slate-900">
+          <details
+            className="rounded-[1.75rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-4 py-4 shadow-[var(--ui-shadow-xs)]"
+            open={hasOptionalContent}
+          >
+            <summary className="cursor-pointer list-none text-sm font-semibold text-[var(--ui-text-strong)]">
               {t("Advanced settings")}
             </summary>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm leading-6 text-[var(--ui-text-muted)]">
               {t("Add location, meeting link, status changes, or outcome notes only when they add real context.")}
             </p>
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {meeting ? (
-                <FormField label={t("Status")} className="md:col-span-2">
-                  <Select name="status" defaultValue={meeting.status}>
+                <FormField label={t("Status")} className="gap-3 md:col-span-2">
+                  <Select name="status" defaultValue={meeting.status} className="h-12 rounded-[1.15rem] shadow-none">
                     {meetingStatuses.map((status) => (
                       <option key={status} value={status}>
                         {t(status)}
@@ -134,30 +172,42 @@ export function MeetingDialog({
                 </FormField>
               ) : null}
 
-              <FormField label={t("Location")} error={state.fields?.location}>
-                <Input name="location" defaultValue={meeting?.location ?? ""} placeholder={t("Google Meet / Kyiv office")} />
+              <FormField label={t("Location")} error={state.fields?.location} className="gap-3">
+                <Input
+                  name="location"
+                  defaultValue={meeting?.location ?? ""}
+                  placeholder={t("Google Meet / Kyiv office")}
+                  className="h-12 rounded-[1.15rem] shadow-none"
+                />
               </FormField>
 
-              <FormField label={t("Meeting link")}>
-                <Input name="meetingLink" defaultValue={meeting?.meetingLink ?? ""} placeholder="https://meet.google.com/..." />
+              <FormField label={t("Meeting link")} className="gap-3">
+                <Input
+                  name="meetingLink"
+                  defaultValue={meeting?.meetingLink ?? ""}
+                  placeholder="https://meet.google.com/..."
+                  className="h-12 rounded-[1.15rem] shadow-none"
+                />
               </FormField>
 
               {meeting ? (
-                <FormField label={t("Outcome")} className="md:col-span-2">
+                <FormField label={t("Outcome")} className="gap-3 md:col-span-2">
                   <Textarea
                     name="outcome"
                     defaultValue={meeting?.outcome ?? ""}
                     placeholder={t("Add notes after the meeting, outcomes, blockers, or next steps.")}
-                    className="min-h-24"
+                    className="min-h-28 rounded-[1.35rem] resize-none shadow-none"
                   />
                 </FormField>
               ) : null}
             </div>
           </details>
 
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-500">{t("Core scheduling stays visible first so new meetings take only a few seconds to set up.")}</p>
-            <SubmitButton>{t(meeting ? "Save changes" : "Create meeting")}</SubmitButton>
+          <div className="flex flex-col gap-3 border-t border-[var(--ui-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="max-w-xl text-sm leading-6 text-[var(--ui-text-muted)]">
+              {t("Core scheduling stays visible first so new meetings take only a few seconds to set up.")}
+            </p>
+            <SubmitButton size="lg">{t(meeting ? "Save changes" : "Create meeting")}</SubmitButton>
           </div>
         </form>
       )}

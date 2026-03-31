@@ -19,10 +19,10 @@ const localeMap = {
 } as const;
 
 const statusToneMap: Record<string, string> = {
-  SCHEDULED: "border-sky-200 bg-sky-50 text-sky-700",
-  COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  CANCELED: "border-rose-200 bg-rose-50 text-rose-700",
-  NO_SHOW: "border-amber-200 bg-amber-50 text-amber-700",
+  SCHEDULED: "border-[var(--ui-badge-info-border)] bg-[var(--ui-badge-info-bg)] text-[var(--ui-badge-info-text)]",
+  COMPLETED: "border-[var(--ui-badge-success-border)] bg-[var(--ui-badge-success-bg)] text-[var(--ui-badge-success-text)]",
+  CANCELED: "border-[var(--ui-badge-danger-border)] bg-[var(--ui-badge-danger-bg)] text-[var(--ui-badge-danger-text)]",
+  NO_SHOW: "border-[var(--ui-badge-warning-border)] bg-[var(--ui-badge-warning-bg)] text-[var(--ui-badge-warning-text)]",
 };
 
 export function MeetingCalendar({
@@ -46,18 +46,18 @@ export function MeetingCalendar({
   );
 
   return (
-    <section className="card p-5">
+    <section className="rounded-[2rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_94%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] p-5 shadow-[var(--ui-shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">{t("Calendar overview")}</h3>
-          <p className="mt-1 text-sm text-slate-500">{t("A compact month view for spotting busy days and open space.")}</p>
+          <h3 className="text-lg font-semibold text-[var(--ui-text-strong)]">{t("Calendar overview")}</h3>
+          <p className="mt-1 text-sm text-[var(--ui-text-muted)]">{t("A compact month view for spotting busy days and open space.")}</p>
         </div>
-        <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+        <div className="rounded-full border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-3 py-1 text-xs font-medium text-[var(--ui-text-muted)] shadow-[var(--ui-shadow-xs)]">
           {t("{count} meetings", { count: meetings.length })}
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
+      <div className="mt-5 grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--ui-text-soft)]">
         {weekDays.map((day) => (
           <div key={day} className="py-2">
             {day}
@@ -77,21 +77,23 @@ export function MeetingCalendar({
               key={day.toISOString()}
               className={cn(
                 "min-h-28 rounded-[1.35rem] border p-3",
-                isSameMonth(day, month) ? "border-slate-200 bg-[var(--ui-surface-solid)]" : "border-slate-200 bg-slate-50/75 opacity-70",
-                isToday(day) ? "border-[var(--ui-border-strong)] shadow-[var(--ui-shadow-xs)]" : "",
+                isSameMonth(day, month)
+                  ? "border-[var(--ui-border)] bg-[var(--ui-surface-solid)] shadow-[var(--ui-shadow-xs)]"
+                  : "border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-muted)_88%,transparent)] opacity-72",
+                isToday(day) ? "border-[var(--ui-border-strong)] shadow-[var(--ui-shadow-soft)]" : "",
               )}
             >
               <div className="flex items-center justify-between gap-2">
                 <span
                   className={cn(
                     "text-sm font-semibold",
-                    isSameMonth(day, month) ? "text-slate-900" : "text-slate-400",
+                    isSameMonth(day, month) ? "text-[var(--ui-text-strong)]" : "text-[var(--ui-text-soft)]",
                     isToday(day) ? "rounded-full bg-[var(--ui-brand)] px-2 py-1 text-[var(--ui-brand-foreground)]" : "",
                   )}
                 >
                   {format(day, "d")}
                 </span>
-                {dayMeetings.length ? <span className="text-[11px] text-slate-400">{dayMeetings.length}</span> : null}
+                {dayMeetings.length ? <span className="text-[11px] text-[var(--ui-text-soft)]">{dayMeetings.length}</span> : null}
               </div>
 
               <div className="mt-3 space-y-2">
@@ -100,7 +102,7 @@ export function MeetingCalendar({
                     key={meeting.id}
                     className={cn(
                       "rounded-xl border px-2.5 py-2",
-                      statusToneMap[meeting.status] ?? "border-slate-200 bg-slate-50 text-slate-700",
+                      statusToneMap[meeting.status] ?? "border-[var(--ui-border)] bg-[var(--ui-surface-muted)] text-[var(--ui-text)]",
                     )}
                   >
                     <p className="truncate text-[11px] font-semibold">{format(meeting.startsAt, "HH:mm")} • {meeting.title}</p>
@@ -109,7 +111,7 @@ export function MeetingCalendar({
                 ))}
 
                 {dayMeetings.length > 2 ? (
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-[var(--ui-text-soft)]">
                     {t("+{count} more", { count: dayMeetings.length - 2 })}
                   </p>
                 ) : null}
