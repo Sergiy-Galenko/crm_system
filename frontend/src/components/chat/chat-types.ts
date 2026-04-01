@@ -44,6 +44,11 @@ export type ChatMessageItem = {
     preview: string;
     mediaType?: "IMAGE" | "VIDEO" | null;
   } | null;
+  reactions: Array<{
+    emoji: string;
+    count: number;
+    reacted: boolean;
+  }>;
   timeLabel: string;
 };
 

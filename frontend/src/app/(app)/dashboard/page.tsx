@@ -1,14 +1,11 @@
 import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { ActivityFeed } from "@/components/activity-feed";
-import { MetricCard } from "@/components/metric-card";
-import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import {
   activityAccessWhere,
   clientAccessWhere,
   dealAccessWhere,
   leadAccessWhere,
-  promoCodeAccessWhere,
   taskAccessWhere,
 } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
@@ -19,6 +16,7 @@ import { decimalToNumber, formatCurrency, formatDate, formatNumber, fromNow } fr
 export default async function DashboardPage() {
   const user = await requireUser();
   const { locale, t } = await getServerTranslator();
+  const stageOrder = ["DISCOVERY", "PROPOSAL", "NEGOTIATION", "WON", "LOST"] as const;
   const databaseUnavailableFromSession = "databaseUnavailable" in user && user.databaseUnavailable;
   const dashboardData = databaseUnavailableFromSession
     ? null
@@ -29,15 +27,6 @@ export default async function DashboardPage() {
         prisma.deal.aggregate({
           where: { ...dealAccessWhere(user), stage: "WON" },
           _sum: { netAmount: true },
-        }),
-        prisma.promoCode.aggregate({
-          where: promoCodeAccessWhere(user),
-          _sum: {
-            usedCount: true,
-          },
-          _count: {
-            _all: true,
-          },
         }),
         prisma.activityLog.findMany({
           where: activityAccessWhere(user),
@@ -89,13 +78,6 @@ export default async function DashboardPage() {
             },
           },
         }),
-        prisma.promoCode.findMany({
-          where: promoCodeAccessWhere(user),
-          orderBy: {
-            usedCount: "desc",
-          },
-          take: 4,
-        }),
       ]).catch((error) => {
         if (!isPrismaDatabaseUnavailableError(error)) {
           throw error;
@@ -109,18 +91,14 @@ export default async function DashboardPage() {
     clientsCount,
     dealsCount,
     wonRevenue,
-    promoUsageAggregate,
     recentActivity,
     pipeline,
     upcomingTasks,
-    topPromoCodes,
   ] = dashboardData ?? [
     0,
     0,
     0,
     { _sum: { netAmount: 0 } },
-    { _sum: { usedCount: 0 }, _count: { _all: 0 } },
-    [],
     [],
     [],
     [],
@@ -129,26 +107,76 @@ export default async function DashboardPage() {
   const pipelineMap = new Map<string, number>(pipeline.map((item) => [item.stage, item._count._all]));
   const totalPipeline = [...pipelineMap.values()].reduce((sum, value) => sum + value, 0);
   const revenueValue = decimalToNumber(wonRevenue._sum.netAmount ?? 0);
+  const summaryStats = [
+    {
+      label: t("Leads"),
+      value: formatNumber(leadsCount, locale),
+      meta: t("Active inbound and outbound opportunities."),
+    },
+    {
+      label: t("Clients"),
+      value: formatNumber(clientsCount, locale),
+      meta: t("Accounts under active management."),
+    },
+    {
+      label: t("Deals"),
+      value: formatNumber(dealsCount, locale),
+      meta: t("Full pipeline including won and lost."),
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow={t("Overview")}
-        title={t("Revenue operations at a glance")}
-        description={t("Track account momentum, pipeline health, promo-code performance, and follow-up workload from a single dashboard.")}
-      />
+      <section className="relative overflow-hidden rounded-[2.4rem] border border-[var(--ui-border)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--ui-surface-solid)_94%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] shadow-[var(--ui-shadow-soft)]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-10 top-10 h-40 w-40 rounded-full bg-[color-mix(in_srgb,var(--ui-brand)_10%,transparent)] blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-[color-mix(in_srgb,var(--ui-brand)_8%,transparent)] blur-3xl" />
+        </div>
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        <MetricCard label={t("Leads")} value={formatNumber(leadsCount, locale)} meta={t("Active inbound and outbound opportunities.")} />
-        <MetricCard label={t("Clients")} value={formatNumber(clientsCount, locale)} meta={t("Accounts under active management.")} />
-        <MetricCard label={t("Deals")} value={formatNumber(dealsCount, locale)} meta={t("Full pipeline including won and lost.")} />
-        <MetricCard
-          label={t("Revenue")}
-          value={formatCurrency(revenueValue, "USD", locale)}
-          meta={t("Net value from won deals.")}
-          tone="brand"
-        />
-      </div>
+        <div className="relative grid gap-6 p-6 sm:p-8 xl:grid-cols-[minmax(0,1.2fr)_22rem]">
+          <div className="max-w-4xl">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">{t("Overview")}</p>
+            <h1 className="mt-3 max-w-3xl text-[2.35rem] font-semibold tracking-tight text-slate-950 sm:text-[3rem]">
+              {t("Revenue operations at a glance")}
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
+              {t("Track account momentum, pipeline health, promo-code performance, and follow-up workload from a single dashboard.")}
+            </p>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-3">
+              {summaryStats.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-[1.6rem] border border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_92%,transparent)] p-4 shadow-[var(--ui-shadow-xs)] backdrop-blur"
+                >
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{item.value}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.meta}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-transparent bg-[var(--ui-brand)] p-5 text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] opacity-70">{t("Won revenue")}</p>
+            <p className="mt-4 text-[2.4rem] font-semibold tracking-tight">{formatCurrency(revenueValue, "USD", locale)}</p>
+            <p className="mt-2 text-sm leading-6 opacity-75">{t("Net value from won deals.")}</p>
+
+            <div className="mt-6 space-y-3 border-t border-white/10 pt-4">
+              {stageOrder.map((stage) => {
+                const count = pipelineMap.get(stage) ?? 0;
+
+                return (
+                  <div key={stage} className="flex items-center justify-between gap-3 rounded-2xl bg-black/10 px-3.5 py-3">
+                    <span className="text-sm font-medium opacity-90">{t(stage)}</span>
+                    <span className="rounded-full border border-white/12 px-2.5 py-1 text-xs font-semibold opacity-90">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <ActivityFeed
@@ -161,50 +189,10 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <section className="card p-5">
             <div>
-              <h3 className="text-base font-semibold text-slate-950">{t("Pipeline distribution")}</h3>
-              <p className="mt-1 text-sm text-slate-500">{t("Where current deal volume is concentrated.")}</p>
-            </div>
-            <div className="mt-5 space-y-4">
-              {(["DISCOVERY", "PROPOSAL", "NEGOTIATION", "WON", "LOST"] as const).map((stage) => {
-                const count = pipelineMap.get(stage) ?? 0;
-                const width = totalPipeline ? Math.max(8, (count / totalPipeline) * 100) : 0;
-
-                return (
-                  <div key={stage}>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-700">{t(stage)}</span>
-                      <span className="text-slate-500">{count}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div className="h-2 rounded-full bg-slate-950" style={{ width: `${width}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="card p-5">
-            <div>
               <h3 className="text-base font-semibold text-slate-950">{t("Today")}</h3>
               <p className="mt-1 text-sm text-slate-500">{t("The next follow-ups and promo activity that need attention.")}</p>
             </div>
-
-            <div className="mt-5 rounded-2xl border border-slate-200 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">{t("Promo code usage")}</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {t("{count} total promo codes in the library.", { count: promoUsageAggregate._count._all })}
-                  </p>
-                </div>
-                <p className="text-2xl font-semibold tracking-tight text-slate-950">
-                  {formatNumber(promoUsageAggregate._sum.usedCount ?? 0, locale)}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
+            <div className="mt-5 space-y-4">
               {upcomingTasks.length ? (
                 upcomingTasks.map((task) => (
                   <div key={task.id} className="rounded-2xl border border-slate-200 p-4">
@@ -227,41 +215,33 @@ export default async function DashboardPage() {
               )}
             </div>
           </section>
+
+          <section className="card p-5">
+            <div>
+              <h3 className="text-base font-semibold text-slate-950">{t("Pipeline distribution")}</h3>
+              <p className="mt-1 text-sm text-slate-500">{t("Where current deal volume is concentrated.")}</p>
+            </div>
+            <div className="mt-5 space-y-4">
+              {stageOrder.map((stage) => {
+                const count = pipelineMap.get(stage) ?? 0;
+                const width = totalPipeline ? Math.max(8, (count / totalPipeline) * 100) : 0;
+
+                return (
+                  <div key={stage}>
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="font-medium text-slate-700">{t(stage)}</span>
+                      <span className="text-slate-500">{count}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-100">
+                      <div className="h-2 rounded-full bg-slate-950" style={{ width: `${width}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         </div>
       </div>
-
-      <section className="card p-5">
-        <div>
-          <h3 className="text-base font-semibold text-slate-950">{t("Top promo codes")}</h3>
-          <p className="mt-1 text-sm text-slate-500">{t("Most-used discount campaigns right now.")}</p>
-        </div>
-        <div className="mt-5 grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
-          {topPromoCodes.map((promoCode) => (
-            <div key={promoCode.id} className="rounded-2xl border border-slate-200 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-medium text-slate-950">{promoCode.code}</p>
-                  <p className="mt-1 text-sm text-slate-500">{promoCode.description ?? t("No description added.")}</p>
-                </div>
-                <StatusBadge value={promoCode.active ? "ACTIVE" : "INACTIVE"} />
-              </div>
-              <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
-                <span>{promoCode.usedCount} {t("usages")}</span>
-                <span>
-                  {promoCode.discountType === "PERCENT"
-                    ? `${decimalToNumber(promoCode.discountValue)}%`
-                    : formatCurrency(decimalToNumber(promoCode.discountValue), "USD", locale)}
-                </span>
-              </div>
-            </div>
-          ))}
-          {!topPromoCodes.length ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-500 lg:col-span-2 xl:col-span-4">
-              {t("Promo codes will appear here once the team starts using them.")}
-            </div>
-          ) : null}
-        </div>
-      </section>
     </div>
   );
 }

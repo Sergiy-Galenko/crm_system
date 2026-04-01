@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-const urlPattern = /((https?:\/\/|www\.)[^\s<]+)/gi;
+const tokenPattern = /((https?:\/\/|www\.)[^\s<]+|@[a-z0-9_]{3,24})/gi;
 
 function splitTrailingPunctuation(value: string) {
   const match = value.match(/[),.!?:;]+$/);
@@ -25,13 +25,39 @@ function normalizeHref(value: string) {
   return value.startsWith("www.") ? `https://${value}` : value;
 }
 
-function renderLine(line: string, tone: "incoming" | "outgoing") {
+function renderLine(line: string, tone: "incoming" | "outgoing", mentionableNicknames: Set<string>) {
   const segments: ReactNode[] = [];
   let lastIndex = 0;
 
-  line.replace(urlPattern, (match, _group, _prefix, offset: number) => {
+  line.replace(tokenPattern, (match, _group, _prefix, offset: number) => {
     if (offset > lastIndex) {
       segments.push(line.slice(lastIndex, offset));
+    }
+
+    if (match.startsWith("@")) {
+      const nickname = match.slice(1).toLowerCase();
+
+      if (mentionableNicknames.has(nickname)) {
+        segments.push(
+          <span
+            key={`${match}:${offset}`}
+            className={cn(
+              "inline-flex rounded-full px-2 py-0.5 font-medium",
+              tone === "outgoing"
+                ? "bg-black/10 text-[var(--ui-brand-foreground)]"
+                : "bg-[color-mix(in_srgb,var(--ui-ring)_65%,transparent)] text-[var(--ui-text-strong)]",
+            )}
+          >
+            {match}
+          </span>,
+        );
+        lastIndex = offset + match.length;
+        return match;
+      }
+
+      segments.push(match);
+      lastIndex = offset + match.length;
+      return match;
     }
 
     const { cleanUrl, trailing } = splitTrailingPunctuation(match);
@@ -71,18 +97,25 @@ function renderLine(line: string, tone: "incoming" | "outgoing") {
 export function ChatMessageContent({
   body,
   tone,
+  mentionableUsers = [],
 }: {
   body: string;
   tone: "incoming" | "outgoing";
+  mentionableUsers?: Array<{ nickname?: string | null }>;
 }) {
   const lines = body.split("\n");
+  const mentionableNicknames = new Set(
+    mentionableUsers
+      .map((user) => user.nickname?.toLowerCase())
+      .filter((nickname): nickname is string => Boolean(nickname)),
+  );
 
   return (
     <p className="whitespace-pre-wrap break-words px-1">
       {lines.map((line, index) => (
         <span key={`${line}:${index}`}>
           {index > 0 ? <br /> : null}
-          {renderLine(line, tone)}
+          {renderLine(line, tone, mentionableNicknames)}
         </span>
       ))}
     </p>

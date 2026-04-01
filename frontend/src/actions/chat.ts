@@ -102,3 +102,12 @@ export async function markConversationReadAction(conversationId: string) {
   revalidatePath("/dashboard", "layout");
   revalidatePath("/dashboard/chat");
 }
+
+export async function toggleMessageReactionAction(messageId: string, emoji: string) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.toggleMessageReaction(toRequestUser(user), messageId, emoji);
+
+  revalidatePath("/dashboard/chat");
+}

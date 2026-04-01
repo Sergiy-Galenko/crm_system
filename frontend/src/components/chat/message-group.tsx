@@ -21,7 +21,7 @@ export function MessageGroup({
   return (
     <section className="space-y-4">
       <div className="flex justify-center">
-        <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 shadow-sm backdrop-blur">
+        <span className="rounded-full border border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_84%,transparent)] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ui-text-soft)] shadow-[var(--ui-shadow-xs)] backdrop-blur">
           {group.label}
         </span>
       </div>
@@ -31,6 +31,7 @@ export function MessageGroup({
           <MessageBubble
             key={message.id}
             message={message}
+            mentionableUsers={conversation.participantDirectory}
             highlighted={highlightedMessageId === message.id}
             onEditMessage={onEditMessage}
             onJumpToMessage={onJumpToMessage}

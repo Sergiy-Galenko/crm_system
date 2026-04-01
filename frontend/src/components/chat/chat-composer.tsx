@@ -107,8 +107,10 @@ export function ChatComposer({
   const [attachmentError, setAttachmentError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const { t } = useLocale();
+  const canSubmit = editingMessage ? Boolean(messageBody.trim()) && !isSubmitting : (!isSubmitting && (Boolean(messageBody.trim()) || Boolean(attachment)));
 
   useEffect(() => {
     if (editingMessage || typeof window === "undefined") {
@@ -177,6 +179,10 @@ export function ChatComposer({
   }
 
   function handleSubmit() {
+    if (!canSubmit) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     startTransition(async () => {
@@ -258,17 +264,17 @@ export function ChatComposer({
       ) : null}
 
       {attachment ? (
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-3.5 shadow-[var(--ui-shadow-xs)]">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-950">{t("Attachment ready")}</p>
-              <p className="mt-1 truncate text-xs text-slate-500">{attachment.fileName}</p>
+              <p className="text-sm font-medium text-[var(--ui-text-strong)]">{t("Attachment ready")}</p>
+              <p className="mt-1 truncate text-xs text-[var(--ui-text-muted)]">{attachment.fileName}</p>
             </div>
             <Button type="button" variant="ghost" size="icon" onClick={() => setAttachment(null)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="mt-3 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-slate-50">
+          <div className="mt-3 overflow-hidden rounded-[1.25rem] border border-[var(--ui-border)] bg-[var(--ui-surface-muted)]">
             {attachment.mediaType === "IMAGE" ? (
               <Image
                 src={attachment.mediaUrl}
@@ -297,8 +303,10 @@ export function ChatComposer({
 
       <div
         className={cn(
-          "rounded-[1.75rem] border border-slate-200 bg-white p-3 shadow-sm transition",
-          isDraggingAttachment ? "border-sky-500 bg-sky-50" : "hover:border-slate-300",
+          "rounded-[1.9rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_96%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] p-3 shadow-[var(--ui-shadow-soft)] transition",
+          isDraggingAttachment
+            ? "border-[var(--ui-border-strong)] bg-[color-mix(in_srgb,var(--ui-ring)_32%,var(--ui-surface-solid))]"
+            : "hover:border-[var(--ui-border-strong)]",
           editingMessage ? "border-[var(--ui-border-strong)]" : "",
         )}
         onDragEnter={(event) => {
@@ -336,50 +344,62 @@ export function ChatComposer({
       >
         <div className="flex items-end gap-3">
           {!editingMessage ? (
-            <Button type="button" variant="secondary" size="icon" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
+            <Button type="button" variant="secondary" size="icon" className="h-12 w-12 shrink-0 rounded-[1.35rem]" onClick={() => fileInputRef.current?.click()}>
               <Paperclip className="h-4 w-4" />
             </Button>
           ) : null}
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 rounded-[1.55rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-3 shadow-[var(--ui-shadow-xs)]">
             <Textarea
+              ref={textareaRef}
               name="body"
               value={messageBody}
               onChange={(event) => setMessageBody(event.target.value)}
+              onKeyDown={(event) => {
+                const nativeEvent = event.nativeEvent as KeyboardEvent & { isComposing?: boolean };
+
+                if (event.key === "Enter" && !event.shiftKey && !nativeEvent.isComposing) {
+                  event.preventDefault();
+                  handleSubmit();
+                }
+              }}
               placeholder={t(editingMessage ? "Refine your message..." : "Write a message or add a caption...")}
-              className="min-h-24 resize-none rounded-[1.4rem] border-0 bg-transparent px-2 py-2 shadow-none focus:border-0 focus:ring-0"
+              className="min-h-28 resize-none rounded-[1.3rem] border-0 bg-transparent px-1 py-1 text-[15px] shadow-none focus:border-0 focus:ring-0"
             />
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-2 text-xs text-slate-500">
-              {editingMessage ? (
-                <>
-                  <span>{t("Save a cleaner version without breaking the original message order.")}</span>
-                  {isSubmitting ? (
-                    <span className="inline-flex items-center gap-1 font-medium text-slate-600">
-                      <LoaderIcon />
-                      {t("Saving...")}
-                    </span>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <span>{t("Drag and drop a photo or video here, or choose a file.")}</span>
-                  <span>{t("Photos and videos up to 12 MB.")}</span>
-                  {isSubmitting ? (
-                    <span className="inline-flex items-center gap-1 font-medium text-slate-600">
-                      <LoaderIcon />
-                      {t("Sending...")}
-                    </span>
-                  ) : null}
-                </>
-              )}
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ui-border)] pt-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--ui-text-muted)]">
+                {editingMessage ? (
+                  <>
+                    <span>{t("Save a cleaner version without breaking the original message order.")}</span>
+                    {isSubmitting ? (
+                      <span className="inline-flex items-center gap-1 font-medium text-[var(--ui-text)]">
+                        <LoaderIcon />
+                        {t("Saving...")}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <span>{t("Drag and drop a photo or video here, or choose a file.")}</span>
+                    <span>{t("Photos and videos up to 12 MB.")}</span>
+                    {isSubmitting ? (
+                      <span className="inline-flex items-center gap-1 font-medium text-[var(--ui-text)]">
+                        <LoaderIcon />
+                        {t("Sending...")}
+                      </span>
+                    ) : null}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting || (editingMessage ? !messageBody.trim() : !messageBody.trim() && !attachment)}
-            className={cn("h-12 rounded-full px-4", editingMessage ? "min-w-[6.75rem]" : "w-12 p-0")}
+            disabled={!canSubmit}
+            className={cn("self-end rounded-[1.35rem] px-4 shadow-[var(--ui-shadow-soft)]", editingMessage ? "h-12 min-w-[7rem]" : "h-12 w-12 p-0")}
             aria-label={t(editingMessage ? "Save" : "Send")}
           >
             {editingMessage ? (

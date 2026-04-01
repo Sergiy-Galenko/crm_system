@@ -36,17 +36,25 @@ function WeekButton({
   label,
   active = false,
   icon,
+  className,
 }: {
   href: UrlObject;
   label: string;
   active?: boolean;
   icon?: React.ReactNode;
+  className?: string;
 }) {
   return (
     <Button
       asChild
       variant={active ? "primary" : "secondary"}
-      className={active ? "rounded-2xl px-4 shadow-[var(--ui-shadow-soft)]" : "rounded-2xl border-[var(--ui-border-strong)] bg-[var(--ui-surface-solid)] px-4"}
+      className={[
+        "h-auto min-h-14 w-full justify-start gap-3 whitespace-normal rounded-2xl px-4 py-3 text-left leading-5",
+        active
+          ? "shadow-[var(--ui-shadow-soft)]"
+          : "border-[var(--ui-border-strong)] bg-[var(--ui-surface-solid)]",
+        className ?? "",
+      ].join(" ")}
     >
       <Link href={href}>
         {icon}
@@ -194,7 +202,7 @@ export default async function MeetingsPage({ searchParams }: MeetingsPageProps) 
           <div className="absolute bottom-[-3rem] right-[-2rem] h-44 w-44 rounded-full bg-[color-mix(in_srgb,var(--ui-ring)_55%,transparent)] blur-3xl" />
         </div>
 
-        <div className="relative grid gap-8 px-5 py-6 sm:px-6 sm:py-7 xl:grid-cols-[minmax(0,1fr)_23rem] xl:items-start">
+        <div className="relative grid gap-8 px-5 py-6 sm:px-6 sm:py-7 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:items-start">
           <div className="max-w-3xl">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ui-text-soft)]">{t("Schedule")}</p>
             <h1 className="mt-3 text-[2.65rem] font-semibold tracking-tight text-[var(--ui-text-strong)] sm:text-[3.35rem]">
@@ -216,7 +224,7 @@ export default async function MeetingsPage({ searchParams }: MeetingsPageProps) 
             </div>
           </div>
 
-          <div className="rounded-[1.9rem] border border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_86%,transparent)] p-4 shadow-[var(--ui-shadow-xs)] backdrop-blur xl:p-5">
+          <div className="w-full rounded-[1.9rem] border border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_86%,transparent)] p-4 shadow-[var(--ui-shadow-xs)] backdrop-blur xl:max-w-[24rem] xl:justify-self-end xl:p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ui-text-soft)]">{t("Week in focus")}</p>
@@ -229,14 +237,21 @@ export default async function MeetingsPage({ searchParams }: MeetingsPageProps) 
               </div>
             </div>
 
-            <div className="mt-5 flex items-center gap-2">
-              <WeekButton href={createMeetingsWeekHref(prevWeek)} label={t("Previous week")} icon={<ArrowLeft className="h-4 w-4" />} />
-              <WeekButton href={createMeetingsWeekHref(nextWeek)} label={t("Next week")} icon={<ArrowRight className="h-4 w-4" />} />
+            <div className="mt-5 grid gap-2">
+              <WeekButton href={createMeetingsWeekHref(prevWeek)} label={t("Previous week")} icon={<ArrowLeft className="h-4 w-4 shrink-0" />} />
+              <WeekButton href={createMeetingsWeekHref(nextWeek)} label={t("Next week")} icon={<ArrowRight className="h-4 w-4 shrink-0" />} />
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <WeekButton href={createMeetingsWeekHref(currentWeek)} label={t("Current week")} active={selectedWeekKey === currentWeek} />
-              <MeetingDialog users={users} clients={clients} defaults={{ assignedToId: user.id }} triggerLabel="Schedule meeting" />
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <WeekButton
+                href={createMeetingsWeekHref(currentWeek)}
+                label={t("Current week")}
+                active={selectedWeekKey === currentWeek}
+                className="justify-center text-center"
+              />
+              <div className="[&_button]:h-auto [&_button]:min-h-14 [&_button]:w-full [&_button]:justify-center [&_button]:whitespace-normal [&_button]:rounded-2xl [&_button]:px-4 [&_button]:py-3 [&_button]:text-center [&_button]:leading-5">
+                <MeetingDialog users={users} clients={clients} defaults={{ assignedToId: user.id }} triggerLabel="Schedule meeting" />
+              </div>
             </div>
           </div>
         </div>

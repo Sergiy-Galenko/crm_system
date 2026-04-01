@@ -184,7 +184,7 @@ function ActiveConversationPanel({
           )}
         </div>
 
-        <div className="sticky bottom-0 z-10 border-t border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
+        <div className="sticky bottom-0 z-10 border-t border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_88%,transparent)] px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl">
             <MessageInput
               key={editingMessage ? `${conversation.id}:edit:${editingMessage.id}` : `${conversation.id}:compose`}
@@ -203,13 +203,13 @@ function ActiveConversationPanel({
         </div>
       </section>
 
-      <div className="hidden min-h-0 border-l border-slate-200/80 bg-white/72 2xl:block">
+      <div className="hidden min-h-0 border-l border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_74%,transparent)] 2xl:block">
         <UserProfilePanel conversation={conversation} backgroundPreference={backgroundPreference} onBackgroundChange={onBackgroundChange} />
       </div>
 
       <div
         className={cn(
-          "absolute inset-y-0 right-0 z-30 w-[min(22rem,calc(100vw-1rem))] border-l border-slate-200/80 bg-white/96 shadow-[-18px_0_60px_rgba(15,23,42,0.16)] backdrop-blur transition-transform duration-300 2xl:hidden",
+          "absolute inset-y-0 right-0 z-30 w-[min(22rem,calc(100vw-1rem))] border-l border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_96%,transparent)] shadow-[-18px_0_60px_rgba(15,23,42,0.16)] backdrop-blur transition-transform duration-300 2xl:hidden",
           isProfileOpen ? "translate-x-0" : "translate-x-[105%]",
         )}
       >

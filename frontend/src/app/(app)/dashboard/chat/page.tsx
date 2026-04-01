@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { isToday, isYesterday } from "date-fns";
 import { prisma } from "@/lib/db";
 import { getParam, createPageHref, type SearchParamsRecord } from "@/lib/query-params";
@@ -85,6 +85,12 @@ type ConversationLike = ConversationListItem | ConversationDetail;
 
 type ChatPageProps = {
   searchParams: Promise<SearchParamsRecord>;
+};
+
+type MessageReactionRow = {
+  messageId: string;
+  emoji: string;
+  userId: string;
 };
 
 function mapChatUser(
@@ -229,6 +235,31 @@ function getReplyPreview(
   return t("Message");
 }
 
+function groupMessageReactions(
+  reactions: MessageReactionRow[],
+  currentUserId: string,
+) {
+  const grouped = new Map<string, { emoji: string; count: number; reacted: boolean }>();
+
+  for (const reaction of reactions) {
+    const current = grouped.get(reaction.emoji);
+
+    if (current) {
+      current.count += 1;
+      current.reacted = current.reacted || reaction.userId === currentUserId;
+      continue;
+    }
+
+    grouped.set(reaction.emoji, {
+      emoji: reaction.emoji,
+      count: 1,
+      reacted: reaction.userId === currentUserId,
+    });
+  }
+
+  return [...grouped.values()].sort((left, right) => right.count - left.count);
+}
+
 function mapConversationListItem(
   conversation: ConversationListItem,
   currentUserId: string,
@@ -261,6 +292,7 @@ function mapActiveConversation(
   currentUserId: string,
   locale: Locale,
   lastReadAtByConversationId: Map<string, Date>,
+  reactionsByMessageId: Map<string, MessageReactionRow[]>,
   backgroundPreference: ChatBackgroundPreference,
   t: (key: string, values?: Record<string, string | number>) => string,
 ): ActiveConversation {
@@ -292,6 +324,7 @@ function mapActiveConversation(
             mediaType: message.replyToMessage.mediaType,
           }
         : null,
+      reactions: groupMessageReactions(reactionsByMessageId.get(message.id) ?? [], currentUserId),
       timeLabel: formatDate(message.createdAt, locale, "HH:mm"),
     };
 
@@ -422,6 +455,28 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
         include: conversationDetailInclude,
       })
     : null;
+  const activeConversationMessageIds = activeConversation?.messages.map((message) => message.id) ?? [];
+  const activeConversationReactions = activeConversationMessageIds.length
+    ? await prisma.$queryRaw<MessageReactionRow[]>(
+        Prisma.sql`
+          SELECT "messageId", "emoji", "userId"
+          FROM "ChatMessageReaction"
+          WHERE "messageId" IN (${Prisma.join(activeConversationMessageIds)})
+          ORDER BY "createdAt" ASC
+        `,
+      )
+    : [];
+  const reactionsByMessageId = activeConversationReactions.reduce<Map<string, MessageReactionRow[]>>((accumulator, reaction) => {
+    const current = accumulator.get(reaction.messageId);
+
+    if (current) {
+      current.push(reaction);
+      return accumulator;
+    }
+
+    accumulator.set(reaction.messageId, [reaction]);
+    return accumulator;
+  }, new Map());
 
   return (
     <div className="space-y-5">
@@ -435,7 +490,15 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
         conversations={conversationItems}
         activeConversation={
           activeConversation
-            ? mapActiveConversation(activeConversation, currentUser.id, locale, lastReadAtByConversationId, backgroundPreference, t)
+            ? mapActiveConversation(
+                activeConversation,
+                currentUser.id,
+                locale,
+                lastReadAtByConversationId,
+                reactionsByMessageId,
+                backgroundPreference,
+                t,
+              )
             : null
         }
         teammates={teammates}

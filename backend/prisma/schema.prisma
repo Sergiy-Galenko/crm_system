@@ -145,6 +145,7 @@ model User {
   createdChatConversations ChatConversation[] @relation("ChatConversationCreator")
   chatParticipations ChatParticipant[] @relation("ChatParticipantUser")
   chatMessages      ChatMessage[]    @relation("ChatMessageSender")
+  chatMessageReactions ChatMessageReaction[]
   notes             Note[]           @relation("NoteAuthor")
   recordComments    RecordComment[]
   createdPromoCodes PromoCode[]      @relation("PromoCodeCreator")
@@ -360,12 +361,27 @@ model ChatMessage {
   sender         User             @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   replyToMessage ChatMessage?     @relation("ChatMessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
   replies        ChatMessage[]    @relation("ChatMessageReplies")
+  reactions      ChatMessageReaction[]
 
   @@index([senderId])
   @@index([mediaType])
   @@index([status])
   @@index([replyToMessageId])
   @@index([conversationId, createdAt])
+}
+
+model ChatMessageReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId, createdAt])
+  @@index([userId])
 }
 
 model PromoCode {

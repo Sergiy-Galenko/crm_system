@@ -1,6 +1,9 @@
 "use client";
 
+import { startTransition, useState } from "react";
 import { EllipsisVertical, PencilLine, Reply } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toggleMessageReactionAction } from "@/actions/chat";
 import { ChatImageLightbox } from "@/components/chat/chat-image-lightbox";
 import { ChatMessageContent } from "@/components/chat/chat-message-content";
 import { ChatMessageStatus } from "@/components/chat/chat-message-status";
@@ -11,8 +14,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 import type { ChatMessageItem } from "./chat-types";
 
+const reactionOptions = ["👍", "❤️", "🔥", "😂", "👏", "🎯"];
+
 export function MessageBubble({
   message,
+  mentionableUsers,
   highlighted = false,
   onEditMessage,
   onJumpToMessage,
@@ -20,6 +26,7 @@ export function MessageBubble({
   showSenderName,
 }: {
   message: ChatMessageItem;
+  mentionableUsers: Array<{ nickname?: string | null }>;
   highlighted?: boolean;
   onEditMessage: (message: ChatMessageItem) => void;
   onJumpToMessage: (messageId: string) => void;
@@ -28,6 +35,34 @@ export function MessageBubble({
 }) {
   const { t } = useLocale();
   const tone = message.isCurrentUser ? "outgoing" : "incoming";
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [isReacting, setIsReacting] = useState(false);
+  const router = useRouter();
+
+  function handleOpenReactionPicker(event: React.MouseEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
+
+    if (target.closest("a,button,video,input,textarea,[role='menu'],[data-chat-reaction-ignore='true']")) {
+      return;
+    }
+
+    setReactionPickerOpen((current) => !current);
+  }
+
+  function handleToggleReaction(emoji: string) {
+    if (isReacting) {
+      return;
+    }
+
+    setIsReacting(true);
+    setReactionPickerOpen(false);
+
+    startTransition(async () => {
+      await toggleMessageReactionAction(message.id, emoji);
+      setIsReacting(false);
+      router.refresh();
+    });
+  }
 
   return (
     <div
@@ -77,8 +112,9 @@ export function MessageBubble({
         </div>
 
         <div
+          onClick={handleOpenReactionPicker}
           className={cn(
-            "space-y-3 rounded-[1.75rem] px-3 py-3 text-sm leading-6 shadow-sm",
+            "cursor-pointer space-y-3 rounded-[1.75rem] px-3 py-3 text-sm leading-6 shadow-sm",
             highlighted ? "ring-2 ring-[var(--ui-ring)] ring-offset-2 ring-offset-transparent" : "",
             message.isCurrentUser
               ? "bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]"
@@ -119,8 +155,56 @@ export function MessageBubble({
             </div>
           ) : null}
 
-          {message.body ? <ChatMessageContent body={message.body} tone={tone} /> : null}
+          {message.body ? <ChatMessageContent body={message.body} tone={tone} mentionableUsers={mentionableUsers} /> : null}
         </div>
+
+        {reactionPickerOpen ? (
+          <div className={cn("flex flex-wrap gap-2", message.isCurrentUser ? "justify-end" : "justify-start")}>
+            {reactionOptions.map((emoji) => {
+              const activeReaction = message.reactions.find((reaction) => reaction.emoji === emoji)?.reacted;
+
+              return (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleToggleReaction(emoji)}
+                  disabled={isReacting}
+                  className={cn(
+                    "inline-flex h-9 w-9 items-center justify-center rounded-full border text-base transition",
+                    activeReaction
+                      ? "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)]"
+                      : "border-[var(--ui-border)] bg-[var(--ui-surface-solid)] hover:border-[var(--ui-border-strong)] hover:bg-[var(--ui-surface-hover)]",
+                  )}
+                  aria-label={`${t("React with {emoji}", { emoji })}`}
+                >
+                  {emoji}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {message.reactions.length ? (
+          <div className={cn("flex flex-wrap items-center gap-2", message.isCurrentUser ? "justify-end" : "justify-start")}>
+            {message.reactions.map((reaction) => (
+              <button
+                key={reaction.emoji}
+                type="button"
+                onClick={() => handleToggleReaction(reaction.emoji)}
+                disabled={isReacting}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition",
+                  reaction.reacted
+                    ? "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-xs)]"
+                    : "border-[var(--ui-border)] bg-[var(--ui-surface-solid)] text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-hover)]",
+                )}
+              >
+                <span>{reaction.emoji}</span>
+                <span>{reaction.count}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className={cn("flex items-center gap-2 text-xs", message.isCurrentUser ? "justify-end" : "justify-start")}>
           {message.isEdited ? <span className="text-slate-400">{t("Edited")}</span> : null}

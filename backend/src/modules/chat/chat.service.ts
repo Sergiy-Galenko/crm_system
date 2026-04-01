@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
 import { ChatMessageStatus } from "@prisma/client";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
 import { PrismaService } from "@backend/common/database/prisma.service";
@@ -6,6 +7,8 @@ import { chatUsersWhere } from "@backend/common/scope/crm-scope";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
 import { SendMessageDto } from "./dto/send-message.dto";
 import { UpdateMessageDto } from "./dto/update-message.dto";
+
+const allowedChatReactions = new Set(["👍", "❤️", "🔥", "😂", "👏", "🎯"]);
 
 @Injectable()
 export class ChatService {
@@ -269,5 +272,66 @@ export class ChatService {
         },
       }),
     ]);
+  }
+
+  async toggleMessageReaction(currentUser: RequestUser, messageId: string, emoji: string) {
+    if (!allowedChatReactions.has(emoji)) {
+      throw new BadRequestException("Choose a valid reaction.");
+    }
+
+    const message = await this.prisma.chatMessage.findFirst({
+      where: {
+        id: messageId,
+        conversation: {
+          participants: {
+            some: {
+              userId: currentUser.userId,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!message) {
+      throw new ForbiddenException("This conversation is not available.");
+    }
+
+    const existingReaction = (
+      await this.prisma.$queryRaw<Array<{ id: string; emoji: string }>>`
+        SELECT "id", "emoji"
+        FROM "ChatMessageReaction"
+        WHERE "messageId" = ${messageId}
+          AND "userId" = ${currentUser.userId}
+        LIMIT 1
+      `
+    )[0];
+
+    if (existingReaction?.emoji === emoji) {
+      await this.prisma.$executeRaw`
+        DELETE FROM "ChatMessageReaction"
+        WHERE "messageId" = ${messageId}
+          AND "userId" = ${currentUser.userId}
+      `;
+
+      return;
+    }
+
+    if (existingReaction) {
+      await this.prisma.$executeRaw`
+        UPDATE "ChatMessageReaction"
+        SET "emoji" = ${emoji}
+        WHERE "id" = ${existingReaction.id}
+      `;
+
+      return;
+    }
+
+    await this.prisma.$executeRaw`
+      INSERT INTO "ChatMessageReaction" ("id", "messageId", "userId", "emoji", "createdAt")
+      VALUES (${randomUUID()}, ${messageId}, ${currentUser.userId}, ${emoji}, NOW())
+    `;
   }
 }
