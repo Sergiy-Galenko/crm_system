@@ -37,7 +37,7 @@ export function ChatSidebar({
     : chats;
 
   return (
-    <aside className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,var(--ui-surface-muted),var(--ui-surface-solid))]">
+    <aside className="flex h-full min-h-0 flex-col bg-[color-mix(in_srgb,var(--ui-surface-solid)_60%,transparent)] backdrop-blur-[20px]">
       <div className="border-b border-[var(--ui-border)] px-5 py-5">
         <div className="flex items-center justify-between gap-3">
           <BrandMark href="/dashboard/chat" />

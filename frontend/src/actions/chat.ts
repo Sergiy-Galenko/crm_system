@@ -111,3 +111,12 @@ export async function toggleMessageReactionAction(messageId: string, emoji: stri
 
   revalidatePath("/dashboard/chat");
 }
+
+export async function deleteMessageAction(messageId: string) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.deleteMessage(toRequestUser(user), messageId);
+
+  revalidatePath("/dashboard/chat");
+}

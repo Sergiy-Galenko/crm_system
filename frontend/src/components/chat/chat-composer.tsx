@@ -303,10 +303,10 @@ export function ChatComposer({
 
       <div
         className={cn(
-          "rounded-[1.9rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_96%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] p-3 shadow-[var(--ui-shadow-soft)] transition",
+          "rounded-[2.25rem] border border-[color-mix(in_srgb,var(--ui-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_75%,transparent)] p-3 shadow-[0_8px_30px_rgb(0_0_0/0.08)] backdrop-blur-2xl transition-all duration-300",
           isDraggingAttachment
-            ? "border-[var(--ui-border-strong)] bg-[color-mix(in_srgb,var(--ui-ring)_32%,var(--ui-surface-solid))]"
-            : "hover:border-[var(--ui-border-strong)]",
+            ? "border-[var(--ui-brand)] bg-[color-mix(in_srgb,var(--ui-brand)_10%,var(--ui-surface-solid))]"
+            : "focus-within:-translate-y-1 focus-within:shadow-[0_16px_40px_rgb(0_0_0/0.12)] hover:border-[color-mix(in_srgb,var(--ui-border-strong)_80%,transparent)]",
           editingMessage ? "border-[var(--ui-border-strong)]" : "",
         )}
         onDragEnter={(event) => {
@@ -399,7 +399,11 @@ export function ChatComposer({
             type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className={cn("self-end rounded-[1.35rem] px-4 shadow-[var(--ui-shadow-soft)]", editingMessage ? "h-12 min-w-[7rem]" : "h-12 w-12 p-0")}
+            className={cn(
+              "self-end rounded-[1.35rem] px-4 shadow-[var(--ui-shadow-soft)] transition-all duration-300",
+              editingMessage ? "h-12 min-w-[7rem]" : "h-12 w-12 p-0",
+              canSubmit && !editingMessage ? "bg-[linear-gradient(135deg,var(--ui-brand),#6366f1)] hover:scale-105 active:scale-95" : ""
+            )}
             aria-label={t(editingMessage ? "Save" : "Send")}
           >
             {editingMessage ? (

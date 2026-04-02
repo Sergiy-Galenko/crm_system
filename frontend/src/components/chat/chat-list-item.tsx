@@ -19,10 +19,10 @@ export function ChatListItem({
       href={conversation.href as never}
       onClick={onSelect}
       className={cn(
-        "grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-[1.6rem] border px-4 py-3.5 transition duration-200",
+        "grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-[1.25rem] border px-4 py-3.5 transition-all duration-300",
         active
-          ? "border-transparent bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]"
-          : "border-transparent bg-[var(--ui-surface-solid)] hover:border-[var(--ui-border)] hover:bg-[var(--ui-surface-hover)]",
+          ? "border-[color-mix(in_srgb,var(--ui-brand)_40%,transparent)] bg-[linear-gradient(120deg,color-mix(in_srgb,var(--ui-brand)_15%,transparent),transparent)] text-slate-900 shadow-sm backdrop-blur-md dark:text-slate-100"
+          : "border-transparent bg-transparent hover:border-[color-mix(in_srgb,var(--ui-border)_80%,transparent)] hover:bg-[color-mix(in_srgb,var(--ui-surface-hover)_40%,transparent)] hover:shadow-sm hover:backdrop-blur-sm",
       )}
     >
       <ChatAvatarStack participants={conversation.participants} type={conversation.type} className="shrink-0" />

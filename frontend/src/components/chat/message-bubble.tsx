@@ -1,9 +1,9 @@
 "use client";
 
 import { startTransition, useState } from "react";
-import { EllipsisVertical, PencilLine, Reply } from "lucide-react";
+import { EllipsisVertical, PencilLine, Reply, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toggleMessageReactionAction } from "@/actions/chat";
+import { toggleMessageReactionAction, deleteMessageAction } from "@/actions/chat";
 import { ChatImageLightbox } from "@/components/chat/chat-image-lightbox";
 import { ChatMessageContent } from "@/components/chat/chat-message-content";
 import { ChatMessageStatus } from "@/components/chat/chat-message-status";
@@ -107,6 +107,24 @@ export function MessageBubble({
                   {t("Edit")}
                 </DropdownMenuItem>
               ) : null}
+              {message.isCurrentUser ? (
+                <DropdownMenuItem
+                  className="text-red-500 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/50 dark:focus:text-red-400"
+                  onSelect={(e) => {
+                    if (window.confirm(t("Are you sure you want to delete this message?"))) {
+                      startTransition(async () => {
+                        await deleteMessageAction(message.id);
+                        router.refresh();
+                      });
+                    } else {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                  {t("Delete")}
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -114,11 +132,11 @@ export function MessageBubble({
         <div
           onClick={handleOpenReactionPicker}
           className={cn(
-            "cursor-pointer space-y-3 rounded-[1.75rem] px-3 py-3 text-sm leading-6 shadow-sm",
-            highlighted ? "ring-2 ring-[var(--ui-ring)] ring-offset-2 ring-offset-transparent" : "",
+            "cursor-pointer space-y-3 px-4 py-3 text-[15px] leading-relaxed transition-all duration-300",
+            highlighted ? "ring-2 ring-[var(--ui-ring)] ring-offset-4 ring-offset-transparent scale-[1.02]" : "hover:shadow-[0_4px_20px_rgb(0_0_0/0.08)]",
             message.isCurrentUser
-              ? "bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]"
-              : "border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] text-[var(--ui-text-strong)] shadow-[var(--ui-shadow-xs)]",
+              ? "rounded-[1.75rem] rounded-tr-[0.5rem] bg-[linear-gradient(135deg,var(--ui-brand),#8b5cf6)] text-white shadow-[0_4px_14px_0_color-mix(in_srgb,var(--ui-brand)_40%,transparent)]"
+              : "rounded-[1.75rem] rounded-tl-[0.5rem] border border-[color-mix(in_srgb,var(--ui-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_80%,transparent)] text-[var(--ui-text-strong)] shadow-[0_4px_14px_0_rgb(0_0_0/0.05)] backdrop-blur-xl",
           )}
         >
           {message.replyTo ? (

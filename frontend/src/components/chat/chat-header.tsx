@@ -41,7 +41,7 @@ export function ChatHeader({
   const { t } = useLocale();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-[var(--ui-border)] bg-[var(--ui-surface-solid)] px-5 py-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-10 border-b border-[color-mix(in_srgb,var(--ui-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_70%,transparent)] px-5 py-4 backdrop-blur-[20px] transition-all duration-300 sm:px-6">
       <div className="flex items-center gap-3">
         <Button type="button" variant="ghost" size="icon" className="xl:hidden" onClick={onOpenSidebar} aria-label={t("All chats")}>
           <Menu className="h-4 w-4" />

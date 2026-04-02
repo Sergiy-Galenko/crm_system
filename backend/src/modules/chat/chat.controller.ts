@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
@@ -34,5 +34,11 @@ export class ChatController {
       success: true,
       data: await this.chatService.updateMessage(user, id, dto),
     };
+  }
+
+  @Delete("messages/:id")
+  async deleteMessage(@CurrentUser() user: RequestUser, @Param("id") id: string) {
+    await this.chatService.deleteMessage(user, id);
+    return { success: true };
   }
 }

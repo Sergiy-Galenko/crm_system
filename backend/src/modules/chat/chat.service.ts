@@ -247,6 +247,28 @@ export class ChatService {
     });
   }
 
+  async deleteMessage(currentUser: RequestUser, messageId: string) {
+    const message = await this.prisma.chatMessage.findFirst({
+      where: {
+        id: messageId,
+        senderId: currentUser.userId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!message) {
+      throw new ForbiddenException("You can only delete your own messages or the message does not exist.");
+    }
+
+    await this.prisma.chatMessage.delete({
+      where: {
+        id: messageId,
+      },
+    });
+  }
+
   async markConversationRead(currentUser: RequestUser, conversationId: string) {
     await this.ensureParticipant(currentUser, conversationId);
 
