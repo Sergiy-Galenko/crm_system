@@ -302,330 +302,196 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   const listHref = createPageHref("/dashboard/tasks", resolvedSearchParams, { view: "list", page: "" });
 
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-[2.4rem] border border-white/8 bg-[#0f1012] text-white shadow-[0_34px_110px_rgba(0,0,0,0.4)]">
-        <div className="grid xl:grid-cols-[288px_minmax(0,1fr)]">
-          <aside className="border-b border-white/6 bg-[#151619] px-4 py-5 sm:px-5 xl:min-h-[calc(100vh-13rem)] xl:border-b-0 xl:border-r">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/34">{t("Workspace")}</p>
-                <h1 className="mt-3 text-[2rem] font-semibold tracking-tight text-white">{t("Tasks")}</h1>
-              </div>
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/72">
-                <BriefcaseBusiness className="h-5 w-5" />
-              </div>
-            </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-[2rem] font-bold tracking-tight text-slate-900 dark:text-white">
+            {t("Task Manager")}
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+            {t("Keep follow-ups, internal work, and client delivery in one clean execution queue with real task ownership and due dates.")}
+          </p>
+        </div>
 
-            <p className="mt-4 text-sm leading-7 text-white/46">
-              {t("Keep follow-ups, internal work, and client delivery in one clean execution queue with real task ownership and due dates.")}
-            </p>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="secondary" className="h-[2.6rem] rounded-xl font-medium">
+            <Link href="/dashboard/meetings">
+              <CalendarDays className="mr-2 h-4 w-4" />
+              {t("Calendar")}
+            </Link>
+          </Button>
 
-            <nav className="mt-7 space-y-1.5">
-              <WorkspaceLink
-                href={allTasksHref}
-                label={t("All tasks")}
-                count={totalAccessibleTasks}
-                active={!status && !priority && !assignee && !query}
-                icon={<ListTodo className="h-4 w-4" />}
-              />
-              <WorkspaceLink
-                href={assignedToMeHref}
-                label={t("Assigned to {name}", { name: user.name.split(" ")[0] || user.name })}
-                count={assignedToMeCount}
-                active={assignee === user.id}
-                icon={<UserRoundCheck className="h-4 w-4" />}
-              />
-              <WorkspaceLink
-                href={completedHref}
-                label={t("Completed")}
-                count={statusCountMap.DONE ?? 0}
-                active={status === "DONE"}
-                icon={<CheckCheck className="h-4 w-4" />}
-              />
-            </nav>
+          <TaskDialog
+            users={users}
+            clients={clients}
+            leads={leads}
+            deals={deals}
+            showLinkedRecords
+            defaults={{ assignedToId: user.id }}
+            defaultDueDate={toDateInputValue(defaultDueDate)}
+            triggerLabel={t("Add task")}
+            triggerVariant="primary"
+            triggerClassName="h-[2.6rem] rounded-xl px-5 font-semibold shadow-sm"
+          />
+        </div>
+      </div>
 
-            <div className="mt-7 space-y-6 border-t border-white/6 pt-6">
-              <SidebarBlock title={t("Status")}>
-                {statusOrder.map((statusItem) => (
-                  <WorkspaceLink
-                    key={statusItem}
-                    href={createPageHref("/dashboard/tasks", resolvedSearchParams, { status: statusItem, page: "" })}
-                    label={t(statusItem)}
-                    count={statusCountMap[statusItem] ?? 0}
-                    active={status === statusItem}
-                    icon={<CircleEllipsis className="h-4 w-4" />}
-                    compact
-                  />
-                ))}
-              </SidebarBlock>
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white/60 p-4 backdrop-blur-xl shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-4 dark:border-slate-800/50">
+          <nav className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <FilterTab href={allTasksHref} label={t("All tasks")} count={totalAccessibleTasks} active={!status && !priority && !assignee && !query} />
+            <FilterTab href={assignedToMeHref} label={t("Assigned to me")} count={assignedToMeCount} active={assignee === user.id} />
+            <FilterTab href={completedHref} label={t("Completed")} count={statusCountMap.DONE ?? 0} active={status === "DONE"} />
+          </nav>
 
-              <SidebarBlock title={t("Priority")}>
-                {priorityOrder.map((priorityItem) => (
-                  <WorkspaceLink
-                    key={priorityItem}
-                    href={createPageHref("/dashboard/tasks", resolvedSearchParams, { priority: priorityItem, page: "" })}
-                    label={t(priorityItem)}
-                    count={priorityCountMap[priorityItem] ?? 0}
-                    active={priority === priorityItem}
-                    icon={<Flag className="h-4 w-4" />}
-                    compact
-                  />
-                ))}
-              </SidebarBlock>
-            </div>
-          </aside>
-
-          <div className="min-w-0">
-            <div className="border-b border-white/6 px-5 py-5 sm:px-6">
-              <div className="space-y-5">
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-white/38">
-                      <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-white/76">
-                        {t("Workspace")}
-                      </span>
-                      <ChevronRight className="h-4 w-4" />
-                      <span>{t("Tasks")}</span>
-                      <ChevronRight className="h-4 w-4" />
-                      <span className="text-white">{t("Task Manager")}</span>
-                    </div>
-
-                    <h2 className="mt-4 text-[2rem] font-semibold tracking-tight text-white sm:text-[2.4rem]">
-                      {t("Task Manager")}
-                    </h2>
-                    <p className="mt-3 max-w-3xl text-sm leading-7 text-white/48">
-                      {t("Keep follow-ups, internal work, and client delivery in one clean execution queue with real task ownership and due dates.")}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <ViewLink href={boardHref} active={view === "board"} icon={<LayoutGrid className="h-4 w-4" />}>
-                      {t("Board")}
-                    </ViewLink>
-                    <ViewLink href={listHref} active={view === "list"} icon={<Rows3 className="h-4 w-4" />}>
-                      {t("List")}
-                    </ViewLink>
-                    <ViewLink href="/dashboard/meetings" icon={<CalendarDays className="h-4 w-4" />}>
-                      {t("Calendar")}
-                    </ViewLink>
-                    <TaskDialog
-                      users={users}
-                      clients={clients}
-                      leads={leads}
-                      deals={deals}
-                      showLinkedRecords
-                      defaults={{ assignedToId: user.id }}
-                      defaultDueDate={toDateInputValue(defaultDueDate)}
-                      triggerLabel="Add task"
-                      triggerClassName="rounded-2xl border border-violet-500/30 bg-[linear-gradient(135deg,#7c3aed,#5b21b6)] px-5 text-white shadow-[0_14px_32px_rgba(91,33,182,0.35)] hover:border-violet-400/40 hover:bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]"
-                    />
-                  </div>
-                </div>
-
-                <form className="grid gap-3 xl:grid-cols-[minmax(0,1.65fr)_155px_155px_205px_165px_auto_auto] xl:items-center">
-                  <input type="hidden" name="view" value={view} />
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/34" />
-                    <Input
-                      name="q"
-                      aria-label={t("Search")}
-                      defaultValue={query}
-                      placeholder={t("Search task title or description")}
-                      className="h-11 rounded-[1.1rem] border-white/10 bg-[#181a1f] pl-10 text-white shadow-none placeholder:text-white/26 hover:border-white/16 hover:bg-[#1c1f24] focus:border-violet-400/30 focus:bg-[#1c1f24]"
-                    />
-                  </div>
-
-                  <Select
-                    name="status"
-                    aria-label={t("Status")}
-                    defaultValue={status}
-                    className="h-11 rounded-[1.1rem] border-white/10 bg-[#181a1f] text-white shadow-none hover:border-white/16 hover:bg-[#1c1f24] focus:border-violet-400/30 focus:bg-[#1c1f24]"
-                  >
-                    <option value="">{t("All statuses")}</option>
-                    <option value="TODO">{t("TODO")}</option>
-                    <option value="IN_PROGRESS">{t("IN_PROGRESS")}</option>
-                    <option value="DONE">{t("DONE")}</option>
-                  </Select>
-
-                  <Select
-                    name="priority"
-                    aria-label={t("Priority")}
-                    defaultValue={priority}
-                    className="h-11 rounded-[1.1rem] border-white/10 bg-[#181a1f] text-white shadow-none hover:border-white/16 hover:bg-[#1c1f24] focus:border-violet-400/30 focus:bg-[#1c1f24]"
-                  >
-                    <option value="">{t("All priorities")}</option>
-                    <option value="LOW">{t("LOW")}</option>
-                    <option value="MEDIUM">{t("MEDIUM")}</option>
-                    <option value="HIGH">{t("HIGH")}</option>
-                  </Select>
-
-                  <Select
-                    name="assignedTo"
-                    aria-label={t("Assignee")}
-                    defaultValue={assignee}
-                    className="h-11 rounded-[1.1rem] border-white/10 bg-[#181a1f] text-white shadow-none hover:border-white/16 hover:bg-[#1c1f24] focus:border-violet-400/30 focus:bg-[#1c1f24]"
-                  >
-                    <option value="">{t("All assignees")}</option>
-                    <option value="unassigned">{t("Unassigned")}</option>
-                    {users.map((teamUser) => (
-                      <option key={teamUser.id} value={teamUser.id}>
-                        {teamUser.email ? `${teamUser.name} · ${teamUser.email}` : teamUser.name}
-                      </option>
-                    ))}
-                  </Select>
-
-                  <Select
-                    name="sort"
-                    aria-label={t("Sort by")}
-                    defaultValue={sort}
-                    className="h-11 rounded-[1.1rem] border-white/10 bg-[#181a1f] text-white shadow-none hover:border-white/16 hover:bg-[#1c1f24] focus:border-violet-400/30 focus:bg-[#1c1f24]"
-                  >
-                    <option value="due-date">{t("Nearest due date")}</option>
-                    <option value="created-date">{t("Newest created")}</option>
-                    <option value="priority">{t("Highest priority")}</option>
-                  </Select>
-
-                  <Button type="submit" className="h-11 rounded-[1.1rem] border border-white/10 bg-white/6 px-4 text-white shadow-none hover:border-white/16 hover:bg-white/10">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    {t("Filter")}
-                  </Button>
-
-                  <Button asChild variant="ghost" className="h-11 rounded-[1.1rem] border border-transparent px-4 text-white/62 hover:border-white/10 hover:bg-white/6 hover:text-white">
-                    <Link href={allTasksHref}>{t("Clear filters")}</Link>
-                  </Button>
-                </form>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 border-b border-white/6 px-5 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/22 bg-violet-500/14 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  {view === "board" ? t("Board") : t("List")}
-                </span>
-                {activeFilterSummary.length ? activeFilterSummary.map((item) => (
-                  <span key={item} className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/62">
-                    {item}
-                  </span>
-                )) : (
-                  <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/48">
-                    {t("All workspace tasks")}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em] text-white/30">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                  <ListTodo className="h-3.5 w-3.5" />
-                  {totalTasks}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-5 sm:p-6">
-              {view === "board" ? (
-                <TaskWorkspaceBoard
-                  tasks={taskCards}
-                  currentUserId={user.id}
-                  users={users}
-                  clients={clients}
-                  leads={leads}
-                  deals={deals}
-                  t={t}
-                />
-              ) : (
-                <TaskListBoard
-                  tasks={taskCards}
-                  currentUserId={user.id}
-                  users={users}
-                  clients={clients}
-                  leads={leads}
-                  deals={deals}
-                  layout="workspace"
-                  emptyTitle={t(totalAccessibleTasks ? "No tasks matched your filters" : "No tasks yet")}
-                  emptyDescription={t(
-                    totalAccessibleTasks
-                      ? "Try a broader search, different filters, or create a task with a different owner or priority."
-                      : "Create the first task to start tracking follow-ups, internal work, and delivery deadlines in one place.",
-                  )}
-                />
-              )}
-            </div>
+          <div className="flex shrink-0 items-center gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-800/60">
+            <ViewLink href={boardHref} active={view === "board"} icon={<LayoutGrid className="h-4 w-4" />}>
+              {t("Board")}
+            </ViewLink>
+            <ViewLink href={listHref} active={view === "list"} icon={<Rows3 className="h-4 w-4" />}>
+              {t("List")}
+            </ViewLink>
           </div>
         </div>
-      </section>
 
-      {view === "list" && pageCount > 1 ? (
-        <div className="flex items-center justify-between rounded-[1.65rem] border border-white/8 bg-[#101114] px-4 py-3 text-white shadow-[0_16px_38px_rgba(0,0,0,0.22)]">
-          <p className="text-sm text-white/44">
+        <form className="mt-4 flex flex-wrap items-center gap-3">
+          <input type="hidden" name="view" value={view} />
+          
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              name="q"
+              defaultValue={query}
+              placeholder={t("Search tasks...")}
+              className="h-10 w-full rounded-[1rem] border-slate-200 bg-white pl-10 text-sm shadow-none focus-visible:ring-1 focus-visible:ring-[var(--ui-brand)] dark:border-slate-700/60 dark:bg-slate-950/50"
+            />
+          </div>
+
+          <Select name="status" defaultValue={status} className="h-10 w-[140px] rounded-[1rem] border-slate-200 bg-white shadow-none dark:border-slate-700/60 dark:bg-slate-950/50">
+            <option value="">{t("All statuses")}</option>
+            <option value="TODO">{t("TODO")}</option>
+            <option value="IN_PROGRESS">{t("IN_PROGRESS")}</option>
+            <option value="DONE">{t("DONE")}</option>
+          </Select>
+
+          <Select name="priority" defaultValue={priority} className="h-10 w-[140px] rounded-[1rem] border-slate-200 bg-white shadow-none dark:border-slate-700/60 dark:bg-slate-950/50">
+            <option value="">{t("All priorities")}</option>
+            <option value="LOW">{t("LOW")}</option>
+            <option value="MEDIUM">{t("MEDIUM")}</option>
+            <option value="HIGH">{t("HIGH")}</option>
+          </Select>
+
+          <Select name="assignedTo" defaultValue={assignee} className="h-10 w-[150px] rounded-[1rem] border-slate-200 bg-white shadow-none dark:border-slate-700/60 dark:bg-slate-950/50">
+            <option value="">{t("All assignees")}</option>
+            <option value="unassigned">{t("Unassigned")}</option>
+            {users.map((teamUser) => (
+              <option key={teamUser.id} value={teamUser.id}>
+                {teamUser.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select name="sort" defaultValue={sort} className="h-10 w-[160px] rounded-[1rem] border-slate-200 bg-white shadow-none dark:border-slate-700/60 dark:bg-slate-950/50">
+            <option value="due-date">{t("Nearest due date")}</option>
+            <option value="created-date">{t("Newest created")}</option>
+            <option value="priority">{t("Highest priority")}</option>
+          </Select>
+
+          <Button type="submit" variant="secondary" className="h-10 rounded-[1rem] px-4 shadow-none">
+            <SlidersHorizontal className="mr-2 h-4 w-4" />
+            {t("Filter")}
+          </Button>
+
+          {(query || status || priority || assignee) && (
+            <Button type="button" asChild variant="ghost" className="h-10 rounded-[1rem] px-4 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+              <Link href={allTasksHref}>{t("Clear")}</Link>
+            </Button>
+          )}
+        </form>
+      </div>
+
+      <div>
+        {view === "board" ? (
+          <TaskWorkspaceBoard
+            tasks={taskCards}
+            currentUserId={user.id}
+            users={users}
+            clients={clients}
+            leads={leads}
+            deals={deals}
+            t={t}
+          />
+        ) : (
+          <TaskListBoard
+            tasks={taskCards}
+            currentUserId={user.id}
+            users={users}
+            clients={clients}
+            leads={leads}
+            deals={deals}
+            emptyTitle={t(totalAccessibleTasks ? "No tasks matched your filters" : "No tasks yet")}
+            emptyDescription={t(
+              totalAccessibleTasks
+                ? "Try a broader search, different filters, or create a task with a different owner or priority."
+                : "Create the first task to start tracking follow-ups, internal work, and delivery deadlines in one place.",
+            )}
+          />
+        )}
+      </div>
+
+      {view === "list" && pageCount > 1 && (
+        <div className="flex items-center justify-between rounded-[1.25rem] border border-slate-200 bg-white px-5 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             {t("Page {page} of {pageCount}", { page, pageCount })}
           </p>
           <div className="flex items-center gap-2">
-            <Button asChild className="h-10 rounded-xl border border-white/10 bg-white/6 px-4 text-white shadow-none hover:border-white/16 hover:bg-white/10" disabled={page <= 1}>
+            <Button asChild variant="secondary" className="h-9 rounded-lg" disabled={page <= 1}>
               <Link aria-disabled={page <= 1} href={prevHref}>
                 {t("Previous")}
               </Link>
             </Button>
-            <Button asChild className="h-10 rounded-xl border border-white/10 bg-white/6 px-4 text-white shadow-none hover:border-white/16 hover:bg-white/10" disabled={page >= pageCount}>
+            <Button asChild variant="secondary" className="h-9 rounded-lg" disabled={page >= pageCount}>
               <Link aria-disabled={page >= pageCount} href={nextHref}>
                 {t("Next")}
               </Link>
             </Button>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
-function SidebarBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="space-y-2">
-      <p className="px-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/30">{title}</p>
-      <div className="space-y-1.5">{children}</div>
-    </section>
-  );
-}
-
-function WorkspaceLink({
+function FilterTab({
   href,
   label,
   count,
-  icon,
   active = false,
-  compact = false,
 }: {
   href: UrlObject;
   label: string;
   count: number;
-  icon: ReactNode;
   active?: boolean;
-  compact?: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "group flex items-center justify-between gap-3 rounded-[1.15rem] border px-3.5 py-3 transition",
-        compact ? "bg-transparent" : "",
+        "flex shrink-0 items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
         active
-          ? "border-violet-500/28 bg-violet-500/15 text-white shadow-[0_16px_34px_rgba(91,33,182,0.18)]"
-          : "border-transparent bg-transparent text-white/58 hover:border-white/8 hover:bg-white/5 hover:text-white",
+          ? "bg-slate-100/80 text-[var(--ui-brand-foreground)] shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)] dark:bg-slate-800/80 dark:text-white"
+          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white",
       )}
     >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className={cn("inline-flex items-center justify-center rounded-xl", compact ? "h-8 w-8 bg-white/5 text-white/42" : "h-10 w-10 bg-white/5 text-white/48", active ? "bg-white/10 text-white" : "")}>
-          {icon}
-        </span>
-        <span className="truncate text-sm font-medium">{label}</span>
+      <span>{label}</span>
+      <span
+        className={cn(
+          "inline-flex h-5 items-center justify-center rounded-full px-2 text-[11px] font-semibold",
+          active ? "bg-[var(--ui-brand)] text-white" : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+        )}
+      >
+        {count}
       </span>
-      <span className={cn("text-sm font-semibold", active ? "text-white" : "text-white/32")}>{count}</span>
     </Link>
   );
 }
@@ -645,10 +511,10 @@ function ViewLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 items-center gap-2 rounded-[1.1rem] border px-4 text-sm font-medium transition",
+        "inline-flex h-[2.1rem] items-center gap-2 rounded-[0.5rem] px-3 text-[13px] font-medium transition",
         active
-          ? "border-white/14 bg-white/10 text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
-          : "border-white/8 bg-transparent text-white/52 hover:border-white/12 hover:bg-white/5 hover:text-white",
+          ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700/80 dark:text-white dark:shadow-none"
+          : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
       )}
     >
       {icon}

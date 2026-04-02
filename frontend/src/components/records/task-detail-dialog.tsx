@@ -102,16 +102,16 @@ export function TaskDetailDialog({
   }
 
   const workspaceStatusClassName = {
-    TODO: "border-white/10 bg-white/5 text-white/72",
-    IN_PROGRESS: "border-sky-500/30 bg-sky-500/18 text-sky-200",
-    DONE: "border-emerald-500/30 bg-emerald-500/18 text-emerald-200",
-  }[taskState.status] ?? "border-white/10 bg-white/5 text-white/72";
+    TODO: "border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400",
+    IN_PROGRESS: "border-sky-200 bg-sky-50 text-sky-600 dark:border-sky-900/50 dark:bg-sky-900/20 dark:text-sky-400",
+    DONE: "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-400",
+  }[taskState.status] ?? "border-slate-200 bg-slate-100 text-slate-500";
 
   const workspacePriorityClassName = {
-    LOW: "border-violet-500/25 bg-violet-500/15 text-violet-200",
-    MEDIUM: "border-amber-500/30 bg-amber-500/18 text-amber-200",
-    HIGH: "border-rose-500/30 bg-rose-500/18 text-rose-200",
-  }[taskState.priority] ?? "border-white/10 bg-white/5 text-white/72";
+    LOW: "border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-900/50 dark:bg-violet-900/20 dark:text-violet-400",
+    MEDIUM: "border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-400",
+    HIGH: "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-400",
+  }[taskState.priority] ?? "border-slate-200 bg-slate-100 text-slate-500";
 
   const workspaceLinkedLabel = taskState.client?.company ?? taskState.deal?.title ?? taskState.lead?.company ?? null;
 
@@ -121,10 +121,10 @@ export function TaskDetailDialog({
         <button
           type="button"
           className={cn(
-            "group w-full text-left transition",
+            "group w-full text-left transition-all duration-200",
             layout === "workspace"
-              ? "rounded-[1.45rem] border border-white/8 bg-[#18191d] p-4 shadow-[0_12px_34px_rgba(0,0,0,0.18)] hover:border-white/14 hover:bg-[#1d1f24] hover:shadow-[0_18px_42px_rgba(0,0,0,0.28)]"
-              : "rounded-[2rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_94%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] p-5 shadow-[var(--ui-shadow-xs)] hover:border-[var(--ui-border-strong)] hover:shadow-[var(--ui-shadow-soft)]",
+              ? "block rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm hover:border-[var(--ui-brand)] hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-slate-700"
+              : "rounded-[1.5rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_100%,transparent),color-mix(in_srgb,var(--ui-surface-muted)_100%,transparent))] p-5 shadow-[var(--ui-shadow-xs)] hover:border-[var(--ui-border-strong)] hover:shadow-[var(--ui-shadow-soft)]",
           )}
         >
           {layout === "workspace" ? (
@@ -132,35 +132,32 @@ export function TaskDetailDialog({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]", workspaceStatusClassName)}>
+                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]", workspaceStatusClassName)}>
                       {t(taskState.status)}
                     </span>
-                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]", workspacePriorityClassName)}>
+                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]", workspacePriorityClassName)}>
                       {t(taskState.priority)}
                     </span>
                   </div>
-                  <h3 className="mt-3 text-[15px] font-semibold leading-6 text-white/95 transition group-hover:text-white">
+                  <h3 className="mt-2.5 text-[15px] font-semibold leading-snug text-slate-900 transition group-hover:text-[var(--ui-brand)] dark:text-white dark:group-hover:text-white">
                     {taskState.title}
                   </h3>
                   {taskState.description ? (
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/48">
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                       {taskState.description}
                     </p>
                   ) : null}
                 </div>
-                <div className="hidden text-[10px] uppercase tracking-[0.18em] text-white/28 sm:block">
-                  {taskState.updatedAtLabel}
-                </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/68">
+                  <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <CalendarClock className="h-3.5 w-3.5" />
                     {taskState.dueDateLabel}
                   </span>
                   {workspaceLinkedLabel ? (
-                    <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-[#111216] px-3 py-1.5 text-xs font-medium text-white/56">
+                    <span className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                       <Link2 className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{workspaceLinkedLabel}</span>
                     </span>
@@ -168,26 +165,22 @@ export function TaskDetailDialog({
                 </div>
 
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/68">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <MessageSquareText className="h-3.5 w-3.5" />
                     {commentCount}
                   </span>
                   {taskState.assignedTo ? (
-                    <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1.5">
+                    <div className="inline-flex min-w-0 items-center gap-1.5">
                       <UserAvatar
                         name={taskState.assignedTo.name}
                         color={taskState.assignedTo.avatarColor}
                         imageUrl={taskState.assignedTo.companyLogoUrl}
-                        className="h-7 w-7 rounded-full"
+                        className="h-6 w-6 rounded-full ring-2 ring-white dark:ring-slate-900"
                       />
-                      <span className="max-w-28 truncate text-xs font-medium text-white/76">
-                        {taskState.assignedTo.nickname ? `@${taskState.assignedTo.nickname}` : taskState.assignedTo.name}
-                      </span>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-white/12 px-3 py-1.5 text-xs font-medium text-white/46">
+                    <div className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-dashed border-slate-300 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">
                       <UserRound className="h-3.5 w-3.5" />
-                      {t("Unassigned")}
                     </div>
                   )}
                 </div>
