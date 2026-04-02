@@ -9,6 +9,7 @@ export type ChatUser = {
   roleLabel?: string | null;
   avatarColor?: string | null;
   companyLogoUrl?: string | null;
+  lastSeenAt?: string | Date | null;
 };
 
 export type ChatBackgroundPreference = {
@@ -29,6 +30,17 @@ export type ChatConversationListItem = {
   participants: ChatUser[];
 };
 
+export type ChatPollItem = {
+  id: string;
+  question: string;
+  options: Array<{
+    id: string;
+    text: string;
+    voteCount: number;
+    hasVoted: boolean;
+  }>;
+};
+
 export type ChatMessageItem = {
   id: string;
   sender: ChatUser;
@@ -36,6 +48,7 @@ export type ChatMessageItem = {
   body?: string | null;
   mediaUrl?: string | null;
   mediaType?: "IMAGE" | "VIDEO" | null;
+  isForwarded?: boolean;
   status?: "SENT" | "DELIVERED" | "READ";
   isEdited?: boolean;
   replyTo?: {
@@ -49,6 +62,7 @@ export type ChatMessageItem = {
     count: number;
     reacted: boolean;
   }>;
+  poll?: ChatPollItem;
   timeLabel: string;
 };
 
@@ -64,6 +78,13 @@ export type ActiveConversation = {
   subtitle: string;
   statusLabel: string;
   hasUnread: boolean;
+  mutedUntil?: Date | string | null;
+  pinnedMessage?: {
+    id: string;
+    body: string | null;
+    mediaType: "IMAGE" | "VIDEO" | null;
+    senderName: string;
+  } | null;
   participants: ChatUser[];
   participantDirectory: ChatUser[];
   messageGroups: ChatMessageGroup[];

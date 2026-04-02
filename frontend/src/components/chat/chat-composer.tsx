@@ -2,12 +2,14 @@
 
 import { startTransition, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Check, MessageSquareQuote, Paperclip, PencilLine, SendHorizontal, X } from "lucide-react";
+import { Check, MessageSquareQuote, Paperclip, PencilLine, SendHorizontal, X, BarChart2, Plus, Minus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { sendMessageAction, updateMessageAction } from "@/actions/chat";
+import { searchMentionsAction, type SmartMentionResult } from "@/actions/search-mentions";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { idleActionState, type ActionResult } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import type { ChatMessageItem } from "./chat-types";
@@ -106,11 +108,17 @@ export function ChatComposer({
   const [isDraggingAttachment, setIsDraggingAttachment] = useState(false);
   const [attachmentError, setAttachmentError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pollDraft, setPollDraft] = useState<{ question: string; options: string[] } | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<{ query: string; index: number; type: string } | null>(null);
+  const [mentionResults, setMentionResults] = useState<SmartMentionResult[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const { t } = useLocale();
-  const canSubmit = editingMessage ? Boolean(messageBody.trim()) && !isSubmitting : (!isSubmitting && (Boolean(messageBody.trim()) || Boolean(attachment)));
+  const canSubmit = editingMessage 
+    ? Boolean(messageBody.trim()) && !isSubmitting 
+    : (!isSubmitting && (Boolean(messageBody.trim()) || Boolean(attachment) || (pollDraft && pollDraft.question.trim() && pollDraft.options[0].trim())));
 
   useEffect(() => {
     if (editingMessage || typeof window === "undefined") {
@@ -127,6 +135,22 @@ export function ChatComposer({
 
     window.localStorage.setItem(storageKey, messageBody);
   }, [conversationId, editingMessage, messageBody]);
+
+  useEffect(() => {
+    const cursor = textareaRef.current?.selectionStart ?? messageBody.length;
+    const textBeforeCursor = messageBody.slice(0, cursor);
+    const match = textBeforeCursor.match(/(?:^|\s)([/#])([\w\sа-яієїґ]{0,20})$/i);
+
+    if (match) {
+      const type = match[1];
+      const q = match[2].trim();
+      setMentionQuery({ query: q, index: match.index! + match[1].length, type });
+      searchMentionsAction(q).then((results) => setMentionResults(results));
+    } else {
+      setMentionQuery(null);
+      setMentionResults([]);
+    }
+  }, [messageBody]);
 
   async function prepareAttachment(file: File) {
     if (!isSupportedAttachment(file)) {
@@ -202,6 +226,13 @@ export function ChatComposer({
         if (replyToMessage) {
           formData.set("replyToMessageId", replyToMessage.id);
         }
+
+        if (pollDraft) {
+          formData.set("poll_question", pollDraft.question);
+          pollDraft.options.filter((opt) => opt.trim() !== "").forEach((opt) => {
+             formData.append("poll_options", opt.trim());
+          });
+        }
       }
 
       const nextState = editingMessage
@@ -220,6 +251,7 @@ export function ChatComposer({
       } else {
         setMessageBody("");
         setAttachment(null);
+        setPollDraft(null);
         setAttachmentError("");
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(getDraftStorageKey(conversationId));
@@ -291,6 +323,51 @@ export function ChatComposer({
         </div>
       ) : null}
 
+      {pollDraft ? (
+        <div className="rounded-[1.5rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-4 shadow-[var(--ui-shadow-xs)] relative">
+           <Button type="button" variant="ghost" size="icon" onClick={() => setPollDraft(null)} className="absolute right-3 top-3 w-7 h-7">
+              <X className="h-4 w-4" />
+           </Button>
+           <h4 className="text-sm font-semibold mb-3">Create Poll</h4>
+           <Input 
+             placeholder={t("Ask a question...")} 
+             value={pollDraft.question}
+             className="mb-2 bg-transparent text-sm"
+             onChange={(e) => setPollDraft({ ...pollDraft, question: e.target.value })}
+             autoFocus
+           />
+           <div className="space-y-2 mt-3">
+             {pollDraft.options.map((option, idx) => (
+                <div key={idx} className="flex items-center gap-1.5">
+                   <Input 
+                     placeholder={t("Option {n}", { n: idx + 1 })}
+                     value={option}
+                     className="bg-transparent text-sm h-8"
+                     onChange={(e) => {
+                       const newOptions = [...pollDraft.options];
+                       newOptions[idx] = e.target.value;
+                       setPollDraft({ ...pollDraft, options: newOptions });
+                     }}
+                   />
+                   {pollDraft.options.length > 2 && (
+                     <Button type="button" variant="ghost" size="icon" className="w-8 h-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => {
+                        const newOptions = pollDraft.options.filter((_, i) => i !== idx);
+                        setPollDraft({ ...pollDraft, options: newOptions });
+                     }}>
+                       <Minus className="w-3.5 h-3.5" />
+                     </Button>
+                   )}
+                </div>
+             ))}
+           </div>
+           {pollDraft.options.length < 10 && (
+              <Button type="button" variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs text-[var(--ui-brand)] hover:text-[var(--ui-brand-foreground)] hover:bg-[var(--ui-brand)]/10" onClick={() => setPollDraft({ ...pollDraft, options: [...pollDraft.options, ""] })}>
+                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Option
+              </Button>
+           )}
+        </div>
+      ) : null}
+
       <input
         ref={fileInputRef}
         type="file"
@@ -344,12 +421,52 @@ export function ChatComposer({
       >
         <div className="flex items-end gap-3">
           {!editingMessage ? (
-            <Button type="button" variant="secondary" size="icon" className="h-12 w-12 shrink-0 rounded-[1.35rem]" onClick={() => fileInputRef.current?.click()}>
-              <Paperclip className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-col gap-2 shrink-0 justify-end h-full">
+              {!pollDraft && (
+                <Button type="button" title={t("Create Poll")} variant="ghost" size="icon" className="h-[2.75rem] w-[2.75rem] rounded-[1.35rem] text-[var(--ui-text-muted)] hover:bg-black/5 hover:text-[var(--ui-text-strong)]" onClick={() => setPollDraft({ question: "", options: ["", ""] })}>
+                  <BarChart2 className="h-5 w-5" />
+                </Button>
+              )}
+              <Button type="button" title={t("Attach File")} variant="secondary" size="icon" className="h-[2.75rem] w-[2.75rem] rounded-[1.35rem]" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            </div>
           ) : null}
 
-          <div className="min-w-0 flex-1 rounded-[1.55rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-3 shadow-[var(--ui-shadow-xs)]">
+          <div className="min-w-0 flex-1 relative rounded-[1.55rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-3 shadow-[var(--ui-shadow-xs)]">
+            {mentionQuery && mentionResults.length > 0 && (
+              <div className="absolute bottom-full mb-2 left-0 w-[24rem] max-w-[calc(100vw-4rem)] rounded-[1.25rem] border border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_85%,transparent)] shadow-[0_12px_40px_rgb(0_0_0/0.12)] z-50 overflow-hidden backdrop-blur-3xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 bg-[color-mix(in_srgb,var(--ui-surface-muted)_50%,transparent)] border-b border-[var(--ui-border)]">
+                  Smart Mentions
+                </div>
+                <ul className="max-h-64 overflow-y-auto p-1.5 scrollbar-none">
+                  {mentionResults.map((result) => (
+                    <li key={`${result.type}-${result.id}`}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-3 rounded-[0.85rem] px-3 py-2 text-left hover:bg-[color-mix(in_srgb,var(--ui-brand)_10%,transparent)] focus:bg-[color-mix(in_srgb,var(--ui-brand)_15%,transparent)] outline-none transition-colors"
+                        onClick={() => {
+                          const prefix = messageBody.slice(0, mentionQuery.index - 1);
+                          const suffix = messageBody.slice(textareaRef.current!.selectionStart);
+                          const tagStr = `[[${result.type}:${result.id}:${result.title}]] `;
+                          setMessageBody(prefix + tagStr + suffix);
+                          setMentionQuery(null);
+                          textareaRef.current?.focus();
+                        }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-[var(--ui-text-strong)]">{result.title}</p>
+                          <p className="truncate text-[11px] text-[var(--ui-text-muted)] mt-0.5">{result.subtitle}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-[var(--ui-brand)]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ui-brand)]">
+                          {result.type}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <Textarea
               ref={textareaRef}
               name="body"

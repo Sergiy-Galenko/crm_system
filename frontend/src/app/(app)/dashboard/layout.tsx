@@ -3,6 +3,7 @@ import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prism
 import { AppShell } from "@/components/layout/app-shell";
 import { promoCodeAccessWhere, taskAccessWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
+import { chatDb } from "@/lib/chat-db";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
@@ -87,7 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           },
           take: 3,
         }),
-        prisma.chatConversation.findMany({
+        chatDb.chatConversation.findMany({
           where: {
             participants: {
               some: {
@@ -113,7 +114,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             },
           },
         }),
-        prisma.$queryRaw<Array<{ conversationId: string; lastReadAt: Date }>>`
+        chatDb.$queryRaw<Array<{ conversationId: string; lastReadAt: Date }>>`
           SELECT "conversationId", "lastReadAt"
           FROM "ChatParticipant"
           WHERE "userId" = ${user.id}

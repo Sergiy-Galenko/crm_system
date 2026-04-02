@@ -62,22 +62,6 @@ enum MeetingStatus {
   NO_SHOW
 }
 
-enum ChatConversationType {
-  DIRECT
-  GROUP
-}
-
-enum ChatMessageMediaType {
-  IMAGE
-  VIDEO
-}
-
-enum ChatMessageStatus {
-  SENT
-  DELIVERED
-  READ
-}
-
 enum ChatBackgroundType {
   ABSTRACT
   SOLID
@@ -127,6 +111,7 @@ model User {
   bio               String?
   avatarColor       String           @default("#2154FF")
   companyLogoUrl    String?
+  lastSeenAt        DateTime?        @default(now())
   chatBackgroundType ChatBackgroundType @default(ABSTRACT)
   chatBackgroundColor String?
   chatBackgroundImageUrl String?
@@ -142,10 +127,6 @@ model User {
   createdTasks      Task[]           @relation("TaskCreator")
   assignedMeetings  Meeting[]        @relation("MeetingAssignee")
   createdMeetings   Meeting[]        @relation("MeetingCreator")
-  createdChatConversations ChatConversation[] @relation("ChatConversationCreator")
-  chatParticipations ChatParticipant[] @relation("ChatParticipantUser")
-  chatMessages      ChatMessage[]    @relation("ChatMessageSender")
-  chatMessageReactions ChatMessageReaction[]
   notes             Note[]           @relation("NoteAuthor")
   recordComments    RecordComment[]
   createdPromoCodes PromoCode[]      @relation("PromoCodeCreator")
@@ -315,74 +296,6 @@ model RecordComment {
   @@index([meetingId, createdAt])
 }
 
-model ChatConversation {
-  id            String               @id @default(cuid())
-  type          ChatConversationType
-  title         String?
-  createdById   String
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  lastMessageAt DateTime             @default(now())
-  createdBy     User                 @relation("ChatConversationCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  participants  ChatParticipant[]
-  messages      ChatMessage[]
-
-  @@index([type])
-  @@index([createdById])
-  @@index([lastMessageAt])
-}
-
-model ChatParticipant {
-  conversationId String
-  userId         String
-  joinedAt       DateTime         @default(now())
-  lastReadAt     DateTime         @default(now())
-  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user           User             @relation("ChatParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([conversationId, userId])
-  @@index([userId])
-  @@index([lastReadAt])
-}
-
-model ChatMessage {
-  id             String           @id @default(cuid())
-  conversationId String
-  senderId       String
-  body           String?
-  mediaUrl       String?
-  mediaType      ChatMessageMediaType?
-  status         ChatMessageStatus @default(SENT)
-  editedAt       DateTime?
-  replyToMessageId String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User             @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  replyToMessage ChatMessage?     @relation("ChatMessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
-  replies        ChatMessage[]    @relation("ChatMessageReplies")
-  reactions      ChatMessageReaction[]
-
-  @@index([senderId])
-  @@index([mediaType])
-  @@index([status])
-  @@index([replyToMessageId])
-  @@index([conversationId, createdAt])
-}
-
-model ChatMessageReaction {
-  id        String      @id @default(cuid())
-  messageId String
-  userId    String
-  emoji     String
-  createdAt DateTime    @default(now())
-  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([messageId, userId])
-  @@index([messageId, createdAt])
-  @@index([userId])
-}
 
 model PromoCode {
   id            String           @id @default(cuid())

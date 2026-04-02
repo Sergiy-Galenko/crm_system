@@ -50,7 +50,17 @@ export async function sendMessageAction(prevState: ActionResult, formData: FormD
   const user = await requireUser();
 
   try {
-    const dto = await validateDto(SendMessageDto, Object.fromEntries(formData.entries()));
+    const data: Record<string, any> = Object.fromEntries(formData.entries());
+    const pollQuestion = formData.get("poll_question");
+    
+    if (pollQuestion) {
+      data.poll = {
+        question: pollQuestion as string,
+        options: formData.getAll("poll_options").filter(Boolean) as string[],
+      };
+    }
+
+    const dto = await validateDto(SendMessageDto, data);
     const chatService = await resolveProvider(ChatService);
     await chatService.sendMessage(toRequestUser(user), dto);
 
@@ -118,5 +128,37 @@ export async function deleteMessageAction(messageId: string) {
 
   await chatService.deleteMessage(toRequestUser(user), messageId);
 
+  revalidatePath("/dashboard/chat");
+}
+
+export async function setConversationMuteAction(conversationId: string, mutedUntil: Date | null) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.setMute(toRequestUser(user), conversationId, mutedUntil);
+  revalidatePath("/dashboard/chat");
+}
+
+export async function pinMessageAction(conversationId: string, messageId: string | null) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.pinMessage(toRequestUser(user), conversationId, messageId);
+  revalidatePath("/dashboard/chat");
+}
+
+export async function forwardMessageAction(targetConversationId: string, messageId: string) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.forwardMessage(toRequestUser(user), targetConversationId, messageId);
+  revalidatePath("/dashboard/chat");
+}
+
+export async function votePollAction(pollId: string, optionId: string) {
+  const user = await requireUser();
+  const chatService = await resolveProvider(ChatService);
+
+  await chatService.voteOnPoll(toRequestUser(user), pollId, optionId);
   revalidatePath("/dashboard/chat");
 }

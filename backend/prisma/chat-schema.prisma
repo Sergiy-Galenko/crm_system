@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/@prisma/chat-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CHAT_DATABASE_URL")
+}
+
+enum ChatConversationType {
+  DIRECT
+  GROUP
+}
+
+enum ChatMessageMediaType {
+  IMAGE
+  VIDEO
+}
+
+enum ChatMessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model ChatConversation {
+  id            String               @id @default(cuid())
+  type          ChatConversationType
+  title         String?
+  createdById   String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  lastMessageAt   DateTime             @default(now())
+  pinnedMessageId String?
+  participants    ChatParticipant[]
+  messages        ChatMessage[]
+  pinnedMessage   ChatMessage?         @relation("PinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([createdById])
+  @@index([lastMessageAt])
+}
+
+model ChatParticipant {
+  conversationId String
+  userId         String
+  joinedAt       DateTime         @default(now())
+  lastReadAt     DateTime         @default(now())
+  mutedUntil     DateTime?
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@index([lastReadAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String?
+  mediaUrl       String?
+  mediaType      ChatMessageMediaType?
+  isForwarded    Boolean          @default(false)
+  status         ChatMessageStatus @default(SENT)
+  editedAt       DateTime?
+  replyToMessageId String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyToMessage ChatMessage?     @relation("ChatMessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies        ChatMessage[]    @relation("ChatMessageReplies")
+  reactions      ChatMessageReaction[]
+  pinnedIn       ChatConversation[] @relation("PinnedMessage")
+  poll           ChatPoll?
+
+  @@index([senderId])
+  @@index([mediaType])
+  @@index([status])
+  @@index([replyToMessageId])
+  @@index([conversationId, createdAt])
+}
+
+model ChatMessageReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId, createdAt])
+  @@index([userId])
+}
+
+model ChatPoll {
+  id          String   @id @default(cuid())
+  question    String
+  createdAt   DateTime @default(now())
+
+  messageId   String   @unique
+  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  options     ChatPollOption[]
+  votes       ChatPollVote[]
+}
+
+model ChatPollOption {
+  id        String   @id @default(cuid())
+  text      String
+
+  pollId    String
+  poll      ChatPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  votes     ChatPollVote[]
+}
+
+model ChatPollVote {
+  id        String   @id @default(cuid())
+  userId    String
+
+  pollId    String
+  poll      ChatPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  optionId  String
+  option    ChatPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pollId])
+}

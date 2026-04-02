@@ -10,6 +10,8 @@ export function MessageGroup({
   onEditMessage,
   onJumpToMessage,
   onReplyToMessage,
+  onForwardMessage,
+  onPinMessage,
 }: {
   group: ChatMessageGroup;
   conversation: ActiveConversation;
@@ -17,6 +19,8 @@ export function MessageGroup({
   onEditMessage: (message: ChatMessageItem) => void;
   onJumpToMessage: (messageId: string) => void;
   onReplyToMessage: (message: ChatMessageItem) => void;
+  onForwardMessage: (message: ChatMessageItem) => void;
+  onPinMessage: (messageId: string) => void;
 }) {
   return (
     <section className="space-y-4">
@@ -33,9 +37,12 @@ export function MessageGroup({
             message={message}
             mentionableUsers={conversation.participantDirectory}
             highlighted={highlightedMessageId === message.id}
+            isPinned={conversation.pinnedMessage?.id === message.id}
             onEditMessage={onEditMessage}
             onJumpToMessage={onJumpToMessage}
             onReplyToMessage={onReplyToMessage}
+            onForwardMessage={onForwardMessage}
+            onPinMessage={onPinMessage}
             showSenderName={conversation.type === "GROUP" && !message.isCurrentUser}
           />
         ))}

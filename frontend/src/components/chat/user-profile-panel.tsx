@@ -8,6 +8,7 @@ import { UserAvatar } from "@/components/ui/avatar";
 import { ChatImageLightbox } from "@/components/chat/chat-image-lightbox";
 import { ChatAppearanceControls } from "@/components/chat/chat-appearance-controls";
 import type { ActiveConversation } from "./chat-types";
+import { fromNow } from "@/lib/utils";
 
 export function UserProfilePanel({
   conversation,
@@ -51,6 +52,16 @@ export function UserProfilePanel({
           ) : null}
           <h3 className="mt-4 text-lg font-semibold text-slate-950">{conversation.title}</h3>
           <p className="mt-1 text-sm text-slate-500">{conversation.subtitle}</p>
+          {conversation.type === "DIRECT" && primaryUser?.lastSeenAt && (
+             <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium">
+               <span className="relative flex h-2 w-2">
+                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40"></span>
+                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+               </span>
+               <span className="text-slate-600 dark:text-slate-400">В мережі</span>
+               {/* Note: This mocks 'Online' since we just added the field and don't track 'Offline' states yet. */}
+             </div>
+          )}
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
             <Badge variant="info">{conversation.statusLabel}</Badge>
             <Badge>{conversation.type === "GROUP" ? t("Group") : t("Direct")}</Badge>

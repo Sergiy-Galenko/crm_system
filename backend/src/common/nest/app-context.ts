@@ -3,6 +3,7 @@ import "reflect-metadata";
 import type { Type } from "@nestjs/common";
 import { ActivityLogService } from "@backend/common/activity/activity-log.service";
 import { PrismaService } from "@backend/common/database/prisma.service";
+import { ChatPrismaService } from "@backend/common/database/chat-prisma.service";
 import { AuthService } from "@backend/modules/auth/auth.service";
 import { ChatService } from "@backend/modules/chat/chat.service";
 import { CommentsService } from "@backend/modules/comments/comments.service";
@@ -15,6 +16,7 @@ import { UsersService } from "@backend/modules/users/users.service";
 
 type BackendProviders = {
   prismaService: PrismaService;
+  chatPrismaService: ChatPrismaService;
   activityLogService: ActivityLogService;
   authService: AuthService;
   chatService: ChatService;
@@ -35,9 +37,10 @@ const globalForBackendProviders = globalThis as GlobalBackendProviders;
 
 async function createProviders(): Promise<BackendProviders> {
   const prismaService = new PrismaService();
+  const chatPrismaService = new ChatPrismaService();
   const activityLogService = new ActivityLogService();
   const authService = new AuthService(prismaService, activityLogService);
-  const chatService = new ChatService(prismaService);
+  const chatService = new ChatService(prismaService, chatPrismaService);
   const commentsService = new CommentsService(prismaService, activityLogService);
   const clientsService = new ClientsService(prismaService, activityLogService);
   const leadsService = new LeadsService(prismaService, activityLogService);
@@ -48,6 +51,7 @@ async function createProviders(): Promise<BackendProviders> {
 
   return {
     prismaService,
+    chatPrismaService,
     activityLogService,
     authService,
     chatService,
@@ -78,6 +82,7 @@ export async function resolveProvider<T>(provider: Type<T> | symbol | string) {
 
   const providerMap = new Map<Function, unknown>([
     [PrismaService, providers.prismaService],
+    [ChatPrismaService, providers.chatPrismaService],
     [ActivityLogService, providers.activityLogService],
     [AuthService, providers.authService],
     [ChatService, providers.chatService],

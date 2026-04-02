@@ -41,4 +41,46 @@ export class ChatController {
     await this.chatService.deleteMessage(user, id);
     return { success: true };
   }
+
+  @Post("conversations/:id/mute")
+  async setMute(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Body("mutedUntil") mutedUntil: string | null,
+  ) {
+    await this.chatService.setMute(user, id, mutedUntil ? new Date(mutedUntil) : null);
+    return { success: true };
+  }
+
+  @Post("conversations/:id/pin")
+  async pinMessage(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Body("messageId") messageId: string | null,
+  ) {
+    await this.chatService.pinMessage(user, id, messageId);
+    return { success: true };
+  }
+
+  @Post("messages/:id/forward")
+  async forwardMessage(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Body("targetConversationId") targetConversationId: string,
+  ) {
+    return {
+      success: true,
+      data: await this.chatService.forwardMessage(user, targetConversationId, id),
+    };
+  }
+
+  @Post("messages/polls/:pollId/vote")
+  async voteOnPoll(
+    @CurrentUser() user: RequestUser,
+    @Param("pollId") pollId: string,
+    @Body("optionId") optionId: string,
+  ) {
+    await this.chatService.voteOnPoll(user, pollId, optionId);
+    return { success: true };
+  }
 }

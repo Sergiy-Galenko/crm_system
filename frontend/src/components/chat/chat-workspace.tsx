@@ -1,11 +1,12 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { PanelRightClose, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { markConversationReadAction } from "@/actions/chat";
+import { markConversationReadAction, pinMessageAction } from "@/actions/chat";
 import { ChatBackgroundLayer } from "@/components/chat/chat-background-layer";
 import { ChatConversationDialog } from "@/components/forms/chat-conversation-dialog";
+import { ChatForwardDialog } from "@/components/chat/chat-forward-dialog";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -24,6 +25,7 @@ function ActiveConversationPanel({
   onOpenSidebar,
   onToggleProfile,
   onBackgroundChange,
+  conversations,
 }: {
   conversation: ActiveConversation;
   backgroundPreference: ChatBackgroundPreference;
@@ -31,11 +33,13 @@ function ActiveConversationPanel({
   onOpenSidebar: () => void;
   onToggleProfile: () => void;
   onBackgroundChange: (value: ChatBackgroundPreference) => void;
+  conversations: ChatConversationListItem[];
 }) {
   const { t } = useLocale();
   const [messageSearchOpen, setMessageSearchOpen] = useState(false);
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [replyToMessage, setReplyToMessage] = useState<ChatMessageItem | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<ChatMessageItem | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessageItem | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const deferredMessageSearchQuery = useDeferredValue(messageSearchQuery);
@@ -162,6 +166,14 @@ function ActiveConversationPanel({
                     setReplyToMessage(message);
                     setEditingMessage(null);
                   }}
+                  onForwardMessage={(message) => {
+                    setForwardMessage(message);
+                  }}
+                  onPinMessage={(messageId) => {
+                     startTransition(async () => {
+                        await pinMessageAction(conversation.id, messageId);
+                     });
+                  }}
                 />
               ))}
             </div>
@@ -202,6 +214,13 @@ function ActiveConversationPanel({
           </div>
         </div>
       </section>
+      
+      <ChatForwardDialog
+        isOpen={!!forwardMessage}
+        onClose={() => setForwardMessage(null)}
+        message={forwardMessage}
+        conversations={conversations}
+      />
 
       <div className="hidden min-h-0 border-l border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_74%,transparent)] 2xl:block">
         <UserProfilePanel conversation={conversation} backgroundPreference={backgroundPreference} onBackgroundChange={onBackgroundChange} />
@@ -299,6 +318,7 @@ export function ChatWorkspace({
               <ActiveConversationPanel
                 key={activeConversation.id}
                 conversation={activeConversation}
+                conversations={conversations}
                 backgroundPreference={previewBackground}
                 isProfileOpen={isProfileOpen}
                 onOpenSidebar={() => setIsSidebarOpen(true)}

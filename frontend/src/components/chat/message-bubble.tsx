@@ -1,9 +1,9 @@
 "use client";
 
-import { startTransition, useState } from "react";
-import { EllipsisVertical, PencilLine, Reply, Trash } from "lucide-react";
+import { startTransition, useState, useTransition } from "react";
+import { EllipsisVertical, PencilLine, Reply, Trash, Forward, Pin } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toggleMessageReactionAction, deleteMessageAction } from "@/actions/chat";
+import { toggleMessageReactionAction, deleteMessageAction, votePollAction } from "@/actions/chat";
 import { ChatImageLightbox } from "@/components/chat/chat-image-lightbox";
 import { ChatMessageContent } from "@/components/chat/chat-message-content";
 import { ChatMessageStatus } from "@/components/chat/chat-message-status";
@@ -23,7 +23,10 @@ export function MessageBubble({
   onEditMessage,
   onJumpToMessage,
   onReplyToMessage,
+  onForwardMessage,
+  onPinMessage,
   showSenderName,
+  isPinned,
 }: {
   message: ChatMessageItem;
   mentionableUsers: Array<{ nickname?: string | null }>;
@@ -31,12 +34,16 @@ export function MessageBubble({
   onEditMessage: (message: ChatMessageItem) => void;
   onJumpToMessage: (messageId: string) => void;
   onReplyToMessage: (message: ChatMessageItem) => void;
+  onForwardMessage: (message: ChatMessageItem) => void;
+  onPinMessage: (messageId: string) => void;
   showSenderName?: boolean;
+  isPinned?: boolean;
 }) {
   const { t } = useLocale();
   const tone = message.isCurrentUser ? "outgoing" : "incoming";
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [isReacting, setIsReacting] = useState(false);
+  const [isVoting, startVoting] = useTransition();
   const router = useRouter();
 
   function handleOpenReactionPicker(event: React.MouseEvent<HTMLDivElement>) {
@@ -101,6 +108,16 @@ export function MessageBubble({
                 <Reply className="h-4 w-4" />
                 {t("Reply")}
               </DropdownMenuItem>
+              {message.body || message.mediaUrl ? (
+                <DropdownMenuItem onSelect={() => onForwardMessage(message)}>
+                  <Forward className="h-4 w-4" />
+                  {t("Forward")}
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem onSelect={() => onPinMessage(message.id)}>
+                <Pin className="h-4 w-4 text-amber-500" />
+                {t("Pin")}
+              </DropdownMenuItem>
               {message.isCurrentUser && message.body ? (
                 <DropdownMenuItem onSelect={() => onEditMessage(message)}>
                   <PencilLine className="h-4 w-4" />
@@ -139,6 +156,12 @@ export function MessageBubble({
               : "rounded-[1.75rem] rounded-tl-[0.5rem] border border-[color-mix(in_srgb,var(--ui-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_80%,transparent)] text-[var(--ui-text-strong)] shadow-[0_4px_14px_0_rgb(0_0_0/0.05)] backdrop-blur-xl",
           )}
         >
+          {message.isForwarded ? (
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold tracking-wide opacity-70">
+              <Forward className="h-3 w-3" />
+              {t("Forwarded")}
+            </div>
+          ) : null}
           {message.replyTo ? (
             <button
               type="button"
@@ -174,6 +197,47 @@ export function MessageBubble({
           ) : null}
 
           {message.body ? <ChatMessageContent body={message.body} tone={tone} mentionableUsers={mentionableUsers} /> : null}
+
+          {message.poll ? (
+            <div className={cn("mt-4 space-y-3 p-1 rounded-xl bg-black/5", message.isCurrentUser ? "bg-black/10 text-white" : "")}>
+              <p className="font-semibold text-sm mx-1">{message.poll.question}</p>
+              <div className="space-y-1.5">
+                {message.poll.options.map((option) => {
+                  const totalVotes = message.poll!.options.reduce((acc, o) => acc + o.voteCount, 0);
+                  const percentage = totalVotes === 0 ? 0 : Math.round((option.voteCount / totalVotes) * 100);
+                  const bgClass = option.hasVoted 
+                    ? (message.isCurrentUser ? "bg-[var(--ui-brand-foreground)]/30" : "bg-[var(--ui-brand)]/20")
+                    : (message.isCurrentUser ? "bg-transparent" : "bg-slate-100");
+                  
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        if (isVoting) return;
+                        startVoting(async () => {
+                          await votePollAction(message.poll!.id, option.id);
+                        });
+                      }}
+                      className={cn(
+                        "relative flex w-full items-center justify-between overflow-hidden rounded-xl border p-2.5 text-left text-sm transition-all duration-300",
+                        option.hasVoted ? "border-[var(--ui-brand)]/40 font-bold" : "border-transparent bg-white/40 shadow-sm hover:bg-white/60",
+                        message.isCurrentUser && !option.hasVoted ? "border-transparent bg-black/10 hover:bg-black/20" : ""
+                      )}
+                    >
+                      <div className={cn("absolute inset-y-0 left-0 transition-all duration-500", bgClass)} style={{ width: `${percentage}%` }} />
+                      <span className="relative z-10 px-1">{option.text}</span>
+                      <span className="relative z-10 text-xs font-bold tabular-nums opacity-60 px-1">
+                        {percentage}%
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-50 px-1">
+                {message.poll.options.reduce((acc, o) => acc + o.voteCount, 0)} votes
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {reactionPickerOpen ? (
@@ -225,6 +289,7 @@ export function MessageBubble({
         ) : null}
 
         <div className={cn("flex items-center gap-2 text-xs", message.isCurrentUser ? "justify-end" : "justify-start")}>
+          {isPinned ? <span className="font-medium text-amber-500 mr-1">{t("Pinned")}</span> : null}
           {message.isEdited ? <span className="text-slate-400">{t("Edited")}</span> : null}
           {message.isCurrentUser ? <ChatMessageStatus status={message.status} /> : null}
         </div>

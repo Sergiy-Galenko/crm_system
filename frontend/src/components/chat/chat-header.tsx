@@ -1,7 +1,9 @@
 "use client";
 
-import { EllipsisVertical, Menu, PanelRightOpen, Search, X } from "lucide-react";
+import { startTransition } from "react";
+import { EllipsisVertical, Menu, PanelRightOpen, Search, X, Pin, BellOff, Bell } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
+import { pinMessageAction, setConversationMuteAction } from "@/actions/chat";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,7 +52,10 @@ export function ChatHeader({
         <ChatAvatarStack participants={conversation.participants} type={conversation.type} className="shrink-0" />
 
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950">{conversation.title}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950">{conversation.title}</h2>
+            {conversation.mutedUntil ? <BellOff className="h-4 w-4 text-slate-400" /> : null}
+          </div>
           <p className="truncate text-sm leading-6 text-slate-500">{conversation.statusLabel}</p>
         </div>
 
@@ -82,6 +87,19 @@ export function ChatHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
+              <DropdownMenuItem
+                onSelect={() => {
+                  startTransition(() => {
+                    setConversationMuteAction(
+                      conversation.id,
+                      conversation.mutedUntil ? null : new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+                    );
+                  });
+                }}
+              >
+                {conversation.mutedUntil ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />}
+                {conversation.mutedUntil ? t("Unmute conversation") : t("Mute notifications")}
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={onJumpToLatest}>{t("Jump to latest")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={onToggleSearch}>
                 {searchOpen ? t("Close search") : t("Search messages")}
@@ -122,6 +140,32 @@ export function ChatHeader({
           <div className="shrink-0 text-xs font-medium text-slate-500">
             {searchQuery ? t("{count} matches", { count: searchResultCount }) : t("Search messages")}
           </div>
+        </div>
+      ) : null}
+
+      {conversation.pinnedMessage ? (
+        <div className="mt-3 flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-50/50 p-2.5 backdrop-blur-md dark:border-amber-500/10 dark:bg-amber-500/10">
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+            <Pin className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-200">
+              {t("Pinned Message")} <span className="text-slate-500 font-normal ml-1">({conversation.pinnedMessage.senderName})</span>
+            </p>
+            <p className="truncate text-xs text-slate-500">
+              {conversation.pinnedMessage.body || t("Attachment")}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 rounded-full text-slate-400 hover:text-slate-600"
+            onClick={() => startTransition(() => pinMessageAction(conversation.id, null))}
+            aria-label={t("Unpin message")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       ) : null}
     </header>

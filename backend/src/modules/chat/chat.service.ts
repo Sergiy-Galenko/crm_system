@@ -1,8 +1,9 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
-import { ChatMessageStatus } from "@prisma/client";
+import { ChatMessageStatus } from "@prisma/chat-client";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
 import { PrismaService } from "@backend/common/database/prisma.service";
+import { ChatPrismaService } from "@backend/common/database/chat-prisma.service";
 import { chatUsersWhere } from "@backend/common/scope/crm-scope";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
 import { SendMessageDto } from "./dto/send-message.dto";
@@ -12,10 +13,13 @@ const allowedChatReactions = new Set(["👍", "❤️", "🔥", "😂", "👏", 
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatPrisma: ChatPrismaService,
+  ) {}
 
   private async ensureParticipant(currentUser: RequestUser, conversationId: string) {
-    const participant = await this.prisma.chatParticipant.findUnique({
+    const participant = await this.chatPrisma.chatParticipant.findUnique({
       where: {
         conversationId_userId: {
           conversationId,
@@ -76,7 +80,7 @@ export class ChatService {
       }
 
       const [teammateId] = teammateIds;
-      const existingConversation = await this.prisma.chatConversation.findFirst({
+      const existingConversation = await this.chatPrisma.chatConversation.findFirst({
         where: {
           type: "DIRECT",
           AND: [
@@ -127,7 +131,7 @@ export class ChatService {
 
     const participantIds = [currentUser.userId, ...teammateIds];
 
-    return this.prisma.chatConversation.create({
+    return this.chatPrisma.chatConversation.create({
       data: {
         type: dto.type,
         title: dto.type === "GROUP" ? dto.title ?? null : null,
@@ -148,7 +152,7 @@ export class ChatService {
   async sendMessage(currentUser: RequestUser, dto: SendMessageDto) {
     const participant = await this.ensureParticipant(currentUser, dto.conversationId);
 
-    if (!dto.body && !dto.mediaUrl) {
+    if (!dto.body && !dto.mediaUrl && !dto.poll) {
       throw new BadRequestException("Message cannot be empty.");
     }
 
@@ -157,7 +161,7 @@ export class ChatService {
     }
 
     if (dto.replyToMessageId) {
-      const replyTarget = await this.prisma.chatMessage.findFirst({
+      const replyTarget = await this.chatPrisma.chatMessage.findFirst({
         where: {
           id: dto.replyToMessageId,
           conversationId: dto.conversationId,
@@ -174,8 +178,8 @@ export class ChatService {
 
     const now = new Date();
 
-    const [message] = await this.prisma.$transaction([
-      this.prisma.chatMessage.create({
+    const [message] = await this.chatPrisma.$transaction([
+      this.chatPrisma.chatMessage.create({
         data: {
           conversationId: dto.conversationId,
           senderId: currentUser.userId,
@@ -184,9 +188,19 @@ export class ChatService {
           mediaType: dto.mediaType ?? null,
           replyToMessageId: dto.replyToMessageId ?? null,
           status: ChatMessageStatus.SENT,
+          poll: dto.poll
+            ? {
+                create: {
+                  question: dto.poll.question,
+                  options: {
+                    create: dto.poll.options.map((opt) => ({ text: opt })),
+                  },
+                },
+              }
+            : undefined,
         },
       }),
-      this.prisma.chatConversation.update({
+      this.chatPrisma.chatConversation.update({
         where: {
           id: dto.conversationId,
         },
@@ -194,7 +208,7 @@ export class ChatService {
           lastMessageAt: now,
         },
       }),
-      this.prisma.$executeRaw`
+      this.chatPrisma.$executeRaw`
         UPDATE "ChatParticipant"
         SET "lastReadAt" = ${now}
         WHERE "conversationId" = ${dto.conversationId}
@@ -206,7 +220,7 @@ export class ChatService {
   }
 
   async updateMessage(currentUser: RequestUser, messageId: string, dto: UpdateMessageDto) {
-    const message = await this.prisma.chatMessage.findFirst({
+    const message = await this.chatPrisma.chatMessage.findFirst({
       where: {
         id: messageId,
         conversation: {
@@ -232,7 +246,7 @@ export class ChatService {
       throw new ForbiddenException("You can only edit your own messages.");
     }
 
-    return this.prisma.chatMessage.update({
+    return this.chatPrisma.chatMessage.update({
       where: {
         id: messageId,
       },
@@ -248,7 +262,7 @@ export class ChatService {
   }
 
   async deleteMessage(currentUser: RequestUser, messageId: string) {
-    const message = await this.prisma.chatMessage.findFirst({
+    const message = await this.chatPrisma.chatMessage.findFirst({
       where: {
         id: messageId,
         senderId: currentUser.userId,
@@ -262,7 +276,7 @@ export class ChatService {
       throw new ForbiddenException("You can only delete your own messages or the message does not exist.");
     }
 
-    await this.prisma.chatMessage.delete({
+    await this.chatPrisma.chatMessage.delete({
       where: {
         id: messageId,
       },
@@ -272,14 +286,14 @@ export class ChatService {
   async markConversationRead(currentUser: RequestUser, conversationId: string) {
     await this.ensureParticipant(currentUser, conversationId);
 
-    await this.prisma.$transaction([
-      this.prisma.$executeRaw`
+    await this.chatPrisma.$transaction([
+      this.chatPrisma.$executeRaw`
         UPDATE "ChatParticipant"
         SET "lastReadAt" = ${new Date()}
         WHERE "conversationId" = ${conversationId}
           AND "userId" = ${currentUser.userId}
       `,
-      this.prisma.chatMessage.updateMany({
+      this.chatPrisma.chatMessage.updateMany({
         where: {
           conversationId,
           senderId: {
@@ -301,7 +315,7 @@ export class ChatService {
       throw new BadRequestException("Choose a valid reaction.");
     }
 
-    const message = await this.prisma.chatMessage.findFirst({
+    const message = await this.chatPrisma.chatMessage.findFirst({
       where: {
         id: messageId,
         conversation: {
@@ -322,7 +336,7 @@ export class ChatService {
     }
 
     const existingReaction = (
-      await this.prisma.$queryRaw<Array<{ id: string; emoji: string }>>`
+      await this.chatPrisma.$queryRaw<Array<{ id: string; emoji: string }>>`
         SELECT "id", "emoji"
         FROM "ChatMessageReaction"
         WHERE "messageId" = ${messageId}
@@ -332,7 +346,7 @@ export class ChatService {
     )[0];
 
     if (existingReaction?.emoji === emoji) {
-      await this.prisma.$executeRaw`
+      await this.chatPrisma.$executeRaw`
         DELETE FROM "ChatMessageReaction"
         WHERE "messageId" = ${messageId}
           AND "userId" = ${currentUser.userId}
@@ -342,7 +356,7 @@ export class ChatService {
     }
 
     if (existingReaction) {
-      await this.prisma.$executeRaw`
+      await this.chatPrisma.$executeRaw`
         UPDATE "ChatMessageReaction"
         SET "emoji" = ${emoji}
         WHERE "id" = ${existingReaction.id}
@@ -351,9 +365,125 @@ export class ChatService {
       return;
     }
 
-    await this.prisma.$executeRaw`
+    await this.chatPrisma.$executeRaw`
       INSERT INTO "ChatMessageReaction" ("id", "messageId", "userId", "emoji", "createdAt")
       VALUES (${randomUUID()}, ${messageId}, ${currentUser.userId}, ${emoji}, NOW())
     `;
+  }
+
+  async setMute(currentUser: RequestUser, conversationId: string, mutedUntil: Date | null) {
+    await this.ensureParticipant(currentUser, conversationId);
+
+    await this.chatPrisma.chatParticipant.update({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: currentUser.userId,
+        },
+      },
+      data: {
+        mutedUntil,
+      },
+    });
+  }
+
+  async pinMessage(currentUser: RequestUser, conversationId: string, messageId: string | null) {
+    await this.ensureParticipant(currentUser, conversationId);
+
+    if (messageId) {
+      const message = await this.chatPrisma.chatMessage.findFirst({
+        where: { id: messageId, conversationId },
+        select: { id: true },
+      });
+      if (!message) {
+        throw new BadRequestException("Message not found within this conversation.");
+      }
+    }
+
+    await this.chatPrisma.chatConversation.update({
+      where: { id: conversationId },
+      data: { pinnedMessageId: messageId },
+    });
+  }
+
+  async forwardMessage(currentUser: RequestUser, targetConversationId: string, messageId: string) {
+    await this.ensureParticipant(currentUser, targetConversationId);
+
+    const targetMessage = await this.chatPrisma.chatMessage.findFirst({
+      where: {
+        id: messageId,
+        conversation: {
+          participants: { some: { userId: currentUser.userId } }
+        }
+      },
+    });
+
+    if (!targetMessage) {
+      throw new ForbiddenException("Cannot forward a message from an inaccessible conversation.");
+    }
+
+    if (!targetMessage.body && !targetMessage.mediaUrl) {
+      throw new BadRequestException("Message has no content to forward.");
+    }
+
+    return this.chatPrisma.chatMessage.create({
+      data: {
+        conversationId: targetConversationId,
+        senderId: currentUser.userId,
+        body: targetMessage.body,
+        mediaUrl: targetMessage.mediaUrl,
+        mediaType: targetMessage.mediaType,
+        isForwarded: true,
+        status: ChatMessageStatus.SENT,
+      },
+    });
+  }
+
+  async voteOnPoll(currentUser: RequestUser, pollId: string, optionId: string) {
+    const poll = await this.chatPrisma.chatPoll.findUnique({
+      where: { id: pollId },
+      select: {
+        message: {
+          select: {
+            conversationId: true,
+          },
+        },
+      },
+    });
+
+    if (!poll) throw new BadRequestException("Poll not found.");
+    await this.ensureParticipant(currentUser, poll.message.conversationId);
+
+    const existingVote = await this.chatPrisma.chatPollVote.findUnique({
+      where: {
+        userId_pollId: {
+          userId: currentUser.userId,
+          pollId,
+        },
+      },
+    });
+
+    if (existingVote) {
+      if (existingVote.optionId === optionId) {
+        await this.chatPrisma.chatPollVote.delete({
+          where: { id: existingVote.id },
+        });
+        return;
+      } else {
+        await this.chatPrisma.chatPollVote.update({
+          where: { id: existingVote.id },
+          data: { optionId },
+        });
+        return;
+      }
+    }
+
+    await this.chatPrisma.chatPollVote.create({
+      data: {
+        userId: currentUser.userId,
+        pollId,
+        optionId,
+      },
+    });
   }
 }

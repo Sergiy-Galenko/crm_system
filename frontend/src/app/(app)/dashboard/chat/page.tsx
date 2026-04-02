@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
+import { Prisma as ChatPrisma } from "@prisma/chat-client";
 import { isToday, isYesterday } from "date-fns";
 import { prisma } from "@/lib/db";
+import { chatDb } from "@/lib/chat-db";
 import { getParam, createPageHref, type SearchParamsRecord } from "@/lib/query-params";
 import { formatDate, formatMonthDay, fromNow } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
@@ -20,6 +22,7 @@ const chatUserSelect = {
   roleLabel: true,
   avatarColor: true,
   companyLogoUrl: true,
+  lastSeenAt: true,
 } satisfies Prisma.UserSelect;
 
 const conversationListInclude = {
@@ -27,34 +30,19 @@ const conversationListInclude = {
     orderBy: {
       joinedAt: "asc",
     },
-    select: {
-      user: {
-        select: chatUserSelect,
-      },
-    },
   },
   messages: {
     take: 1,
     orderBy: {
       createdAt: "desc",
     },
-    include: {
-      sender: {
-        select: chatUserSelect,
-      },
-    },
   },
-} satisfies Prisma.ChatConversationInclude;
+} satisfies ChatPrisma.ChatConversationInclude;
 
 const conversationDetailInclude = {
   participants: {
     orderBy: {
       joinedAt: "asc",
-    },
-    select: {
-      user: {
-        select: chatUserSelect,
-      },
     },
   },
   messages: {
@@ -62,25 +50,44 @@ const conversationDetailInclude = {
       createdAt: "asc",
     },
     include: {
-      sender: {
-        select: chatUserSelect,
-      },
-      replyToMessage: {
-        select: {
-          id: true,
-          body: true,
-          mediaType: true,
-          sender: {
-            select: chatUserSelect,
+      replyToMessage: true,
+      reactions: true,
+      poll: {
+        include: {
+          options: {
+            include: {
+              votes: true,
+            },
           },
         },
       },
     },
   },
-} satisfies Prisma.ChatConversationInclude;
+  pinnedMessage: true,
+} satisfies ChatPrisma.ChatConversationInclude;
 
-type ConversationListItem = Prisma.ChatConversationGetPayload<{ include: typeof conversationListInclude }>;
-type ConversationDetail = Prisma.ChatConversationGetPayload<{ include: typeof conversationDetailInclude }>;
+type ConversationListItemRaw = ChatPrisma.ChatConversationGetPayload<{ include: typeof conversationListInclude }>;
+type ConversationDetailRaw = ChatPrisma.ChatConversationGetPayload<{ include: typeof conversationDetailInclude }>;
+
+type EnrichedUser = { user: Prisma.UserGetPayload<{ select: typeof chatUserSelect }> };
+type EnrichedMessage = { sender: Prisma.UserGetPayload<{ select: typeof chatUserSelect }> };
+type EnrichedReply = { sender: Prisma.UserGetPayload<{ select: typeof chatUserSelect }> };
+
+type ConversationListItem = Omit<ConversationListItemRaw, "participants" | "messages"> & {
+  participants: Array<ConversationListItemRaw["participants"][number] & EnrichedUser>;
+  messages: Array<ConversationListItemRaw["messages"][number] & EnrichedMessage>;
+};
+
+type ConversationDetail = Omit<ConversationDetailRaw, "participants" | "messages" | "pinnedMessage"> & {
+  participants: Array<ConversationDetailRaw["participants"][number] & EnrichedUser>;
+  messages: Array<
+    Omit<ConversationDetailRaw["messages"][number], "replyToMessage"> & EnrichedMessage & {
+      replyToMessage: (ConversationDetailRaw["messages"][number]["replyToMessage"] & EnrichedReply) | null;
+    }
+  >;
+  pinnedMessage: (NonNullable<ConversationDetailRaw["pinnedMessage"]> & EnrichedMessage) | null;
+};
+
 type ConversationLike = ConversationListItem | ConversationDetail;
 
 type ChatPageProps = {
@@ -105,6 +112,7 @@ function mapChatUser(
     roleLabel: user.roleLabel,
     avatarColor: user.avatarColor,
     companyLogoUrl: user.companyLogoUrl,
+    lastSeenAt: user.lastSeenAt,
   };
 }
 
@@ -298,6 +306,7 @@ function mapActiveConversation(
 ): ActiveConversation {
   const participants = conversation.participants.map((participant) => mapChatUser(participant.user));
   const avatarParticipants = getParticipantPreview(conversation, currentUserId);
+  const currentUserParticipant = conversation.participants.find((p) => p.userId === currentUserId);
   const lastMessage = conversation.messages.at(-1);
   const lastReadAt = lastReadAtByConversationId.get(conversation.id);
   const messageGroups = conversation.messages.reduce<
@@ -314,6 +323,7 @@ function mapActiveConversation(
       body: message.body,
       mediaUrl: message.mediaUrl,
       mediaType: message.mediaType,
+      isForwarded: message.isForwarded,
       status: message.status,
       isEdited: Boolean(message.editedAt),
       replyTo: message.replyToMessage
@@ -325,6 +335,16 @@ function mapActiveConversation(
           }
         : null,
       reactions: groupMessageReactions(reactionsByMessageId.get(message.id) ?? [], currentUserId),
+      poll: message.poll ? {
+         id: message.poll.id,
+         question: message.poll.question,
+         options: message.poll.options.map((opt) => ({
+             id: opt.id,
+             text: opt.text,
+             voteCount: opt.votes.length,
+             hasVoted: opt.votes.some((v) => v.userId === currentUserId),
+         }))
+      } : undefined,
       timeLabel: formatDate(message.createdAt, locale, "HH:mm"),
     };
 
@@ -373,6 +393,15 @@ function mapActiveConversation(
     backgroundPreference,
     sharedMedia,
     participantDirectory: participants,
+    mutedUntil: currentUserParticipant?.mutedUntil ?? null,
+    pinnedMessage: conversation.pinnedMessage
+      ? {
+          id: conversation.pinnedMessage.id,
+          body: conversation.pinnedMessage.body,
+          mediaType: conversation.pinnedMessage.mediaType,
+          senderName: conversation.pinnedMessage.sender.name,
+        }
+      : null,
   };
 }
 
@@ -387,7 +416,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     imageUrl: currentUser.chatBackgroundImageUrl,
   };
 
-  await prisma.chatMessage.updateMany({
+  await chatDb.chatMessage.updateMany({
     where: {
       senderId: {
         not: currentUser.id,
@@ -406,7 +435,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     },
   });
 
-  const [visibleUsers, conversations, chatReadStates] = await Promise.all([
+  const [visibleUsers, rawConversations, chatReadStates] = await Promise.all([
     prisma.user.findMany({
       where: chatUsersWhere(currentUser),
       select: chatUserSelect,
@@ -414,7 +443,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
         name: "asc",
       },
     }),
-    prisma.chatConversation.findMany({
+    chatDb.chatConversation.findMany({
       where: {
         participants: {
           some: {
@@ -423,15 +452,42 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
         },
       },
       orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
-        include: conversationListInclude,
-      }),
-    prisma.$queryRaw<Array<{ conversationId: string; lastReadAt: Date }>>`
+      include: conversationListInclude,
+    }),
+    chatDb.$queryRaw<Array<{ conversationId: string; lastReadAt: Date }>>`
       SELECT "conversationId", "lastReadAt"
       FROM "ChatParticipant"
       WHERE "userId" = ${currentUser.id}
     `,
   ]);
   const lastReadAtByConversationId = new Map(chatReadStates.map((item) => [item.conversationId, item.lastReadAt]));
+
+  const userMap = new Map<string, Prisma.UserGetPayload<{ select: typeof chatUserSelect }>>(
+    visibleUsers.map((user) => [user.id, user as any]),
+  );
+
+  const fallbackUser = {
+    id: "unknown",
+    name: t("Unknown User"),
+    email: "",
+    nickname: null,
+    title: null,
+    roleLabel: null,
+    avatarColor: "#000000",
+    companyLogoUrl: null,
+  };
+
+  const conversations = rawConversations.map((conv) => ({
+    ...conv,
+    participants: conv.participants.map((p) => ({
+      ...p,
+      user: userMap.get(p.userId) ?? { ...fallbackUser, id: p.userId },
+    })),
+    messages: conv.messages.map((m) => ({
+      ...m,
+      sender: userMap.get(m.senderId) ?? { ...fallbackUser, id: m.senderId },
+    })),
+  })) as ConversationListItem[];
 
   const teammates = visibleUsers.filter((user) => user.id !== currentUser.id).map(mapChatUser);
   const conversationItems = conversations.map((conversation) =>
@@ -442,8 +498,8 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       ? requestedConversationId
       : conversations[0]?.id ?? "";
 
-  const activeConversation = selectedConversationId
-    ? await prisma.chatConversation.findFirst({
+  const activeConversationRaw = selectedConversationId
+    ? await chatDb.chatConversation.findFirst({
         where: {
           id: selectedConversationId,
           participants: {
@@ -455,13 +511,40 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
         include: conversationDetailInclude,
       })
     : null;
+
+  const activeConversation = activeConversationRaw
+    ? ({
+        ...activeConversationRaw,
+        participants: activeConversationRaw.participants.map((p) => ({
+          ...p,
+          user: userMap.get(p.userId) ?? { ...fallbackUser, id: p.userId },
+        })),
+        messages: activeConversationRaw.messages.map((m) => ({
+          ...m,
+          sender: userMap.get(m.senderId) ?? { ...fallbackUser, id: m.senderId },
+          replyToMessage: m.replyToMessage
+            ? {
+                ...m.replyToMessage,
+                sender: userMap.get(m.replyToMessage.senderId) ?? { ...fallbackUser, id: m.replyToMessage.senderId },
+              }
+            : null,
+        })),
+        pinnedMessage: activeConversationRaw.pinnedMessage
+          ? {
+              ...activeConversationRaw.pinnedMessage,
+              sender: userMap.get(activeConversationRaw.pinnedMessage.senderId) ?? { ...fallbackUser, id: activeConversationRaw.pinnedMessage.senderId },
+            }
+          : null,
+      } as ConversationDetail)
+    : null;
+
   const activeConversationMessageIds = activeConversation?.messages.map((message) => message.id) ?? [];
   const activeConversationReactions = activeConversationMessageIds.length
-    ? await prisma.$queryRaw<MessageReactionRow[]>(
-        Prisma.sql`
+    ? await chatDb.$queryRaw<MessageReactionRow[]>(
+        ChatPrisma.sql`
           SELECT "messageId", "emoji", "userId"
           FROM "ChatMessageReaction"
-          WHERE "messageId" IN (${Prisma.join(activeConversationMessageIds)})
+          WHERE "messageId" IN (${ChatPrisma.join(activeConversationMessageIds)})
           ORDER BY "createdAt" ASC
         `,
       )

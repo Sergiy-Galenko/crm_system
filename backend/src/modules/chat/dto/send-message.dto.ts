@@ -1,7 +1,17 @@
 import { Transform } from "class-transformer";
-import { ChatMessageMediaType } from "@prisma/client";
-import { IsEnum, IsOptional, IsString, Matches, MaxLength } from "class-validator";
+import { ChatMessageMediaType } from "@prisma/chat-client";
+import { IsEnum, IsOptional, IsString, Matches, MaxLength, ValidateNested, IsArray } from "class-validator";
 import { toOptionalString, toTrimmedString } from "@backend/common/validation/transforms";
+import { Type } from "class-transformer";
+
+export class CreatePollDto {
+  @IsString()
+  question!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  options!: string[];
+}
 
 export class SendMessageDto {
   @Transform(({ value }) => toTrimmedString(value))
@@ -32,4 +42,9 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   replyToMessageId?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreatePollDto)
+  poll?: CreatePollDto;
 }

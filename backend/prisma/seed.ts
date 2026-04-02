@@ -15,15 +15,17 @@ import {
 import { addDays, subDays } from "date-fns";
 import bcrypt from "bcryptjs";
 import { loadWorkspaceEnv } from "../src/common/env/load-workspace-env";
+import { PrismaClient as ChatPrismaClient } from "@prisma/chat-client";
 
 loadWorkspaceEnv();
 
 const prisma = new PrismaClient();
+const chatPrisma = new ChatPrismaClient();
 
 async function main() {
-  await prisma.chatMessage.deleteMany();
-  await prisma.chatParticipant.deleteMany();
-  await prisma.chatConversation.deleteMany();
+  await chatPrisma.chatMessage.deleteMany();
+  await chatPrisma.chatParticipant.deleteMany();
+  await chatPrisma.chatConversation.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.promoCodeUsage.deleteMany();
   await prisma.meeting.deleteMany();
@@ -472,7 +474,7 @@ async function main() {
     ],
   });
 
-  const directConversation = await prisma.chatConversation.create({
+  const directConversation = await chatPrisma.chatConversation.create({
     data: {
       type: "DIRECT",
       createdById: admin.id,
@@ -483,7 +485,7 @@ async function main() {
     },
   });
 
-  const groupConversation = await prisma.chatConversation.create({
+  const groupConversation = await chatPrisma.chatConversation.create({
     data: {
       type: "GROUP",
       title: "Revenue standup",
@@ -495,7 +497,7 @@ async function main() {
     },
   });
 
-  await prisma.chatMessage.createMany({
+  await chatPrisma.chatMessage.createMany({
     data: [
       {
         conversationId: directConversation.id,
@@ -536,4 +538,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await chatPrisma.$disconnect();
   });
