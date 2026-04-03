@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} {...{ [THEME_ATTRIBUTE]: serverTheme, [THEME_PREFERENCE_ATTRIBUTE]: themePreference }} suppressHydrationWarning>
-      <body className={`${sans.variable} ${mono.variable} antialiased`}>
+      <body className={`${sans.variable} ${mono.variable} antialiased`} suppressHydrationWarning>
         <Script id="theme-init" strategy="beforeInteractive">
           {getThemeInitScript(themePreference)}
         </Script>
