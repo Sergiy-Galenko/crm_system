@@ -21,9 +21,9 @@ function buildGradientBackground() {
     background: `
       linear-gradient(
         145deg,
-        color-mix(in srgb, var(--ui-background-canvas) 70%, #dbeafe 30%) 0%,
-        color-mix(in srgb, var(--ui-surface-solid) 68%, #c4b5fd 32%) 52%,
-        color-mix(in srgb, var(--ui-background-canvas) 74%, #bfdbfe 26%) 100%
+        color-mix(in srgb, var(--ui-background-canvas) 74%, #dbeafe 26%) 0%,
+        color-mix(in srgb, var(--ui-surface-solid) 70%, #67e8f9 30%) 50%,
+        color-mix(in srgb, var(--ui-background-canvas) 76%, #99f6e4 24%) 100%
       )
     `,
   };
@@ -54,14 +54,14 @@ export function ChatBackgroundLayer({
       ) : preference.type === "GRADIENT" ? (
         <>
           <div className="absolute inset-0" style={buildGradientBackground()} />
-          <div className="absolute -right-20 top-10 h-64 w-64 rounded-full bg-[color-mix(in_srgb,var(--ui-brand)_10%,transparent)] blur-3xl" />
-          <div className="absolute bottom-0 left-[-4rem] h-72 w-72 rounded-full bg-[color-mix(in_srgb,#14b8a6_14%,transparent)] blur-3xl" />
+          <div className="absolute -right-20 top-10 h-64 w-64 rounded-full bg-[color-mix(in_srgb,#38bdf8_14%,transparent)] blur-3xl" />
+          <div className="absolute bottom-0 left-[-4rem] h-72 w-72 rounded-full bg-[color-mix(in_srgb,#14b8a6_16%,transparent)] blur-3xl" />
         </>
       ) : (
         <>
           <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ui-surface-solid)_40%,transparent),color-mix(in_srgb,var(--ui-background-canvas)_60%,transparent))]" />
           <div className="absolute -left-16 top-8 h-[28rem] w-[28rem] rounded-full bg-[color-mix(in_srgb,#3b82f6_22%,transparent)] blur-[6rem] animate-pulse duration-[8000ms]" />
-          <div className="absolute right-[-5rem] top-20 h-[30rem] w-[30rem] rounded-full bg-[color-mix(in_srgb,#8b5cf6_20%,transparent)] blur-[7rem] animate-pulse duration-[10000ms]" />
+          <div className="absolute right-[-5rem] top-20 h-[30rem] w-[30rem] rounded-full bg-[color-mix(in_srgb,#22d3ee_18%,transparent)] blur-[7rem] animate-pulse duration-[10000ms]" />
           <div className="absolute bottom-[-5rem] left-1/3 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-[color-mix(in_srgb,#14b8a6_15%,transparent)] blur-[8rem] animate-pulse duration-[12000ms]" />
           <div className="absolute inset-x-12 top-14 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--ui-border-strong)_76%,transparent),transparent)]" />
           <div className="absolute inset-x-24 top-28 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--ui-border)_74%,transparent),transparent)]" />

@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db";
 import { chatDb } from "@/lib/chat-db";
 import { getParam, createPageHref, type SearchParamsRecord } from "@/lib/query-params";
 import { formatDate, formatMonthDay, fromNow } from "@/lib/utils";
-import { PageHeader } from "@/components/page-header";
 import { ChatWorkspace } from "@/components/chat/chat-workspace";
 import type { ActiveConversation, ChatBackgroundPreference, ChatConversationListItem, ChatMessageItem, ChatUser } from "@/components/chat/chat-types";
 import { getServerTranslator } from "@/lib/locale-server";
@@ -68,10 +67,11 @@ const conversationDetailInclude = {
 
 type ConversationListItemRaw = ChatPrisma.ChatConversationGetPayload<{ include: typeof conversationListInclude }>;
 type ConversationDetailRaw = ChatPrisma.ChatConversationGetPayload<{ include: typeof conversationDetailInclude }>;
+type ChatDirectoryUser = Prisma.UserGetPayload<{ select: typeof chatUserSelect }>;
 
-type EnrichedUser = { user: Prisma.UserGetPayload<{ select: typeof chatUserSelect }> };
-type EnrichedMessage = { sender: Prisma.UserGetPayload<{ select: typeof chatUserSelect }> };
-type EnrichedReply = { sender: Prisma.UserGetPayload<{ select: typeof chatUserSelect }> };
+type EnrichedUser = { user: ChatDirectoryUser };
+type EnrichedMessage = { sender: ChatDirectoryUser };
+type EnrichedReply = { sender: ChatDirectoryUser };
 
 type ConversationListItem = Omit<ConversationListItemRaw, "participants" | "messages"> & {
   participants: Array<ConversationListItemRaw["participants"][number] & EnrichedUser>;
@@ -462,11 +462,11 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   ]);
   const lastReadAtByConversationId = new Map(chatReadStates.map((item) => [item.conversationId, item.lastReadAt]));
 
-  const userMap = new Map<string, Prisma.UserGetPayload<{ select: typeof chatUserSelect }>>(
-    visibleUsers.map((user) => [user.id, user as any]),
+  const userMap = new Map<string, ChatDirectoryUser>(
+    visibleUsers.map((user): [string, ChatDirectoryUser] => [user.id, user]),
   );
 
-  const fallbackUser = {
+  const fallbackUser: ChatDirectoryUser = {
     id: "unknown",
     name: t("Unknown User"),
     email: "",
@@ -475,6 +475,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     roleLabel: null,
     avatarColor: "#000000",
     companyLogoUrl: null,
+    lastSeenAt: null,
   };
 
   const conversations = rawConversations.map((conv) => ({
@@ -562,31 +563,23 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   }, new Map());
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        eyebrow={t("Workspace")}
-        title={t("Chat")}
-        description={t("Keep direct and group conversations close to your deals, renewals, and daily client follow-ups.")}
-      />
-
-      <ChatWorkspace
-        conversations={conversationItems}
-        activeConversation={
-          activeConversation
-            ? mapActiveConversation(
-                activeConversation,
-                currentUser.id,
-                locale,
-                lastReadAtByConversationId,
-                reactionsByMessageId,
-                backgroundPreference,
-                t,
-              )
-            : null
-        }
-        teammates={teammates}
-        backgroundPreference={backgroundPreference}
-      />
-    </div>
+    <ChatWorkspace
+      conversations={conversationItems}
+      activeConversation={
+        activeConversation
+          ? mapActiveConversation(
+              activeConversation,
+              currentUser.id,
+              locale,
+              lastReadAtByConversationId,
+              reactionsByMessageId,
+              backgroundPreference,
+              t,
+            )
+          : null
+      }
+      teammates={teammates}
+      backgroundPreference={backgroundPreference}
+    />
   );
 }

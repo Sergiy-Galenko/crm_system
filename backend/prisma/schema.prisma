@@ -132,8 +132,22 @@ model User {
   createdPromoCodes PromoCode[]      @relation("PromoCodeCreator")
   promoUsages       PromoCodeUsage[] @relation("PromoCodeAppliedBy")
   activities        ActivityLog[]    @relation("ActivityActor")
+  notifications     Notification[]
 
   @@index([createdById])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 model Client {

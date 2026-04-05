@@ -50,13 +50,15 @@ export async function sendMessageAction(prevState: ActionResult, formData: FormD
   const user = await requireUser();
 
   try {
-    const data: Record<string, any> = Object.fromEntries(formData.entries());
+    const data: Record<string, unknown> = Object.fromEntries(formData.entries());
     const pollQuestion = formData.get("poll_question");
-    
-    if (pollQuestion) {
+
+    if (typeof pollQuestion === "string" && pollQuestion.trim()) {
       data.poll = {
-        question: pollQuestion as string,
-        options: formData.getAll("poll_options").filter(Boolean) as string[],
+        question: pollQuestion,
+        options: formData
+          .getAll("poll_options")
+          .flatMap((value) => (typeof value === "string" && value.trim() ? [value] : [])),
       };
     }
 

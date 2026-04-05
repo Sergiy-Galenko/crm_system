@@ -129,7 +129,8 @@ function ActiveConversationPanel({
   }
 
   return (
-    <div className="grid h-full min-h-[calc(100vh-11.5rem)] min-w-0 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div className="grid h-full min-w-0">
+      {/* ── Messages column ── */}
       <section className="relative flex min-h-0 min-w-0 flex-col">
         <ChatBackgroundLayer preference={backgroundPreference} />
         <ChatHeader
@@ -148,9 +149,10 @@ function ActiveConversationPanel({
           searchResultCount={searchResultCount}
         />
 
-        <div ref={messageViewportRef} className="relative min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
+        {/* Scrollable message viewport */}
+        <div ref={messageViewportRef} className="relative min-h-0 flex-1 overflow-y-auto px-3 py-5 sm:px-5 md:px-6 lg:px-8 scrollbar-subtle">
           {filteredMessageGroups.length ? (
-            <div className="mx-auto flex max-w-4xl flex-col gap-6">
+            <div className="mx-auto flex max-w-5xl flex-col gap-6">
               {filteredMessageGroups.map((group) => (
                 <MessageGroup
                   key={group.label}
@@ -170,9 +172,9 @@ function ActiveConversationPanel({
                     setForwardMessage(message);
                   }}
                   onPinMessage={(messageId) => {
-                     startTransition(async () => {
-                        await pinMessageAction(conversation.id, messageId);
-                     });
+                    startTransition(async () => {
+                      await pinMessageAction(conversation.id, messageId);
+                    });
                   }}
                 />
               ))}
@@ -196,8 +198,9 @@ function ActiveConversationPanel({
           )}
         </div>
 
-        <div className="sticky bottom-0 z-10 border-t border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_88%,transparent)] px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl">
+        {/* Composer / input bar */}
+        <div className="sticky bottom-0 z-10 border-t border-white/10 bg-[linear-gradient(180deg,rgba(10,15,28,0.32),rgba(10,15,28,0.78))] px-3 py-3 backdrop-blur-[26px] sm:px-5 md:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">
             <MessageInput
               key={editingMessage ? `${conversation.id}:edit:${editingMessage.id}` : `${conversation.id}:compose`}
               conversationId={conversation.id}
@@ -214,7 +217,7 @@ function ActiveConversationPanel({
           </div>
         </div>
       </section>
-      
+
       <ChatForwardDialog
         isOpen={!!forwardMessage}
         onClose={() => setForwardMessage(null)}
@@ -222,13 +225,20 @@ function ActiveConversationPanel({
         conversations={conversations}
       />
 
-      <div className="hidden min-h-0 border-l border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_74%,transparent)] 2xl:block">
-        <UserProfilePanel conversation={conversation} backgroundPreference={backgroundPreference} onBackgroundChange={onBackgroundChange} />
-      </div>
+      {/* Overlay backdrop — always covers messages area */}
+      {isProfileOpen ? (
+        <button
+          type="button"
+          aria-label={t("Close details")}
+          className="absolute inset-0 z-20 bg-[var(--ui-overlay)] backdrop-blur-sm"
+          onClick={onToggleProfile}
+        />
+      ) : null}
 
+      {/* Sliding profile drawer — always overlay on every screen size */}
       <div
         className={cn(
-          "absolute inset-y-0 right-0 z-30 w-[min(22rem,calc(100vw-1rem))] border-l border-[var(--ui-border)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_96%,transparent)] shadow-[-18px_0_60px_rgba(15,23,42,0.16)] backdrop-blur transition-transform duration-300 2xl:hidden",
+          "absolute inset-y-0 right-0 z-30 w-[min(22rem,calc(100vw-1rem))] border-l border-white/10 bg-[linear-gradient(180deg,rgba(6,11,25,0.96),rgba(15,23,42,0.92))] shadow-[-24px_0_70px_rgba(2,6,23,0.45)] backdrop-blur transition-transform duration-300",
           isProfileOpen ? "translate-x-0" : "translate-x-[105%]",
         )}
       >
@@ -265,27 +275,51 @@ export function ChatWorkspace({
     setPreviewBackground(backgroundPreference);
   }, [backgroundPreference]);
 
-  return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-[var(--ui-border)] bg-[linear-gradient(180deg,var(--ui-surface-solid),var(--ui-surface-muted))] shadow-[var(--ui-shadow-strong)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(148,163,184,0.1),transparent_28%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.08),transparent_26%)]" />
+  // Close mobile sidebar when a conversation is selected
+  function handleSelectConversation() {
+    setIsSidebarOpen(false);
+  }
 
-      <div className="relative grid min-h-[calc(100vh-11.5rem)] xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <div className="hidden min-h-0 border-r border-[var(--ui-border)] xl:block">
+  return (
+    /*
+     * Height strategy:
+     *   - 100dvh  = full dynamic viewport (accounts for mobile browser chrome)
+     *   - minus AppShell header (~4.25rem) + its top gap (~1rem, from py-4 * 2 / 2)
+     *   - minus the rounded card's own border (visual correction)
+     * Result: the workspace fills the screen exactly without a page-level scrollbar.
+     */
+    <section
+      className="relative flex flex-col overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,#08101d,#0f172a)] shadow-[0_38px_110px_rgba(2,6,23,0.48)]"
+      style={{ height: "calc(100dvh - var(--shell-header-h) - var(--shell-gap-y) - 2.5rem)" }}
+    >
+      {/* Ambient gradient overlays */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.1),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_24%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)]" />
+
+      {/*
+       * Inner grid: sidebar | main content
+       *   < md  → sidebar hidden (full-screen drawer on demand)
+       *   md+   → 18rem sidebar | flex-1 messages
+       *   xl+   → 20rem sidebar | flex-1 messages
+       */}
+      <div className="relative grid min-h-0 flex-1 md:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
+
+        {/* ── Desktop sidebar (md+) ── */}
+        <div className="hidden min-h-0 border-r border-white/10 md:block">
           <ChatSidebar
             chats={conversations}
             activeConversationId={activeConversation?.id}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onSelectConversation={() => {
-              setIsSidebarOpen(false);
-            }}
+            onSelectConversation={handleSelectConversation}
             newChatAction={<ChatConversationDialog teammates={teammates} />}
           />
         </div>
 
+        {/* ── Mobile sidebar drawer (< md) ── */}
         <div
           className={cn(
-            "absolute inset-y-0 left-0 z-30 w-[min(23rem,calc(100vw-1rem))] border-r border-[var(--ui-border)] bg-[var(--ui-surface-solid)] shadow-[var(--ui-shadow-strong)] backdrop-blur transition-transform duration-300 xl:hidden",
+            "absolute inset-y-0 left-0 z-30 w-[min(20rem,calc(100vw-3rem))] border-r border-white/10 bg-[linear-gradient(180deg,rgba(6,11,25,0.98),rgba(15,23,42,0.94))] shadow-[0_30px_90px_rgba(2,6,23,0.52)] backdrop-blur transition-transform duration-300 md:hidden",
             isSidebarOpen ? "translate-x-0" : "-translate-x-[105%]",
           )}
         >
@@ -294,27 +328,27 @@ export function ChatWorkspace({
             activeConversationId={activeConversation?.id}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onSelectConversation={() => {
-              setIsSidebarOpen(false);
-            }}
+            onSelectConversation={handleSelectConversation}
             newChatAction={<ChatConversationDialog teammates={teammates} />}
             onCloseMobile={() => setIsSidebarOpen(false)}
             showMobileClose
           />
         </div>
 
+        {/* Mobile sidebar backdrop */}
         {isSidebarOpen ? (
           <button
             type="button"
             aria-label={t("Close sidebar")}
-            className="absolute inset-0 z-20 bg-[var(--ui-overlay)] xl:hidden"
+            className="absolute inset-0 z-20 bg-[var(--ui-overlay)] backdrop-blur-sm md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         ) : null}
 
-        <div className="relative min-h-0">
+        {/* ── Main content area ── */}
+        <div className="relative min-h-0 flex flex-col">
           {activeConversation ? (
-            <div className="relative">
+            <div className="relative flex-1 flex flex-col min-h-0">
               <ActiveConversationPanel
                 key={activeConversation.id}
                 conversation={activeConversation}
@@ -325,26 +359,19 @@ export function ChatWorkspace({
                 onToggleProfile={() => setIsProfileOpen((current) => !current)}
                 onBackgroundChange={setPreviewBackground}
               />
-              {isProfileOpen ? (
-                <button
-                  type="button"
-                  aria-label={t("Close details")}
-                  className="absolute inset-0 z-20 bg-[var(--ui-overlay)] 2xl:hidden"
-                  onClick={() => setIsProfileOpen(false)}
-                />
-              ) : null}
             </div>
           ) : (
-            <div className="relative flex min-h-[calc(100vh-11.5rem)] items-center justify-center overflow-hidden px-6 py-10">
+            /* Empty / welcome state */
+            <div className="relative flex flex-1 items-center justify-center overflow-hidden px-5 py-10">
               <ChatBackgroundLayer preference={previewBackground} />
-              <div className="relative w-full max-w-2xl rounded-[2rem] border border-[var(--ui-border)] bg-[var(--ui-surface-solid)] p-8 text-center shadow-[var(--ui-shadow-soft)] backdrop-blur">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-[1.5rem] bg-[var(--ui-brand)] text-[var(--ui-brand-foreground)] shadow-[var(--ui-shadow-strong)]">
+              <div className="relative w-full max-w-xl rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.7))] p-7 text-center shadow-[0_26px_70px_rgba(2,6,23,0.36)] backdrop-blur sm:p-10">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-[1.5rem] bg-[linear-gradient(135deg,#2563eb,#0f766e)] text-white shadow-[0_24px_60px_rgba(37,99,235,0.26)]">
                   <Sparkles className="h-7 w-7" />
                 </div>
-                <h2 className="mt-6 text-2xl font-semibold tracking-tight text-slate-950">
+                <h2 className="mt-6 text-2xl font-semibold tracking-tight text-white">
                   {conversations.length ? t("Select a conversation") : t("No conversations yet")}
                 </h2>
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-500">
+                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-white/62">
                   {conversations.length
                     ? t("Choose a chat from the list or create a new one to start messaging your team.")
                     : teammates.length
@@ -353,7 +380,7 @@ export function ChatWorkspace({
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <ChatConversationDialog teammates={teammates} />
-                  <Button type="button" variant="secondary" onClick={() => setIsSidebarOpen(true)} className="xl:hidden">
+                  <Button type="button" variant="secondary" onClick={() => setIsSidebarOpen(true)} className="md:hidden">
                     <PanelRightClose className="h-4 w-4" />
                     {t("All chats")}
                   </Button>

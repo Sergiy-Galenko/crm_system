@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import { SESSION_COOKIE } from "@backend/common/constants/app.constants";
 import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { prisma } from "@backend/common/database/prisma.service";
-import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token.server";
+import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token";
 
 export async function hashPassword(value: string) {
   return bcrypt.hash(value, 12);

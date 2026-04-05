@@ -10,6 +10,7 @@ import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
 import { actionErrorFromException, toRequestUser } from "@/lib/backend-actions";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
+import { createAndPushNotification } from "@/lib/notification-store";
 
 function revalidateTaskViews(clientIds: Array<string | null | undefined>) {
   revalidatePath("/dashboard");
@@ -31,6 +32,17 @@ export async function upsertTaskAction(prevState: ActionResult, formData: FormDa
     const result = await tasksService.upsertTask(toRequestUser(user), dto);
 
     revalidateTaskViews([dto.clientId, result.previousClientId]);
+
+    // Notify the assignee when a new task is assigned to someone else
+    if (!dto.id && dto.assignedToId && dto.assignedToId !== user.id) {
+      createAndPushNotification({
+        userId: dto.assignedToId,
+        title: t("New task assigned to you"),
+        body: dto.title,
+      }).catch(() => {
+        // Fire-and-forget — don't block the action response
+      });
+    }
 
     return actionSuccess(t(dto.id ? "Task updated." : "Task created."));
   } catch (error) {

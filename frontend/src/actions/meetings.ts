@@ -10,6 +10,8 @@ import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
 import { actionErrorFromException, toRequestUser } from "@/lib/backend-actions";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
+import { createAndPushNotification } from "@/lib/notification-store";
+
 
 export async function upsertMeetingAction(prevState: ActionResult, formData: FormData) {
   const { t } = await getServerTranslator();
@@ -33,6 +35,15 @@ export async function upsertMeetingAction(prevState: ActionResult, formData: For
     const clientIds = Array.from(new Set([dto.clientId, result.previousClientId].filter((value): value is string => Boolean(value))));
     for (const clientId of clientIds) {
       revalidatePath(`/dashboard/clients/${clientId}`);
+    }
+
+    // Notify the assignee when a new meeting is created and they are not the creator
+    if (!dto.id && dto.assignedToId && dto.assignedToId !== user.id) {
+      createAndPushNotification({
+        userId: dto.assignedToId,
+        title: t("New meeting scheduled for you"),
+        body: dto.title,
+      }).catch(() => {});
     }
 
     return actionSuccess(t(dto.id ? "Meeting updated." : "Meeting created."));

@@ -82,6 +82,7 @@ export function MessageBubble({
           color={message.sender.avatarColor}
           imageUrl={message.sender.companyLogoUrl}
           className="mt-7 h-10 w-10 shrink-0 rounded-[1.15rem] shadow-sm"
+          imageClassName="h-full w-full bg-transparent object-cover p-0"
         />
       ) : null}
 
@@ -152,7 +153,7 @@ export function MessageBubble({
             "cursor-pointer space-y-3 px-4 py-3 text-[15px] leading-relaxed transition-all duration-300",
             highlighted ? "ring-2 ring-[var(--ui-ring)] ring-offset-4 ring-offset-transparent scale-[1.02]" : "hover:shadow-[0_4px_20px_rgb(0_0_0/0.08)]",
             message.isCurrentUser
-              ? "rounded-[1.75rem] rounded-tr-[0.5rem] bg-[linear-gradient(135deg,var(--ui-brand),#8b5cf6)] text-white shadow-[0_4px_14px_0_color-mix(in_srgb,var(--ui-brand)_40%,transparent)]"
+              ? "rounded-[1.75rem] rounded-tr-[0.5rem] bg-[linear-gradient(135deg,#2563eb,#0f766e)] text-white shadow-[0_14px_32px_rgba(37,99,235,0.22)]"
               : "rounded-[1.75rem] rounded-tl-[0.5rem] border border-[color-mix(in_srgb,var(--ui-border)_40%,transparent)] bg-[color-mix(in_srgb,var(--ui-surface-solid)_80%,transparent)] text-[var(--ui-text-strong)] shadow-[0_4px_14px_0_rgb(0_0_0/0.05)] backdrop-blur-xl",
           )}
         >

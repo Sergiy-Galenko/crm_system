@@ -10,6 +10,8 @@ import { actionErrorFromException, toRequestUser } from "@/lib/backend-actions";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
+import { createAndPushNotification } from "@/lib/notification-store";
+
 
 export type RecordCommentPayload = {
   id: string;
@@ -80,6 +82,18 @@ export async function upsertRecordCommentAction(
     const recordId = dto.taskId ?? dto.meetingId ?? "";
 
     revalidateCommentViews(recordId, result.clientId);
+
+    // Notify every mentioned user (excluding the author) on new comments
+    if (!dto.id && result.comment.mentionUserIds.length > 0) {
+      const mentionedOthers = result.comment.mentionUserIds.filter((id) => id !== user.id);
+      for (const mentionedUserId of mentionedOthers) {
+        createAndPushNotification({
+          userId: mentionedUserId,
+          title: t("{name} mentioned you in a comment", { name: user.name }),
+          body: result.comment.body.slice(0, 120),
+        }).catch(() => {});
+      }
+    }
 
     return actionSuccess(
       t(dto.id ? "Comment updated." : "Comment added."),

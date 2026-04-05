@@ -23,7 +23,8 @@ export function ChatAvatarStack({
         name={teammate.name}
         color={teammate.avatarColor}
         imageUrl={teammate.companyLogoUrl}
-        className={cn("h-12 w-12 rounded-2xl", className)}
+        className={cn("h-12 w-12 rounded-[1.25rem] border border-white/10 shadow-[0_14px_30px_rgba(2,6,23,0.18)]", className)}
+        imageClassName="h-full w-full bg-transparent object-cover p-0"
       />
     );
   }
@@ -39,9 +40,10 @@ export function ChatAvatarStack({
           color={participant.avatarColor}
           imageUrl={participant.companyLogoUrl}
           className={cn(
-            "absolute top-0 h-10 w-10 rounded-[1.1rem] border-2 border-white bg-white shadow-sm",
+            "absolute top-0 h-10 w-10 rounded-[1rem] border border-white/10 bg-[color-mix(in_srgb,var(--ui-surface-solid)_78%,transparent)] shadow-[0_10px_24px_rgba(2,6,23,0.16)]",
             index === 0 ? "left-0" : index === 1 ? "left-5 top-2" : "left-9 top-0",
           )}
+          imageClassName="h-full w-full bg-transparent object-cover p-0"
         />
       ))}
     </div>

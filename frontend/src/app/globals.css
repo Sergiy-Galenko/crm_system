@@ -5,6 +5,24 @@
   --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
 }
 
+:root {
+  /*
+   * AppShell sticky header height:
+   *   avatar (h-9 = 2.25rem) + py-3 top+bottom (1.5rem) + border (1px)
+   *   ≈ 3.875rem. We round up slightly to ensure no overlap.
+   */
+  --shell-header-h: 3.875rem;
+
+  /*
+   * Vertical rhythm:
+   *   AppShell outer wrapper has py-4 (1rem top) + gap-4 (1rem) between
+   *   header and main content. On md+ it becomes py-5 + gap-4.
+   *   We add the sticky top-4 (1rem) from the header itself.
+   *   Combined budget for the chat height formula: ~2.5rem (comfortable average).
+   */
+  --shell-gap-y: 2rem;
+}
+
 :root,
 html[data-theme="light"] {
   --ui-background-canvas: #eef2f7;

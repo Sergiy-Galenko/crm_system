@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { AlertTriangle, BadgeCheck, Bell, CalendarClock, Menu, Search } from "lucide-react";
+import { AlertTriangle, BadgeCheck, CalendarClock, Menu, Search } from "lucide-react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/providers/locale-provider";
 import { dashboardNavigation } from "@/lib/constants";
@@ -21,6 +21,7 @@ import {
 import { logoutAction } from "@/actions/auth";
 import { BrandMark } from "@/components/brand-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 type UserSummary = {
   id: string;
@@ -143,16 +144,12 @@ function isActivePath(pathname: string, href: string) {
 
 export function AppShell({
   user,
-  notifications,
-  notificationIndicatorCount = 0,
   chatIndicatorCount = 0,
   meetingReminder,
   systemNotice,
   children,
 }: {
   user: UserSummary;
-  notifications: NotificationItem[];
-  notificationIndicatorCount?: number;
   chatIndicatorCount?: number;
   meetingReminder?: MeetingReminder;
   systemNotice?: SystemNotice;
@@ -161,18 +158,12 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [notificationsOpen, setNotificationsOpen] = React.useState(false);
-  const [visibleNotificationCount, setVisibleNotificationCount] = React.useState(notificationIndicatorCount);
   const [isLoggingOut, startLogoutTransition] = React.useTransition();
   const { t } = useLocale();
   const secondaryLine = user.statusMessage || user.title || user.email;
   const sidebarMeta = user.statusMessage || user.location || null;
   const primaryNavigation = dashboardNavigation.filter((item) => item.href !== "/dashboard/settings");
   const secondaryNavigation = dashboardNavigation.filter((item) => item.href === "/dashboard/settings");
-
-  React.useEffect(() => {
-    setVisibleNotificationCount(notificationIndicatorCount);
-  }, [notificationIndicatorCount]);
 
   function handleLogout() {
     startLogoutTransition(async () => {
@@ -308,38 +299,7 @@ export function AppShell({
           <LocaleSwitcher />
           <ThemeToggle />
 
-          <DropdownMenu
-            open={notificationsOpen}
-            onOpenChange={(nextOpen) => {
-              setNotificationsOpen(nextOpen);
-
-              if (nextOpen) {
-                setVisibleNotificationCount(0);
-              }
-            }}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="relative">
-                <Bell className="h-4 w-4" />
-                <BadgeCount count={visibleNotificationCount} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[22rem]">
-              <DropdownMenuLabel>{t("Notifications")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {notifications.length ? (
-                notifications.map((item) => (
-                  <DropdownMenuItem key={item.id} className="block rounded-2xl px-3 py-3">
-                    <p className="font-medium text-slate-900">{item.label}</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">{item.meta}</p>
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">{item.createdAtLabel}</p>
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem className="py-4 text-slate-500">{t("No new notifications.")}</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -401,7 +361,7 @@ export function AppShell({
           </div>
         ) : null}
 
-        <main className="min-w-0 pb-6">{children}</main>
+        <main className={cn("min-w-0", pathname.startsWith("/dashboard/chat") ? "overflow-hidden" : "pb-6")}>{children}</main>
       </div>
     </div>
   );

@@ -128,50 +128,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         return null;
       });
 
-  const [upcomingTasks, expiringPromoCodes, myUpcomingMeetings, teamJoinNotifications, recentChatThreads, chatReadStates] =
+  const [, , myUpcomingMeetings, , recentChatThreads, chatReadStates] =
     layoutData ?? [[], [], [], [], [], []];
   const chatReadStateByConversationId = new Map(chatReadStates.map((item) => [item.conversationId, item.lastReadAt]));
 
-  const notifications = [
-    ...teamJoinNotifications.map((activity) => ({
-      id: activity.id,
-      label: t("{name} joined your team", { name: activity.actor?.name ?? t("A teammate") }),
-      meta: t("They are now part of your workspace."),
-      createdAt: activity.createdAt,
-      createdAtLabel: formatDate(activity.createdAt, locale, "MMM d, yyyy • HH:mm"),
-    })),
-    ...myUpcomingMeetings.map((meeting) => ({
-      id: meeting.id,
-      label: t("Meeting with {company}", { company: meeting.client.company }),
-      meta: t("Scheduled for {date}", { date: formatDate(meeting.startsAt, locale, "MMM d, yyyy • HH:mm") }),
-      createdAt: meeting.startsAt,
-      createdAtLabel: formatDate(meeting.startsAt, locale, "MMM d, yyyy • HH:mm"),
-    })),
-    ...upcomingTasks.map((task) => ({
-      id: task.id,
-      label: task.title,
-      meta: t("Task due {date}", { date: formatDate(task.dueDate, locale, "MMM d") }),
-      createdAt: task.updatedAt,
-      createdAtLabel: formatDate(task.updatedAt, locale, "MMM d, yyyy • HH:mm"),
-    })),
-    ...expiringPromoCodes.map((promoCode) => ({
-      id: promoCode.id,
-      label: t("{code} expires soon", { code: promoCode.code }),
-      meta: t("Promo code expires {date}", {
-        date: promoCode.expiresAt ? formatDate(promoCode.expiresAt, locale, "MMM d") : t("No expiry"),
-      }),
-      createdAt: promoCode.updatedAt,
-      createdAtLabel: formatDate(promoCode.updatedAt, locale, "MMM d, yyyy • HH:mm"),
-    })),
-  ]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 5)
-    .map((item) => ({
-      id: item.id,
-      label: item.label,
-      meta: item.meta,
-      createdAtLabel: item.createdAtLabel,
-    }));
   const chatIndicatorCount = recentChatThreads.filter((conversation) => {
     const lastMessage = conversation.messages[0];
     const lastReadAt = chatReadStateByConversationId.get(conversation.id);
@@ -186,8 +146,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <AppShell
       user={user}
-      notifications={notifications}
-      notificationIndicatorCount={notifications.length}
       chatIndicatorCount={chatIndicatorCount}
       systemNotice={
         databaseUnavailable

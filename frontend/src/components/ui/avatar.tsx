@@ -13,11 +13,13 @@ export function UserAvatar({
   color,
   imageUrl,
   className,
+  imageClassName,
 }: {
   name: string;
   color?: string | null;
   imageUrl?: string | null;
   className?: string;
+  imageClassName?: string;
 }) {
   return (
     <Avatar className={cn("flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl", className)}>
@@ -25,7 +27,7 @@ export function UserAvatar({
         <AvatarImage
           src={imageUrl}
           alt={name}
-          className="h-full w-full bg-[var(--ui-surface-muted)] object-contain p-2"
+          className={cn("h-full w-full bg-[var(--ui-surface-muted)] object-contain p-2", imageClassName)}
           referrerPolicy="no-referrer"
         />
       ) : null}
