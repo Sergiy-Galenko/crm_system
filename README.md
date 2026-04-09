@@ -43,6 +43,7 @@ cp .env.example .env
 Required variables:
 
 - `DATABASE_URL`
+- `CHAT_DATABASE_URL`
 - `JWT_SECRET`
 - `NEXT_PUBLIC_APP_NAME`
 
@@ -50,9 +51,55 @@ Example:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_crm?schema=public"
+CHAT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_chat?schema=public"
 JWT_SECRET="replace-with-a-long-random-string"
 NEXT_PUBLIC_APP_NAME="Koru"
 ```
+
+## Docker setup
+
+The repository now includes Docker support for:
+
+- `frontend` on `http://localhost:3000`
+- `backend` on `http://localhost:4000`
+- PostgreSQL on `localhost:5432`
+
+Docker Compose creates two databases automatically:
+
+- `koru_crm`
+- `koru_chat`
+
+Start the full stack:
+
+```bash
+docker compose up --build
+```
+
+Or with npm:
+
+```bash
+npm run docker:up
+```
+
+Seed demo data after the containers are up:
+
+```bash
+docker compose run --rm backend npm run db:seed
+```
+
+Useful helper commands:
+
+```bash
+npm run docker:logs
+npm run docker:seed
+npm run docker:down
+```
+
+Notes:
+
+- Docker Compose injects container-safe database URLs automatically, so local `localhost` URLs from `.env` are not reused inside containers.
+- The backend applies Prisma migrations on startup.
+- The chat database schema is synced automatically on backend startup.
 
 ## Local setup
 
@@ -74,13 +121,19 @@ npm run prisma:generate
 npm run prisma:migrate
 ```
 
-4. Seed demo data:
+4. Sync the chat schema:
+
+```bash
+npm run prisma:push:chat
+```
+
+5. Seed demo data:
 
 ```bash
 npm run db:seed
 ```
 
-5. Start the app:
+6. Start the app:
 
 ```bash
 npm run dev

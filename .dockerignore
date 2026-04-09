@@ -1,0 +1,15 @@
+.git
+.gitignore
+.next
+frontend/.next
+backend/dist
+node_modules
+coverage
+build
+dist
+*.log
+*.tsbuildinfo
+.env
+.env.local
+.env.production
+tmp_crm_app
