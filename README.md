@@ -34,13 +34,13 @@ It includes:
 
 ## Environment variables
 
-Copy `.env.example` to `.env` and update values:
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Required variables:
+Required app variables:
 
 - `DATABASE_URL`
 - `CHAT_DATABASE_URL`
@@ -56,50 +56,75 @@ JWT_SECRET="replace-with-a-long-random-string"
 NEXT_PUBLIC_APP_NAME="Koru"
 ```
 
+Optional Docker Compose overrides:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=postgres
+APP_DB_NAME=koru_crm
+CHAT_DB_NAME=koru_chat
+```
+
+`docker compose` reads the root `.env` automatically. Inside containers, Compose overrides `DATABASE_URL` and `CHAT_DATABASE_URL` to use the `postgres` service instead of `localhost`.
+
 ## Docker setup
 
-The repository now includes Docker support for:
+Services exposed by Docker Compose:
 
 - `frontend` on `http://localhost:3000`
 - `backend` on `http://localhost:4000`
 - PostgreSQL on `localhost:5432`
 
-Docker Compose creates two databases automatically:
-
-- `koru_crm`
-- `koru_chat`
-
-Start the full stack:
+### Start the stack
 
 ```bash
-docker compose up --build
+cp .env.example .env
+docker compose up --build -d
 ```
 
-Or with npm:
+Or use the npm alias to run Compose in the foreground:
 
 ```bash
 npm run docker:up
 ```
 
-Seed demo data after the containers are up:
+After startup:
+
+- open `http://localhost:3000`
+- backend health endpoint is available at `http://localhost:4000/api`
+- PostgreSQL data is stored in the `postgres_data` Docker volume
+
+### What happens automatically
+
+- PostgreSQL creates two databases: `koru_crm` and `koru_chat`
+- the backend runs `prisma migrate deploy`
+- the backend syncs the chat schema with `prisma db push`
+- the frontend starts only after the backend healthcheck passes
+
+### Seed demo data
+
+Run this after the containers are up:
+
+```bash
+npm run docker:seed
+```
+
+Equivalent raw command:
 
 ```bash
 docker compose run --rm backend npm run db:seed
 ```
 
-Useful helper commands:
+### Useful Docker commands
 
 ```bash
 npm run docker:logs
-npm run docker:seed
 npm run docker:down
+docker compose down -v
 ```
 
-Notes:
-
-- Docker Compose injects container-safe database URLs automatically, so local `localhost` URLs from `.env` are not reused inside containers.
-- The backend applies Prisma migrations on startup.
-- The chat database schema is synced automatically on backend startup.
+Use `docker compose down -v` when you need a clean PostgreSQL volume, for example after changing `POSTGRES_*`, `APP_DB_NAME`, or `CHAT_DB_NAME`.
 
 ## Local setup
 
@@ -199,38 +224,31 @@ Promo validation logic lives on the server only. The client never decides whethe
 
 ```text
 .
-├── .env.example
-├── eslint.config.mjs
-├── middleware.ts
-├── next.config.ts
+├── backend
+│   ├── prisma
+│   │   ├── migrations
+│   │   ├── schema.prisma
+│   │   ├── chat-schema.prisma
+│   │   └── seed.ts
+│   └── src
+├── frontend
+│   ├── src
+│   │   ├── actions
+│   │   ├── app
+│   │   ├── components
+│   │   └── lib
+│   ├── middleware.ts
+│   └── next.config.ts
+├── docker
+│   ├── backend
+│   │   └── start.sh
+│   └── postgres
+│       └── init
+│           └── 01-create-databases.sh
+├── docker-compose.yml
+├── Dockerfile
 ├── package.json
-├── postcss.config.mjs
-├── prisma
-│   ├── migrations
-│   │   └── 0001_init
-│   │       └── migration.sql
-│   ├── schema.prisma
-│   └── seed.ts
-├── prisma.config.ts
-├── src
-│   ├── actions
-│   ├── app
-│   │   ├── (app)
-│   │   │   └── dashboard
-│   │   ├── api
-│   │   ├── login
-│   │   ├── register
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components
-│   │   ├── auth
-│   │   ├── form
-│   │   ├── forms
-│   │   ├── layout
-│   │   └── ui
-│   └── lib
-└── tsconfig.json
+└── README.md
 ```
 
 ## Push to GitHub
