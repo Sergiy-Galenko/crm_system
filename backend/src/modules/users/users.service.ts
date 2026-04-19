@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable } from "@nestjs/common";
 import { ActivityAction, ActivityEntity, Prisma, type User } from "@prisma/client";
 import { ActivityLogService } from "@backend/common/activity/activity-log.service";
+import { hashPassword } from "@backend/common/auth/password";
 import { verifyTeamInviteToken } from "@backend/common/auth/team-invite-token.server";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
 import { signTeamInviteToken } from "@backend/common/auth/team-invite-token.server";
 import { PrismaService } from "@backend/common/database/prisma.service";
-import { hashPassword } from "@backend/common/next/session";
 import { JoinTeamDto } from "./dto/join-team.dto";
 import { teamUsersWhere } from "@backend/common/scope/crm-scope";
 import { UpdateChatAppearanceDto } from "./dto/update-chat-appearance.dto";

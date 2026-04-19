@@ -9,11 +9,11 @@
     "dev:backend": "tsx watch backend/src/main.ts",
     "build": "npm run prisma:generate && npm run build:frontend && npm run build:backend",
     "build:frontend": "next build frontend",
-    "build:backend": "tsc -p backend/tsconfig.build.json",
+    "build:backend": "tsc -p backend/tsconfig.build.json && tsc-alias -p backend/tsconfig.build.json",
     "i18n:check": "node scripts/i18n-check.mjs",
     "start": "next start frontend",
     "start:frontend": "next start frontend",
-    "start:backend": "node backend/dist/main.js",
+    "start:backend": "node backend/dist/src/main.js",
     "lint": "cd frontend && eslint src middleware.ts next.config.ts postcss.config.mjs && cd .. && tsc -p backend/tsconfig.build.json --noEmit",
     "prisma:generate": "npm run prisma:generate:main && npm run prisma:generate:chat",
     "prisma:generate:main": "prisma generate --config backend/prisma.config.ts",
@@ -73,6 +73,7 @@
     "eslint-config-next": "^16.2.1",
     "prisma": "^6.7.0",
     "tailwindcss": "^4.1.8",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
   }

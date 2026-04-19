@@ -2,20 +2,12 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
+import { hashPassword, verifyPassword } from "@backend/common/auth/password";
 import { SESSION_COOKIE } from "@backend/common/constants/app.constants";
 import { getCookieSecure } from "@backend/common/config/runtime-options";
 import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { prisma } from "@backend/common/database/prisma.service";
 import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token";
-
-export async function hashPassword(value: string) {
-  return bcrypt.hash(value, 12);
-}
-
-export async function verifyPassword(value: string, hashedValue: string) {
-  return bcrypt.compare(value, hashedValue);
-}
 
 export async function createSessionCookie(payload: Parameters<typeof signSessionToken>[0]) {
   const token = await signSessionToken(payload);

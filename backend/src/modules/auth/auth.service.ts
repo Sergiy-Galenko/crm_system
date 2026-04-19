@@ -1,9 +1,9 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ActivityAction, ActivityEntity, Prisma, type User } from "@prisma/client";
 import { ActivityLogService } from "@backend/common/activity/activity-log.service";
+import { hashPassword, verifyPassword } from "@backend/common/auth/password";
 import { verifyTeamInviteToken } from "@backend/common/auth/team-invite-token.server";
 import { PrismaService } from "@backend/common/database/prisma.service";
-import { hashPassword, verifyPassword } from "@backend/common/next/session";
 import type { LoginDto } from "./dto/login.dto";
 import type { RegisterDto } from "./dto/register.dto";
 
