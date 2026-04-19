@@ -27,7 +27,12 @@ export async function loginAction(prevState: ActionResult, formData: FormData) {
     });
 
     redirect(inviteToken ? `/dashboard/settings?invite=${encodeURIComponent(inviteToken)}` : "/dashboard");
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.response?.message === "ACCOUNT_NOT_VERIFIED" || error?.message === "ACCOUNT_NOT_VERIFIED") {
+      const email = String(formData.get("email") ?? "").trim();
+      redirect(`/verify?email=${encodeURIComponent(email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ""}`);
+    }
+
     const response = actionErrorFromException(error, t, {
       email: ["email"],
       password: ["password"],
@@ -52,13 +57,8 @@ export async function registerAction(prevState: ActionResult, formData: FormData
     const authService = await resolveProvider(AuthService);
     const user = await authService.register(dto);
 
-    await createSessionCookie({
-      userId: user.id,
-      role: user.role,
-      email: user.email,
-    });
-
-    redirect("/dashboard");
+    const inviteToken = String(formData.get("inviteToken") ?? "").trim();
+    redirect(`/verify?email=${encodeURIComponent(user.email)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ""}`);
   } catch (error) {
     const response = actionErrorFromException(error, t, {
       name: ["name"],
@@ -84,4 +84,56 @@ export async function requireAnonymous() {
   }
 
   return null;
+}
+
+export async function verifyAction(prevState: ActionResult, formData: FormData) {
+  const { t } = await getServerTranslator();
+  const email = String(formData.get("email") ?? "").trim();
+  const code = String(formData.get("code") ?? "").trim();
+  const inviteToken = String(formData.get("inviteToken") ?? "").trim();
+
+  try {
+    if (!email || !code) {
+      return actionError(t("Email and code are required."), { code: t("Code is required") });
+    }
+
+    const authService = await resolveProvider(AuthService);
+    const user = await authService.verifyCode(email, code);
+
+    await createSessionCookie({
+      userId: user.id,
+      role: user.role,
+      email: user.email,
+    });
+
+    redirect(inviteToken ? `/dashboard/settings?invite=${encodeURIComponent(inviteToken)}` : "/dashboard");
+  } catch (error) {
+    const response = actionErrorFromException(error, t, {
+      code: ["code", "verification code"],
+    });
+
+    return actionError(response.message, response.fields);
+  }
+}
+
+export async function resendCodeAction(prevState: ActionResult, formData: FormData) {
+  const { t } = await getServerTranslator();
+  const email = String(formData.get("email") ?? "").trim();
+
+  try {
+    if (!email) {
+      return actionError(t("Email is required."));
+    }
+
+    const authService = await resolveProvider(AuthService);
+    await authService.resendCode(email);
+
+    return {
+      success: true,
+      message: t("A new verification code has been sent to your email."),
+    };
+  } catch (error) {
+    const response = actionErrorFromException(error, t, {});
+    return actionError(response.message, response.fields);
+  }
 }

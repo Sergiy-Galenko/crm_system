@@ -39,6 +39,10 @@ export class AuthService {
       throw new UnauthorizedException("We couldn't find an account with that email.");
     }
 
+    if (!user.isVerified) {
+      throw new UnauthorizedException("ACCOUNT_NOT_VERIFIED");
+    }
+
     const isPasswordValid = await verifyPassword(dto.password, user.passwordHash);
 
     if (!isPasswordValid) {
@@ -72,6 +76,9 @@ export class AuthService {
       throw new BadRequestException("This invite link is invalid or has expired.");
     }
 
+    const verificationCode = this.generateVerificationCode();
+    const verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
     const user: User = await (async () => {
       try {
         return await this.prisma.user.create({
@@ -82,6 +89,9 @@ export class AuthService {
             passwordHash,
             title: dto.title || null,
             createdById: invite?.inviterId ?? null,
+            isVerified: false,
+            verificationCode,
+            verificationCodeExpiresAt,
           },
         });
       } catch (error) {
@@ -111,6 +121,72 @@ export class AuthService {
       });
     }
 
+    console.log(`[Email Service Mock] Verification code for ${user.email} is: ${verificationCode}`);
+
     return user;
+  }
+
+  private generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async verifyCode(email: string, code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      throw new BadRequestException("User not found.");
+    }
+
+    if (user.isVerified) {
+      throw new BadRequestException("Account is already verified.");
+    }
+
+    if (user.verificationCode !== code) {
+      throw new BadRequestException("Invalid verification code.");
+    }
+
+    if (!user.verificationCodeExpiresAt || user.verificationCodeExpiresAt < new Date()) {
+      throw new BadRequestException("Verification code has expired.");
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isVerified: true,
+        verificationCode: null,
+        verificationCodeExpiresAt: null,
+      },
+    });
+
+    return updatedUser;
+  }
+
+  async resendCode(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      throw new BadRequestException("User not found.");
+    }
+
+    if (user.isVerified) {
+      throw new BadRequestException("Account is already verified.");
+    }
+
+    const verificationCode = this.generateVerificationCode();
+    const verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verificationCode,
+        verificationCodeExpiresAt,
+      },
+    });
+
+    console.log(`[Email Service Mock] Resent verification code for ${user.email} is: ${verificationCode}`);
   }
 }

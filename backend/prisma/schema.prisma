@@ -134,6 +134,10 @@ model User {
   activities        ActivityLog[]    @relation("ActivityActor")
   notifications     Notification[]
 
+  isVerified        Boolean          @default(false)
+  verificationCode  String?
+  verificationCodeExpiresAt DateTime?
+
   @@index([createdById])
 }
 
