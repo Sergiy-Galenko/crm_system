@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCookieSecure } from "@backend/common/config/runtime-options";
 import { localeCookieName, resolveLocale } from "@/lib/locale";
 
 export async function POST(request: Request) {
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   response.cookies.set(localeCookieName, locale, {
     httpOnly: false,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: getCookieSecure(),
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
   });

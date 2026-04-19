@@ -40,6 +40,8 @@ services:
       CHAT_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${CHAT_DB_NAME:-koru_chat}?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-123456}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Koru}
+      APP_ORIGIN: ${APP_ORIGIN:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
       NEXT_TELEMETRY_DISABLED: "1"
     ports:
       - "4000:4000"
@@ -72,6 +74,8 @@ services:
       CHAT_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${CHAT_DB_NAME:-koru_chat}?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-123456}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Koru}
+      APP_ORIGIN: ${APP_ORIGIN:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
       NEXT_TELEMETRY_DISABLED: "1"
     ports:
       - "3000:3000"

@@ -5,6 +5,7 @@ import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
 import { Public } from "@backend/common/auth/public.decorator";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
+import { getCookieSecure } from "@backend/common/config/runtime-options";
 import { signSessionToken } from "@backend/common/auth/session-token.server";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
@@ -30,7 +31,7 @@ export class AuthController {
     response.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: getCookieSecure(),
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
@@ -63,7 +64,7 @@ export class AuthController {
     response.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: getCookieSecure(),
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
@@ -86,7 +87,7 @@ export class AuthController {
     response.clearCookie(SESSION_COOKIE, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: getCookieSecure(),
       path: "/",
     });
 

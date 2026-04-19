@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { getRequestOrigin } from "@backend/common/config/runtime-options";
 import { resolveProvider } from "@backend/common/nest/app-context";
 import { validateDto } from "@backend/common/validation/validate-dto";
 import { JoinTeamDto } from "@backend/modules/users/dto/join-team.dto";
@@ -13,16 +14,6 @@ import { actionError, actionSuccess, type ActionResult } from "@/lib/actions";
 import { actionErrorFromException, toRequestUser } from "@/lib/backend-actions";
 import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
-
-function getRequestOriginFromHeaders(headerStore: Awaited<ReturnType<typeof headers>>) {
-  const forwardedHost = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  const forwardedProto =
-    headerStore.get("x-forwarded-proto") ??
-    headerStore.get("origin")?.split("://")[0] ??
-    (forwardedHost?.includes("localhost") ? "http" : "https");
-
-  return forwardedHost ? `${forwardedProto}://${forwardedHost}` : "http://localhost:3000";
-}
 
 export async function upsertUserAction(prevState: ActionResult, formData: FormData) {
   const { t } = await getServerTranslator();
@@ -121,7 +112,7 @@ export async function generateTeamInviteAction(
     const usersService = await resolveProvider(UsersService);
     const token = await usersService.createTeamInvite(toRequestUser(user));
     const headerStore = await headers();
-    const origin = getRequestOriginFromHeaders(headerStore);
+    const origin = getRequestOrigin(headerStore);
     const inviteLink = `${origin}/register?invite=${encodeURIComponent(token)}`;
 
     return actionSuccess(t("Invite link ready."), { inviteLink });

@@ -46,6 +46,8 @@ Required app variables:
 - `CHAT_DATABASE_URL`
 - `JWT_SECRET`
 - `NEXT_PUBLIC_APP_NAME`
+- `APP_ORIGIN`
+- `COOKIE_SECURE`
 
 Example:
 
@@ -54,6 +56,8 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_crm?schema=publ
 CHAT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_chat?schema=public"
 JWT_SECRET="replace-with-a-long-random-string"
 NEXT_PUBLIC_APP_NAME="Koru"
+APP_ORIGIN="http://localhost:3000"
+COOKIE_SECURE="false"
 ```
 
 Optional Docker Compose overrides:
@@ -68,6 +72,12 @@ CHAT_DB_NAME=koru_chat
 
 `docker compose` reads the root `.env` automatically. Inside containers, Compose overrides `DATABASE_URL` and `CHAT_DATABASE_URL` to use the `postgres` service instead of `localhost`.
 
+Runtime notes:
+
+- `APP_ORIGIN` is the public frontend URL used for generated links such as invite URLs
+- set `COOKIE_SECURE="false"` for plain HTTP on localhost or LAN
+- set `COOKIE_SECURE="true"` when the app is served over HTTPS
+
 ## Docker setup
 
 Services exposed by Docker Compose:
@@ -77,6 +87,8 @@ Services exposed by Docker Compose:
 - PostgreSQL on `localhost:5432`
 
 ### Start the stack
+
+Before the first run, make sure Docker Desktop or another Docker daemon is running.
 
 ```bash
 cp .env.example .env
@@ -125,6 +137,21 @@ docker compose down -v
 ```
 
 Use `docker compose down -v` when you need a clean PostgreSQL volume, for example after changing `POSTGRES_*`, `APP_DB_NAME`, or `CHAT_DB_NAME`.
+
+### Run from another device
+
+If you want to open the same running instance from another laptop or phone on your local network:
+
+1. Find the IP address of the machine that runs Docker.
+2. Set `APP_ORIGIN` in `.env`, for example `APP_ORIGIN="http://192.168.1.50:3000"`.
+3. Set `COOKIE_SECURE="false"` if you are using plain HTTP.
+4. Restart the stack:
+
+```bash
+docker compose up --build -d
+```
+
+Then open `http://<host-ip>:3000` from the other device.
 
 ## Local setup
 

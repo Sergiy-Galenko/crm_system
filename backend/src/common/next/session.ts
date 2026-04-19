@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE } from "@backend/common/constants/app.constants";
+import { getCookieSecure } from "@backend/common/config/runtime-options";
 import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { prisma } from "@backend/common/database/prisma.service";
 import { signSessionToken, verifySessionToken } from "@backend/common/auth/session-token";
@@ -23,7 +24,7 @@ export async function createSessionCookie(payload: Parameters<typeof signSession
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: getCookieSecure(),
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
