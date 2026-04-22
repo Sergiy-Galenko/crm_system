@@ -6,6 +6,7 @@ import { loginAction } from "@/actions/auth";
 import { useLocale } from "@/components/providers/locale-provider";
 import { FormField } from "@/components/form/form-field";
 import { SubmitButton } from "@/components/form/submit-button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { idleActionState } from "@/lib/actions";
 
@@ -24,12 +25,11 @@ export function LoginForm({ inviteToken = "" }: { inviteToken?: string }) {
       </FormField>
       {state.message && !state.success ? <p className="text-sm text-rose-500">{state.message}</p> : null}
       <SubmitButton className="w-full">{t("Sign in")}</SubmitButton>
-      <p className="text-sm text-slate-500">
-        {t("Need an account?")}{" "}
-        <Link href={inviteToken ? `/register?invite=${encodeURIComponent(inviteToken)}` : "/register"} className="font-medium text-slate-950">
+      <Button asChild type="button" variant="secondary" className="w-full">
+        <Link href={inviteToken ? `/register?invite=${encodeURIComponent(inviteToken)}` : "/register"}>
           {t("Create one")}
         </Link>
-      </p>
+      </Button>
     </form>
   );
 }
