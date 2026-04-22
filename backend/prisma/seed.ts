@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   ActivityAction,
   ActivityEntity,
@@ -12,6 +13,7 @@ import {
   TaskPriority,
   TaskStatus,
 } from "@prisma/client";
+import { PrismaClient as AuthPrismaClient } from "@prisma/auth-client";
 import { addDays, subDays } from "date-fns";
 import bcrypt from "bcryptjs";
 import { loadWorkspaceEnv } from "../src/common/env/load-workspace-env";
@@ -21,11 +23,98 @@ loadWorkspaceEnv();
 
 const prisma = new PrismaClient();
 const chatPrisma = new ChatPrismaClient();
+const authPrisma = new AuthPrismaClient();
+
+type DemoUserSeed = {
+  name: string;
+  email: string;
+  nickname: string;
+  password: string;
+  role: Role;
+  title: string;
+  statusMessage: string;
+  phone: string;
+  location: string;
+  bio: string;
+  avatarColor: string;
+  createdById?: string | null;
+};
+
+async function ensureDemoUserAccount(email: string, passwordHash: string) {
+  const existingCrmUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  const existingAuthAccount = await authPrisma.authAccount.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  const userId = existingCrmUser?.id ?? existingAuthAccount?.id ?? randomUUID();
+
+  if (existingAuthAccount && existingAuthAccount.id !== userId) {
+    await authPrisma.authAccount.delete({
+      where: { id: existingAuthAccount.id },
+    });
+  }
+
+  await authPrisma.authAccount.upsert({
+    where: { email },
+    update: {
+      passwordHash,
+    },
+    create: {
+      id: userId,
+      email,
+      passwordHash,
+    },
+  });
+
+  return userId;
+}
+
+async function upsertDemoUser(input: DemoUserSeed) {
+  const passwordHash = await bcrypt.hash(input.password, 12);
+  const userId = await ensureDemoUserAccount(input.email, passwordHash);
+
+  return prisma.user.upsert({
+    where: { id: userId },
+    update: {
+      name: input.name,
+      email: input.email,
+      nickname: input.nickname,
+      role: input.role,
+      title: input.title,
+      statusMessage: input.statusMessage,
+      phone: input.phone,
+      location: input.location,
+      bio: input.bio,
+      avatarColor: input.avatarColor,
+      createdById: input.createdById ?? null,
+    },
+    create: {
+      id: userId,
+      name: input.name,
+      email: input.email,
+      nickname: input.nickname,
+      role: input.role,
+      title: input.title,
+      statusMessage: input.statusMessage,
+      phone: input.phone,
+      location: input.location,
+      bio: input.bio,
+      avatarColor: input.avatarColor,
+      createdById: input.createdById ?? null,
+    },
+  });
+}
 
 async function main() {
   await chatPrisma.chatMessage.deleteMany();
   await chatPrisma.chatParticipant.deleteMany();
   await chatPrisma.chatConversation.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.promoCodeUsage.deleteMany();
   await prisma.meeting.deleteMany();
@@ -35,42 +124,34 @@ async function main() {
   await prisma.lead.deleteMany();
   await prisma.client.deleteMany();
   await prisma.promoCode.deleteMany();
-  await prisma.user.deleteMany();
 
-  const passwordHash = await bcrypt.hash("Admin@12345", 12);
-  const managerPasswordHash = await bcrypt.hash("Manager@12345", 12);
-
-  const admin = await prisma.user.create({
-    data: {
-      name: "Olivia Hart",
-      email: "admin@korucrm.dev",
-      nickname: "olivia",
-      passwordHash,
-      role: Role.ADMIN,
-      title: "Revenue Operations Lead",
-      statusMessage: "Expansion planning, renewals, and revenue orchestration.",
-      phone: "+1 415 555 0104",
-      location: "San Francisco, CA",
-      bio: "I coordinate the operating rhythm for pipeline reviews, strategic accounts, and promo-backed commercial initiatives.",
-      avatarColor: "#2154FF",
-    },
+  const admin = await upsertDemoUser({
+    name: "Olivia Hart",
+    email: "admin@korucrm.dev",
+    nickname: "olivia",
+    password: "Admin@12345",
+    role: Role.ADMIN,
+    title: "Revenue Operations Lead",
+    statusMessage: "Expansion planning, renewals, and revenue orchestration.",
+    phone: "+1 415 555 0104",
+    location: "San Francisco, CA",
+    bio: "I coordinate the operating rhythm for pipeline reviews, strategic accounts, and promo-backed commercial initiatives.",
+    avatarColor: "#2154FF",
   });
 
-  const manager = await prisma.user.create({
-    data: {
-      name: "Noah Bennett",
-      email: "manager@korucrm.dev",
-      nickname: "noah",
-      passwordHash: managerPasswordHash,
-      role: Role.MANAGER,
-      title: "Account Manager",
-      statusMessage: "Client retention, follow-ups, and regional growth accounts.",
-      phone: "+1 646 555 0122",
-      location: "New York, NY",
-      bio: "I focus on customer momentum after handoff, renewal preparation, and identifying expansion opportunities inside active accounts.",
-      avatarColor: "#0F9F68",
-      createdById: admin.id,
-    },
+  const manager = await upsertDemoUser({
+    name: "Noah Bennett",
+    email: "manager@korucrm.dev",
+    nickname: "noah",
+    password: "Manager@12345",
+    role: Role.MANAGER,
+    title: "Account Manager",
+    statusMessage: "Client retention, follow-ups, and regional growth accounts.",
+    phone: "+1 646 555 0122",
+    location: "New York, NY",
+    bio: "I focus on customer momentum after handoff, renewal preparation, and identifying expansion opportunities inside active accounts.",
+    avatarColor: "#0F9F68",
+    createdById: admin.id,
   });
 
   const clients = await Promise.all([
@@ -539,4 +620,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
     await chatPrisma.$disconnect();
+    await authPrisma.$disconnect();
   });

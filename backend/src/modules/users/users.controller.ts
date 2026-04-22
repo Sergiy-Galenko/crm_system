@@ -2,6 +2,7 @@ import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common"
 import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
+import { JoinTeamDto } from "./dto/join-team.dto";
 import { UpdateChatAppearanceDto } from "./dto/update-chat-appearance.dto";
 import { UpdateSettingsDto } from "./dto/update-settings.dto";
 import { UpsertUserDto } from "./dto/upsert-user.dto";
@@ -20,12 +21,16 @@ export class UsersController {
     };
   }
 
-  @Patch(":id")
-  async updateUser(@CurrentUser() user: RequestUser, @Param("id") id: string, @Body() dto: UpsertUserDto) {
-    return {
-      success: true,
-      data: await this.usersService.upsertUser(user, { ...dto, id }),
-    };
+  @Post("invite")
+  async createTeamInvite(@CurrentUser() user: RequestUser) {
+    const token = await this.usersService.createTeamInvite(user);
+    return { success: true, data: { token } };
+  }
+
+  @Post("join-team")
+  async joinTeam(@CurrentUser() user: RequestUser, @Body() dto: JoinTeamDto) {
+    await this.usersService.joinTeam(user, dto);
+    return { success: true };
   }
 
   @Patch("settings/profile")
@@ -38,5 +43,13 @@ export class UsersController {
   async updateChatAppearance(@CurrentUser() user: RequestUser, @Body() dto: UpdateChatAppearanceDto) {
     await this.usersService.updateChatAppearance(user, dto);
     return { success: true };
+  }
+
+  @Patch(":id")
+  async updateUser(@CurrentUser() user: RequestUser, @Param("id") id: string, @Body() dto: UpsertUserDto) {
+    return {
+      success: true,
+      data: await this.usersService.upsertUser(user, { ...dto, id }),
+    };
   }
 }

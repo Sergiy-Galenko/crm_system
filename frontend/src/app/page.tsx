@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BadgePercent, BriefcaseBusiness, ShieldCheck, Users2 } from "lucide-react";
+import { ArrowRight, BadgePercent, BriefcaseBusiness, Users2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -33,11 +33,7 @@ export default async function LandingPage() {
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-500">
-              <ShieldCheck className="h-4 w-4 text-blue-500" />
-              {t("Production-ready CRM on Next.js + Prisma")}
-            </div>
-            <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
+            <h1 className="max-w-4xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
               {t("Minimal revenue operations for premium teams.")}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-500">

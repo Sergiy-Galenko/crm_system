@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
-import { ActivityAction, ActivityEntity, Prisma } from "@prisma/client";
+import { ActivityAction, ActivityEntity, DiscountType, Prisma } from "@prisma/client";
 import { ActivityLogService } from "@backend/common/activity/activity-log.service";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
 import { PrismaService } from "@backend/common/database/prisma.service";
@@ -20,64 +20,50 @@ export class DealsService {
   ) {}
 
   async upsertDeal(user: RequestUser, dto: UpsertDealDto) {
-    const owner = await this.prisma.user.findFirst({
-      where: {
-        id: dto.ownerId,
-        ...visibleUsersWhere(user),
-      },
-      select: { id: true },
-    });
+    const [owner, client, lead] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: {
+          id: dto.ownerId,
+          ...visibleUsersWhere(user),
+        },
+        select: { id: true },
+      }),
+      this.prisma.client.findFirst({
+        where: {
+          id: dto.clientId,
+          ...clientAccessWhere(user),
+        },
+        select: { id: true },
+      }),
+      dto.leadId
+        ? this.prisma.lead.findFirst({
+            where: {
+              id: dto.leadId,
+              ...leadAccessWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (!owner) {
       throw new BadRequestException("That owner is not in your team.");
     }
 
-    const client = await this.prisma.client.findFirst({
-      where: {
-        id: dto.clientId,
-        ...clientAccessWhere(user),
-      },
-      select: { id: true },
-    });
-
     if (!client) {
       throw new BadRequestException("That client is not available in your workspace.");
     }
 
-    if (dto.leadId) {
-      const lead = await this.prisma.lead.findFirst({
-        where: {
-          id: dto.leadId,
-          ...leadAccessWhere(user),
-        },
-        select: { id: true },
-      });
-
-      if (!lead) {
-        throw new BadRequestException("That lead is not available in your workspace.");
-      }
-    }
-
-    if (dto.id) {
-      const existingDeal = await this.prisma.deal.findFirst({
-        where: {
-          id: dto.id,
-          ...dealAccessWhere(user),
-        },
-        select: { id: true },
-      });
-
-      if (!existingDeal) {
-        throw new ForbiddenException("You can only update deals in your workspace.");
-      }
+    if (dto.leadId && !lead) {
+      throw new BadRequestException("That lead is not available in your workspace.");
     }
 
     const promoCodeInput = normalizedPromoCode(dto.promoCode);
 
     await this.prisma.$transaction(async (tx) => {
       const existingDeal = dto.id
-        ? await tx.deal.findUnique({
-            where: { id: dto.id },
+        ? await tx.deal.findFirst({
+            where: { id: dto.id, ...dealAccessWhere(user) },
             include: {
               promoUsage: true,
               promoCode: true,
@@ -85,9 +71,19 @@ export class DealsService {
           })
         : null;
 
+      if (dto.id && !existingDeal) {
+        throw new ForbiddenException("You can only update deals in your workspace.");
+      }
+
       let discountAmount = 0;
       let netAmount = dto.grossAmount;
       let promoCodeId: string | null = null;
+      let promoCodeForUsage: {
+        id: string;
+        code: string;
+        discountType: DiscountType;
+        discountValue: Prisma.Decimal | number;
+      } | null = null;
 
       const currentPromoCode = existingDeal?.promoCode?.code ?? "";
       const isSamePromoCode = Boolean(existingDeal?.promoUsage && currentPromoCode && currentPromoCode === promoCodeInput);
@@ -136,6 +132,7 @@ export class DealsService {
         discountAmount = promoValidation.discountAmount;
         netAmount = promoValidation.finalAmount;
         promoCodeId = promoValidation.promoCode.id;
+        promoCodeForUsage = promoValidation.promoCode;
       }
 
       const deal = existingDeal
@@ -173,13 +170,9 @@ export class DealsService {
             },
           });
 
-      if (promoCodeInput && !isSamePromoCode) {
-        const promoCode = await tx.promoCode.findUniqueOrThrow({
-          where: { code: promoCodeInput },
-        });
-
+      if (promoCodeInput && !isSamePromoCode && promoCodeForUsage) {
         await tx.promoCode.update({
-          where: { id: promoCode.id },
+          where: { id: promoCodeForUsage.id },
           data: {
             usedCount: {
               increment: 1,
@@ -189,14 +182,14 @@ export class DealsService {
 
         await tx.promoCodeUsage.create({
           data: {
-            promoCodeId: promoCode.id,
+            promoCodeId: promoCodeForUsage.id,
             dealId: deal.id,
             clientId: dto.clientId,
             appliedById: user.userId,
             dealAmount: dto.grossAmount,
             discountAmount,
-            discountType: promoCode.discountType,
-            discountValue: promoCode.discountValue,
+            discountType: promoCodeForUsage.discountType,
+            discountValue: promoCodeForUsage.discountValue,
           },
         });
 
@@ -205,7 +198,7 @@ export class DealsService {
           entity: ActivityEntity.DEAL,
           action: ActivityAction.PROMO_APPLIED,
           entityId: deal.id,
-          description: `Applied ${promoCode.code} to ${deal.title}.`,
+          description: `Applied ${promoCodeForUsage.code} to ${deal.title}.`,
         });
       }
 

@@ -12,12 +12,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["frontend/src/*"],
-      "@backend/*": ["backend/src/*"],
-      "@prisma/client": ["node_modules/.prisma/client/index"],
-      "@prisma/client/*": ["node_modules/@prisma/client/*"]
+      "@/*": ["./frontend/src/*"],
+      "@backend/*": ["./backend/src/*"],
+      "@prisma/client": ["./node_modules/.prisma/client/index"],
+      "@prisma/client/*": ["./node_modules/@prisma/client/*"]
     }
   }
 }

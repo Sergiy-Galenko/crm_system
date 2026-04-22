@@ -1,7 +1,9 @@
 "use server";
 
+import { clientAccessWhere, dealAccessWhere, leadAccessWhere } from "@backend/common/scope/crm-scope";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { toRequestUser } from "@/lib/backend-actions";
 
 export type SmartMentionResult = {
   id: string;
@@ -18,17 +20,19 @@ export async function searchMentionsAction(query: string): Promise<SmartMentionR
     return [];
   }
 
+  const scopedUser = toRequestUser(user);
+
   const [deals, leads, clients] = await Promise.all([
     prisma.deal.findMany({
       where: { 
-        ownerId: user.id, 
+        ...dealAccessWhere(scopedUser),
         title: { contains: q, mode: "insensitive" } 
       },
       take: 5,
     }),
     prisma.lead.findMany({
       where: { 
-        ownerId: user.id, 
+        ...leadAccessWhere(scopedUser),
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { company: { contains: q, mode: "insensitive" } },
@@ -38,7 +42,7 @@ export async function searchMentionsAction(query: string): Promise<SmartMentionR
     }),
     prisma.client.findMany({
       where: { 
-        ownerId: user.id, 
+        ...clientAccessWhere(scopedUser),
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { company: { contains: q, mode: "insensitive" } },
@@ -71,3 +75,4 @@ export async function searchMentionsAction(query: string): Promise<SmartMentionR
 
   return results;
 }
+

@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { TaskStatus } from "@prisma/client";
 import { CurrentUser } from "@backend/common/auth/current-user.decorator";
 import { JwtAuthGuard } from "@backend/common/auth/jwt-auth.guard";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
@@ -40,6 +41,18 @@ export class TasksController {
     return {
       success: true,
       data: await this.tasksService.upsertTask(user, { ...dto, id }),
+    };
+  }
+
+  @Patch(":id/status")
+  async updateTaskStatus(
+    @CurrentUser() user: RequestUser,
+    @Param("id") id: string,
+    @Body("status") status: TaskStatus,
+  ) {
+    return {
+      success: true,
+      data: await this.tasksService.updateTaskStatus(user, id, status),
     };
   }
 

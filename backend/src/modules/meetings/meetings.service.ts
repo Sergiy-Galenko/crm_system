@@ -14,25 +14,38 @@ export class MeetingsService {
   ) {}
 
   async upsertMeeting(user: RequestUser, dto: UpsertMeetingDto) {
-    const assignee = await this.prisma.user.findFirst({
-      where: {
-        id: dto.assignedToId,
-        ...visibleUsersWhere(user),
-      },
-      select: { id: true },
-    });
+    const [assignee, client, existingMeeting] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: {
+          id: dto.assignedToId,
+          ...visibleUsersWhere(user),
+        },
+        select: { id: true },
+      }),
+      this.prisma.client.findFirst({
+        where: {
+          id: dto.clientId,
+          ...clientAccessWhere(user),
+        },
+        select: { id: true },
+      }),
+      dto.id
+        ? this.prisma.meeting.findFirst({
+            where: {
+              id: dto.id,
+              ...meetingAccessWhere(user),
+            },
+            select: {
+              id: true,
+              clientId: true,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (!assignee) {
       throw new BadRequestException("That assignee is not in your team.");
     }
-
-    const client = await this.prisma.client.findFirst({
-      where: {
-        id: dto.clientId,
-        ...clientAccessWhere(user),
-      },
-      select: { id: true },
-    });
 
     if (!client) {
       throw new BadRequestException("That client is not available in your workspace.");
@@ -41,17 +54,6 @@ export class MeetingsService {
     let previousClientId: string | null = null;
 
     if (dto.id) {
-      const existingMeeting = await this.prisma.meeting.findFirst({
-        where: {
-          id: dto.id,
-          ...meetingAccessWhere(user),
-        },
-        select: {
-          id: true,
-          clientId: true,
-        },
-      });
-
       if (!existingMeeting) {
         throw new ForbiddenException("You can only update meetings in your workspace.");
       }

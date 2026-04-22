@@ -7,25 +7,20 @@ const WORKSPACE_MARKERS = ["package.json", path.join("backend", "prisma", "schem
 let didLoadWorkspaceEnv = false;
 
 function hasWorkspaceMarkers(directory: string) {
-  return WORKSPACE_MARKERS.every((marker) => existsSync(path.join(directory, marker)));
+  return WORKSPACE_MARKERS.every((marker) => existsSync(path.join(/* turbopackIgnore: true */ directory, marker)));
 }
 
 function findWorkspaceRoot(startDirectory: string) {
-  let currentDirectory = path.resolve(startDirectory);
+  const currentDirectory = path.resolve(startDirectory);
+  const parentDirectory = path.dirname(currentDirectory);
 
-  while (true) {
-    if (hasWorkspaceMarkers(currentDirectory)) {
-      return currentDirectory;
+  for (const directory of [currentDirectory, parentDirectory]) {
+    if (hasWorkspaceMarkers(directory)) {
+      return directory;
     }
-
-    const parentDirectory = path.dirname(currentDirectory);
-
-    if (parentDirectory === currentDirectory) {
-      return null;
-    }
-
-    currentDirectory = parentDirectory;
   }
+
+  return null;
 }
 
 function loadEnvFile(filePath: string) {
@@ -81,7 +76,7 @@ export function loadWorkspaceEnv() {
   const envDirectory = workspaceRoot ?? process.cwd();
 
   for (const file of ENV_FILES) {
-    loadEnvFile(path.join(envDirectory, file));
+    loadEnvFile(path.join(/* turbopackIgnore: true */ envDirectory, file));
   }
 
   didLoadWorkspaceEnv = true;

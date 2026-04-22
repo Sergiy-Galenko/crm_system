@@ -3,18 +3,11 @@ import type { UrlObject } from "url";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
-  BriefcaseBusiness,
   CalendarDays,
-  CheckCheck,
-  ChevronRight,
-  CircleEllipsis,
-  Flag,
   LayoutGrid,
-  ListTodo,
   Rows3,
   Search,
   SlidersHorizontal,
-  UserRoundCheck,
 } from "lucide-react";
 import { TaskDialog } from "@/components/forms/task-dialog";
 import { TaskListBoard } from "@/components/tasks/task-list-board";
@@ -93,9 +86,6 @@ type TasksPageProps = {
   searchParams: Promise<SearchParamsRecord>;
 };
 
-const statusOrder = ["TODO", "IN_PROGRESS", "DONE"] as const;
-const priorityOrder = ["HIGH", "MEDIUM", "LOW"] as const;
-
 export default async function TasksPage({ searchParams }: TasksPageProps) {
   const user = await requireUser();
   const { locale, t } = await getServerTranslator();
@@ -165,7 +155,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         ? [{ priority: "desc" }, { dueDate: "asc" }]
         : [{ dueDate: "asc" }, { createdAt: "desc" }];
 
-  const [tasks, totalTasks, clients, leads, deals, totalAccessibleTasks, statusBreakdown, priorityBreakdown, assignedToMeCount] = await Promise.all([
+  const [tasks, totalTasks, clients, leads, deals, totalAccessibleTasks, statusBreakdown, assignedToMeCount] = await Promise.all([
     prisma.task.findMany({
       ...taskListArgs,
       where,
@@ -216,13 +206,6 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         _all: true,
       },
     }),
-    prisma.task.groupBy({
-      by: ["priority"],
-      where: baseWhere,
-      _count: {
-        _all: true,
-      },
-    }),
     prisma.task.count({
       where: {
         ...baseWhere,
@@ -266,22 +249,6 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   const nextHref = createPageHref("/dashboard/tasks", resolvedSearchParams, { page: String(Math.min(pageCount, page + 1)) });
 
   const statusCountMap = Object.fromEntries(statusBreakdown.map((item) => [item.status, item._count._all])) as Partial<Record<TaskStatus, number>>;
-  const priorityCountMap = Object.fromEntries(priorityBreakdown.map((item) => [item.priority, item._count._all])) as Partial<Record<TaskPriority, number>>;
-
-  const selectedAssigneeName = assignee && assignee !== "unassigned"
-    ? users.find((teamUser) => teamUser.id === assignee)?.name ?? null
-    : null;
-
-  const activeFilterSummary = [
-    status ? t(status) : null,
-    priority ? t(priority) : null,
-    assignee === "unassigned"
-      ? t("Unassigned")
-      : selectedAssigneeName
-        ? t("Assigned to {name}", { name: selectedAssigneeName })
-        : null,
-    query ? `“${query}”` : null,
-  ].filter(Boolean);
 
   const allTasksHref = createPageHref("/dashboard/tasks", resolvedSearchParams, {
     q: "",

@@ -168,66 +168,66 @@ export class TasksService {
   }
 
   async upsertTask(user: RequestUser, dto: UpsertTaskDto) {
-    if (dto.assignedToId) {
-      const assignee = await this.prisma.user.findFirst({
-        where: {
-          id: dto.assignedToId,
-          ...visibleUsersWhere(user),
-        },
-        select: { id: true },
-      });
+    const [assignee, client, lead, deal, existingTask] = await Promise.all([
+      dto.assignedToId
+        ? this.prisma.user.findFirst({
+            where: {
+              id: dto.assignedToId,
+              ...visibleUsersWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.clientId
+        ? this.prisma.client.findFirst({
+            where: { id: dto.clientId, ...clientAccessWhere(user) },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.leadId
+        ? this.prisma.lead.findFirst({
+            where: { id: dto.leadId, ...leadAccessWhere(user) },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.dealId
+        ? this.prisma.deal.findFirst({
+            where: { id: dto.dealId, ...dealAccessWhere(user) },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.id
+        ? this.prisma.task.findFirst({
+            where: { id: dto.id, ...taskAccessWhere(user) },
+            select: {
+              id: true,
+              clientId: true,
+              status: true,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
 
-      if (!assignee) {
-        throw new BadRequestException("That assignee is not in your team.");
-      }
+    if (dto.assignedToId && !assignee) {
+      throw new BadRequestException("That assignee is not in your team.");
     }
 
-    if (dto.clientId) {
-      const client = await this.prisma.client.findFirst({
-        where: { id: dto.clientId, ...clientAccessWhere(user) },
-        select: { id: true },
-      });
-
-      if (!client) {
-        throw new BadRequestException("That client is not available in your workspace.");
-      }
+    if (dto.clientId && !client) {
+      throw new BadRequestException("That client is not available in your workspace.");
     }
 
-    if (dto.leadId) {
-      const lead = await this.prisma.lead.findFirst({
-        where: { id: dto.leadId, ...leadAccessWhere(user) },
-        select: { id: true },
-      });
-
-      if (!lead) {
-        throw new BadRequestException("That lead is not available in your workspace.");
-      }
+    if (dto.leadId && !lead) {
+      throw new BadRequestException("That lead is not available in your workspace.");
     }
 
-    if (dto.dealId) {
-      const deal = await this.prisma.deal.findFirst({
-        where: { id: dto.dealId, ...dealAccessWhere(user) },
-        select: { id: true },
-      });
-
-      if (!deal) {
-        throw new BadRequestException("That deal is not available in your workspace.");
-      }
+    if (dto.dealId && !deal) {
+      throw new BadRequestException("That deal is not available in your workspace.");
     }
 
     let previousClientId: string | null = null;
     let existingStatus: TaskStatus | null = null;
 
     if (dto.id) {
-      const existingTask = await this.prisma.task.findFirst({
-        where: { id: dto.id, ...taskAccessWhere(user) },
-        select: {
-          id: true,
-          clientId: true,
-          status: true,
-        },
-      });
-
       if (!existingTask) {
         throw new ForbiddenException("You can only update tasks in your workspace.");
       }

@@ -7,22 +7,62 @@ import { getServerTranslator } from "@/lib/locale-server";
 import { requireUser } from "@/lib/session";
 import { decimalToNumber, formatCurrency, formatIntlDate, formatNumber } from "@/lib/utils";
 
+const leadSources = ["WEBSITE", "REFERRAL", "OUTBOUND", "PARTNER", "EVENT"] as const;
+const dealStages = ["DISCOVERY", "PROPOSAL", "NEGOTIATION", "WON", "LOST"] as const;
+
 export default async function AnalyticsPage() {
   const user = await requireUser();
   const { locale, t } = await getServerTranslator();
-  const [deals, leads, promoCodes, promoUsages] = await Promise.all([
-    prisma.deal.findMany({
-      where: dealAccessWhere(user),
-      include: {
-        client: {
-          select: {
-            company: true,
-          },
-        },
+  const [
+    wonDealStats,
+    totalLeads,
+    wonLeads,
+    leadSourceBreakdown,
+    dealStageBreakdown,
+    promoUsageStats,
+    promoCodes,
+    promoUsages,
+  ] = await Promise.all([
+    prisma.deal.aggregate({
+      where: {
+        ...dealAccessWhere(user),
+        stage: "WON",
+      },
+      _sum: {
+        netAmount: true,
+      },
+      _avg: {
+        netAmount: true,
       },
     }),
-    prisma.lead.findMany({
+    prisma.lead.count({
       where: leadAccessWhere(user),
+    }),
+    prisma.lead.count({
+      where: {
+        ...leadAccessWhere(user),
+        status: "WON",
+      },
+    }),
+    prisma.lead.groupBy({
+      by: ["source"],
+      where: leadAccessWhere(user),
+      _count: {
+        _all: true,
+      },
+    }),
+    prisma.deal.groupBy({
+      by: ["stage"],
+      where: dealAccessWhere(user),
+      _count: {
+        _all: true,
+      },
+    }),
+    prisma.promoCode.aggregate({
+      where: promoCodeAccessWhere(user),
+      _sum: {
+        usedCount: true,
+      },
     }),
     prisma.promoCode.findMany({
       where: promoCodeAccessWhere(user),
@@ -52,21 +92,19 @@ export default async function AnalyticsPage() {
     }),
   ]);
 
-  const wonDeals = deals.filter((deal) => deal.stage === "WON");
-  const averageDealSize = wonDeals.length
-    ? wonDeals.reduce((sum, deal) => sum + decimalToNumber(deal.netAmount), 0) / wonDeals.length
-    : 0;
-  const winRate = leads.length ? (leads.filter((lead) => lead.status === "WON").length / leads.length) * 100 : 0;
-
-  const sourceTotals = (["WEBSITE", "REFERRAL", "OUTBOUND", "PARTNER", "EVENT"] as const).map((source) => {
-    const count = leads.filter((lead) => lead.source === source).length;
-    return { source, count };
-  });
-
-  const stageTotals = (["DISCOVERY", "PROPOSAL", "NEGOTIATION", "WON", "LOST"] as const).map((stage) => {
-    const count = deals.filter((deal) => deal.stage === stage).length;
-    return { stage, count };
-  });
+  const wonRevenue = decimalToNumber(wonDealStats._sum.netAmount ?? 0);
+  const averageDealSize = decimalToNumber(wonDealStats._avg.netAmount ?? 0);
+  const winRate = totalLeads ? (wonLeads / totalLeads) * 100 : 0;
+  const sourceCountByType = new Map(leadSourceBreakdown.map((item) => [item.source, item._count._all]));
+  const stageCountByType = new Map(dealStageBreakdown.map((item) => [item.stage, item._count._all]));
+  const sourceTotals = leadSources.map((source) => ({
+    source,
+    count: sourceCountByType.get(source) ?? 0,
+  }));
+  const stageTotals = dealStages.map((stage) => ({
+    stage,
+    count: stageCountByType.get(stage) ?? 0,
+  }));
   const maxStageCount = Math.max(...stageTotals.map((item) => item.count), 1);
 
   return (
@@ -78,10 +116,10 @@ export default async function AnalyticsPage() {
       />
 
       <div className="grid gap-4 xl:grid-cols-4">
-        <MetricCard label={t("Won revenue")} value={formatCurrency(wonDeals.reduce((sum, deal) => sum + decimalToNumber(deal.netAmount), 0), "USD", locale)} meta={t("Net value from won deals.")} />
+        <MetricCard label={t("Won revenue")} value={formatCurrency(wonRevenue, "USD", locale)} meta={t("Net value from won deals.")} />
         <MetricCard label={t("Win rate")} value={`${Math.round(winRate)}%`} meta={t("Leads converted to won.")} />
         <MetricCard label={t("Average deal")} value={formatCurrency(averageDealSize, "USD", locale)} meta={t("Mean net size of won deals.")} tone="brand" />
-        <MetricCard label={t("Promo usages")} value={formatNumber(promoCodes.reduce((sum, promoCode) => sum + promoCode.usedCount, 0), locale)} meta={t("Tracked discount applications.")} />
+        <MetricCard label={t("Promo usages")} value={formatNumber(promoUsageStats._sum.usedCount ?? 0, locale)} meta={t("Tracked discount applications.")} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">

@@ -14,41 +14,43 @@ export class LeadsService {
   ) {}
 
   async upsertLead(user: RequestUser, dto: UpsertLeadDto) {
-    const owner = await this.prisma.user.findFirst({
-      where: {
-        id: dto.ownerId,
-        ...visibleUsersWhere(user),
-      },
-      select: { id: true },
-    });
+    const [owner, client, existingLead] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: {
+          id: dto.ownerId,
+          ...visibleUsersWhere(user),
+        },
+        select: { id: true },
+      }),
+      dto.clientId
+        ? this.prisma.client.findFirst({
+            where: {
+              id: dto.clientId,
+              ...clientAccessWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.id
+        ? this.prisma.lead.findFirst({
+            where: {
+              id: dto.id,
+              ...leadAccessWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (!owner) {
       throw new BadRequestException("That owner is not in your team.");
     }
 
-    if (dto.clientId) {
-      const client = await this.prisma.client.findFirst({
-        where: {
-          id: dto.clientId,
-          ...clientAccessWhere(user),
-        },
-        select: { id: true },
-      });
-
-      if (!client) {
-        throw new BadRequestException("That client is not available in your workspace.");
-      }
+    if (dto.clientId && !client) {
+      throw new BadRequestException("That client is not available in your workspace.");
     }
 
     if (dto.id) {
-      const existingLead = await this.prisma.lead.findFirst({
-        where: {
-          id: dto.id,
-          ...leadAccessWhere(user),
-        },
-        select: { id: true },
-      });
-
       if (!existingLead) {
         throw new ForbiddenException("You can only update leads in your workspace.");
       }

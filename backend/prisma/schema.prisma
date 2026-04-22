@@ -101,7 +101,6 @@ model User {
   name              String
   email             String           @unique
   nickname          String?          @unique
-  passwordHash      String
   role              Role             @default(MANAGER)
   roleLabel         String?
   title             String?
@@ -172,6 +171,11 @@ model Client {
   tasks          Task[]
   meetings       Meeting[]
   promoUsages    PromoCodeUsage[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([lastContactAt])
 }
 
 model Lead {
@@ -193,6 +197,13 @@ model Lead {
   deals           Deal[]
   notes           Note[]
   tasks           Task[]
+
+  @@index([ownerId])
+  @@index([clientId])
+  @@index([status])
+  @@index([source])
+  @@index([nextFollowUpAt])
+  @@index([createdAt])
 }
 
 model Deal {
@@ -218,6 +229,14 @@ model Deal {
   notes          Note[]
   tasks          Task[]
   promoUsage     PromoCodeUsage?
+
+  @@index([clientId])
+  @@index([leadId])
+  @@index([ownerId])
+  @@index([promoCodeId])
+  @@index([stage])
+  @@index([closeDate])
+  @@index([createdAt])
 }
 
 model Note {
@@ -233,6 +252,11 @@ model Note {
   client     Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   lead       Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   deal       Deal?     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([clientId, createdAt])
+  @@index([leadId, createdAt])
+  @@index([dealId, createdAt])
 }
 
 model Task {
@@ -263,6 +287,11 @@ model Task {
   @@index([dueDate])
   @@index([assignedToId])
   @@index([createdById])
+  @@index([clientId])
+  @@index([leadId])
+  @@index([dealId])
+  @@index([status, dueDate])
+  @@index([assignedToId, status])
 }
 
 model Meeting {
@@ -289,6 +318,8 @@ model Meeting {
   @@index([status])
   @@index([clientId])
   @@index([assignedToId])
+  @@index([createdById])
+  @@index([status, startsAt])
 }
 
 model RecordComment {
@@ -327,6 +358,11 @@ model PromoCode {
   createdBy     User             @relation("PromoCodeCreator", fields: [createdById], references: [id], onDelete: Cascade)
   deals         Deal[]
   usages        PromoCodeUsage[]
+
+  @@index([createdById])
+  @@index([active])
+  @@index([expiresAt])
+  @@index([usedCount])
 }
 
 model PromoCodeUsage {
@@ -344,6 +380,11 @@ model PromoCodeUsage {
   deal           Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
   client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
   appliedBy      User         @relation("PromoCodeAppliedBy", fields: [appliedById], references: [id], onDelete: Cascade)
+
+  @@index([promoCodeId])
+  @@index([clientId])
+  @@index([appliedById])
+  @@index([usedAt])
 }
 
 model ActivityLog {
@@ -359,4 +400,6 @@ model ActivityLog {
 
   @@index([createdAt])
   @@index([entity])
+  @@index([actorId])
+  @@index([entity, createdAt])
 }

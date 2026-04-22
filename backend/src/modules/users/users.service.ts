@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { BadRequestException, ConflictException, ForbiddenException, Injectable } from "@nestjs/common";
-import { ActivityAction, ActivityEntity, Prisma, type User } from "@prisma/client";
+import { ActivityAction, ActivityEntity, type User } from "@prisma/client";
 import { ActivityLogService } from "@backend/common/activity/activity-log.service";
 import { hashPassword } from "@backend/common/auth/password";
 import { verifyTeamInviteToken } from "@backend/common/auth/team-invite-token.server";
+import { AuthPrismaService } from "@backend/common/database/auth-prisma.service";
 import type { RequestUser } from "@backend/common/auth/request-user.interface";
 import { signTeamInviteToken } from "@backend/common/auth/team-invite-token.server";
 import { PrismaService } from "@backend/common/database/prisma.service";
@@ -16,12 +18,42 @@ import { UpsertUserDto } from "./dto/upsert-user.dto";
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly authPrisma: AuthPrismaService,
     private readonly activityLogService: ActivityLogService,
   ) {}
 
+  private getConstraintTargets(error: unknown) {
+    if (!error || typeof error !== "object") {
+      return [];
+    }
+
+    const maybeMeta = "meta" in error ? error.meta : undefined;
+
+    if (!maybeMeta || typeof maybeMeta !== "object" || !("target" in maybeMeta)) {
+      return [];
+    }
+
+    const { target } = maybeMeta;
+
+    if (Array.isArray(target)) {
+      return target.map(String);
+    }
+
+    if (typeof target === "string") {
+      return [target];
+    }
+
+    return [];
+  }
+
   private throwEmailConflictIfNeeded(error: unknown): never {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const target = Array.isArray(error.meta?.target) ? error.meta.target : [];
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      const target = this.getConstraintTargets(error);
 
       if (target.includes("email")) {
         throw new ConflictException("An account with that email already exists.");
@@ -65,48 +97,111 @@ export class UsersService {
     }
 
     const passwordHash = dto.password ? await hashPassword(dto.password) : undefined;
+    const email = dto.email.toLowerCase();
 
-    const user: User = await (async () => {
+    if (dto.id) {
+      const existingAccount = await this.authPrisma.authAccount.findUnique({
+        where: { id: dto.id },
+      });
+
+      if (!existingAccount) {
+        throw new BadRequestException("We couldn't find that account.");
+      }
+
       try {
-        return dto.id
-        ? await this.prisma.user.update({
-            where: { id: dto.id },
-            data: {
-              name: dto.name,
-              email: dto.email.toLowerCase(),
-              nickname: dto.nickname ?? null,
-              role: dto.role,
-              roleLabel: dto.roleLabel || null,
-              title: dto.title || null,
-              passwordHash,
-            },
-          })
-        : await this.prisma.user.create({
-            data: {
-              name: dto.name,
-              email: dto.email.toLowerCase(),
-              nickname: dto.nickname ?? null,
-              role: dto.role,
-              roleLabel: dto.roleLabel || null,
-              title: dto.title || null,
-              passwordHash: passwordHash!,
-              createdById: currentUser.userId,
-            },
-          });
+        await this.authPrisma.authAccount.update({
+          where: { id: dto.id },
+          data: {
+            email,
+            ...(passwordHash ? { passwordHash } : {}),
+          },
+        });
       } catch (error) {
         this.throwEmailConflictIfNeeded(error);
       }
-    })();
 
-    await this.activityLogService.log(this.prisma, {
-      actorId: currentUser.userId,
-      entity: ActivityEntity.USER,
-      action: dto.id ? ActivityAction.UPDATED : ActivityAction.CREATED,
-      entityId: user.id,
-      description: dto.id ? `Updated user ${user.email}.` : `Invited user ${user.email}.`,
-    });
+      const updatedUser = await this.prisma.$transaction(async (tx): Promise<User> => {
+          const user = await tx.user.update({
+            where: { id: dto.id },
+            data: {
+              name: dto.name,
+              email,
+              nickname: dto.nickname ?? null,
+              role: dto.role,
+              roleLabel: dto.roleLabel || null,
+              title: dto.title || null,
+            },
+          });
 
-    return user;
+          await this.activityLogService.log(tx, {
+            actorId: currentUser.userId,
+            entity: ActivityEntity.USER,
+            action: ActivityAction.UPDATED,
+            entityId: user.id,
+            description: `Updated user ${user.email}.`,
+          });
+
+          return user;
+        }).catch(async (error) => {
+          await this.authPrisma.authAccount.update({
+            where: { id: dto.id! },
+            data: {
+              email: existingAccount.email,
+              passwordHash: existingAccount.passwordHash,
+            },
+          }).catch(() => undefined);
+
+          this.throwEmailConflictIfNeeded(error);
+        });
+
+      return updatedUser;
+    }
+
+    const userId = randomUUID();
+
+    try {
+      await this.authPrisma.authAccount.create({
+        data: {
+          id: userId,
+          email,
+          passwordHash: passwordHash!,
+        },
+      });
+    } catch (error) {
+      this.throwEmailConflictIfNeeded(error);
+    }
+
+    try {
+      const newUser = await this.prisma.$transaction(async (tx): Promise<User> => {
+        const user = await tx.user.create({
+          data: {
+            id: userId,
+            name: dto.name,
+            email,
+            nickname: dto.nickname ?? null,
+            role: dto.role,
+            roleLabel: dto.roleLabel || null,
+            title: dto.title || null,
+            createdById: currentUser.userId,
+          },
+        });
+
+        await this.activityLogService.log(tx, {
+          actorId: currentUser.userId,
+          entity: ActivityEntity.USER,
+          action: ActivityAction.CREATED,
+          entityId: user.id,
+          description: `Invited user ${user.email}.`,
+        });
+
+        return user;
+      });
+
+      return newUser;
+    } catch (error) {
+      await this.authPrisma.authAccount.delete({ where: { id: userId } }).catch(() => undefined);
+      this.throwEmailConflictIfNeeded(error);
+    }
   }
 
   async createTeamInvite(currentUser: RequestUser) {

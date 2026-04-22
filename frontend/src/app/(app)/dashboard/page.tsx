@@ -19,11 +19,10 @@ export default async function DashboardPage() {
   const stageOrder = ["DISCOVERY", "PROPOSAL", "NEGOTIATION", "WON", "LOST"] as const;
   const databaseUnavailableFromSession = "databaseUnavailable" in user && user.databaseUnavailable;
   const dashboardData = databaseUnavailableFromSession
-    ? null
+      ? null
     : await Promise.all([
         prisma.lead.count({ where: leadAccessWhere(user) }),
         prisma.client.count({ where: clientAccessWhere(user) }),
-        prisma.deal.count({ where: dealAccessWhere(user) }),
         prisma.deal.aggregate({
           where: { ...dealAccessWhere(user), stage: "WON" },
           _sum: { netAmount: true },
@@ -89,13 +88,11 @@ export default async function DashboardPage() {
   const [
     leadsCount,
     clientsCount,
-    dealsCount,
     wonRevenue,
     recentActivity,
     pipeline,
     upcomingTasks,
   ] = dashboardData ?? [
-    0,
     0,
     0,
     { _sum: { netAmount: 0 } },
@@ -106,6 +103,7 @@ export default async function DashboardPage() {
 
   const pipelineMap = new Map<string, number>(pipeline.map((item) => [item.stage, item._count._all]));
   const totalPipeline = [...pipelineMap.values()].reduce((sum, value) => sum + value, 0);
+  const dealsCount = totalPipeline;
   const revenueValue = decimalToNumber(wonRevenue._sum.netAmount ?? 0);
   const summaryStats = [
     {

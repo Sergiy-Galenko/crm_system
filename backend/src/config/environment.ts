@@ -21,6 +21,7 @@ const optionalTrimmedUrl = z.preprocess((value) => {
 const environmentSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required."),
   CHAT_DATABASE_URL: z.string().min(1, "CHAT_DATABASE_URL is required."),
+  AUTH_DATABASE_URL: z.string().min(1, "AUTH_DATABASE_URL is required."),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters."),
   NEXT_PUBLIC_APP_NAME: z.string().optional(),
   APP_ORIGIN: optionalTrimmedUrl,

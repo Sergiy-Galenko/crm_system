@@ -15,31 +15,34 @@ export class ClientsService {
   ) {}
 
   async upsertClient(user: RequestUser, dto: UpsertClientDto) {
-    const owner = await this.prisma.user.findFirst({
-      where: {
-        id: dto.ownerId,
-        ...visibleUsersWhere(user),
-      },
-      select: {
-        id: true,
-      },
-    });
+    const [owner, existingClient] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: {
+          id: dto.ownerId,
+          ...visibleUsersWhere(user),
+        },
+        select: {
+          id: true,
+        },
+      }),
+      dto.id
+        ? this.prisma.client.findFirst({
+            where: {
+              id: dto.id,
+              ...clientAccessWhere(user),
+            },
+            select: {
+              id: true,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (!owner) {
       throw new BadRequestException("That owner is not in your team.");
     }
 
     if (dto.id) {
-      const existingClient = await this.prisma.client.findFirst({
-        where: {
-          id: dto.id,
-          ...clientAccessWhere(user),
-        },
-        select: {
-          id: true,
-        },
-      });
-
       if (!existingClient) {
         throw new ForbiddenException("You can only update clients in your workspace.");
       }
@@ -95,46 +98,46 @@ export class ClientsService {
   }
 
   async createNote(user: RequestUser, dto: CreateNoteDto) {
-    if (dto.clientId) {
-      const client = await this.prisma.client.findFirst({
-        where: {
-          id: dto.clientId,
-          ...clientAccessWhere(user),
-        },
-        select: { id: true },
-      });
+    const [client, lead, deal] = await Promise.all([
+      dto.clientId
+        ? this.prisma.client.findFirst({
+            where: {
+              id: dto.clientId,
+              ...clientAccessWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.leadId
+        ? this.prisma.lead.findFirst({
+            where: {
+              id: dto.leadId,
+              ...leadAccessWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.dealId
+        ? this.prisma.deal.findFirst({
+            where: {
+              id: dto.dealId,
+              ...dealAccessWhere(user),
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
-      if (!client) {
-        throw new ForbiddenException("You can only add notes to records in your workspace.");
-      }
+    if (dto.clientId && !client) {
+      throw new ForbiddenException("You can only add notes to records in your workspace.");
     }
 
-    if (dto.leadId) {
-      const lead = await this.prisma.lead.findFirst({
-        where: {
-          id: dto.leadId,
-          ...leadAccessWhere(user),
-        },
-        select: { id: true },
-      });
-
-      if (!lead) {
-        throw new ForbiddenException("You can only add notes to records in your workspace.");
-      }
+    if (dto.leadId && !lead) {
+      throw new ForbiddenException("You can only add notes to records in your workspace.");
     }
 
-    if (dto.dealId) {
-      const deal = await this.prisma.deal.findFirst({
-        where: {
-          id: dto.dealId,
-          ...dealAccessWhere(user),
-        },
-        select: { id: true },
-      });
-
-      if (!deal) {
-        throw new ForbiddenException("You can only add notes to records in your workspace.");
-      }
+    if (dto.dealId && !deal) {
+      throw new ForbiddenException("You can only add notes to records in your workspace.");
     }
 
     const note = await this.prisma.note.create({

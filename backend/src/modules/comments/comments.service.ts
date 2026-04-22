@@ -136,8 +136,16 @@ export class CommentsService {
         select: {
           id: true,
           authorId: true,
-          taskId: true,
-          meetingId: true,
+          task: {
+            select: {
+              clientId: true,
+            },
+          },
+          meeting: {
+            select: {
+              clientId: true,
+            },
+          },
         },
       });
 
@@ -163,11 +171,7 @@ export class CommentsService {
 
       return {
         comment,
-        clientId: dto.taskId
-          ? (await this.ensureTaskAccess(user, dto.taskId)).clientId
-          : dto.meetingId
-            ? (await this.ensureMeetingAccess(user, dto.meetingId)).clientId
-            : null,
+        clientId: existingComment.task?.clientId ?? existingComment.meeting?.clientId ?? null,
       };
     }
 

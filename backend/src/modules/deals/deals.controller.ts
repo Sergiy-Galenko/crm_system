@@ -6,17 +6,17 @@ import { UpsertDealDto } from "./dto/upsert-deal.dto";
 import { DealsService } from "./deals.service";
 
 @UseGuards(JwtAuthGuard)
-@Controller()
+@Controller("deals")
 export class DealsController {
   constructor(private readonly dealsService: DealsService) {}
 
-  @Post("deals")
+  @Post()
   async createDeal(@CurrentUser() user: RequestUser, @Body() dto: UpsertDealDto) {
     await this.dealsService.upsertDeal(user, dto);
     return { success: true };
   }
 
-  @Patch("deals/:id")
+  @Patch(":id")
   async updateDeal(@CurrentUser() user: RequestUser, @Param("id") id: string, @Body() dto: UpsertDealDto) {
     await this.dealsService.upsertDeal(user, { ...dto, id });
     return { success: true };

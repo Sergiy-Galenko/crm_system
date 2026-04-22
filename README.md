@@ -1,38 +1,44 @@
-# Koru
+# Koru CRM
 
-Minimalist full-stack CRM built with Next.js App Router, TypeScript, Tailwind CSS, Prisma, PostgreSQL, and secure JWT auth with HTTP-only cookies.
+Full-stack CRM system built with **Next.js 16 App Router**, **NestJS**, **TypeScript**, **Tailwind CSS 4**, **Prisma**, **PostgreSQL**, and secure JWT auth with HTTP-only cookies.
 
-It includes:
+## Features
 
 - Sign up, sign in, logout, protected dashboard routes
 - Role system: `ADMIN`, `MANAGER`
+- Team invites (link or nickname) and workspace joining
 - Dashboard metrics, activity feed, analytics
-- Clients, leads, deals, notes, tasks, follow-ups
+- Clients, leads, deals, notes, tasks, meetings
+- Real-time chat with direct messages, group chats, polls, reactions, forwarding, pinning
+- Record comments with `@mention` support and notifications
 - End-to-end promo code validation and usage tracking
+- In-app notifications with SSE push
 - Search, filters, sorting, pagination
 - Admin user management
+- Multi-language support (EN, UK, PL, DE, FR)
 - Seeded demo data and credentials
-- Vercel-friendly build and Prisma setup
 
-## Stack
+## Tech Stack
 
-- Next.js 16 App Router
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- Prisma ORM
-- PostgreSQL
-- Zod validation
-- Custom JWT auth with secure cookies
-- Sonner toast notifications
-- Radix UI primitives
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, Tailwind CSS 4 |
+| Backend API | NestJS 11 (standalone REST API) |
+| ORM | Prisma 6 (3 schemas: main, chat, auth) |
+| Database | PostgreSQL |
+| Auth | Custom JWT (jose) + HTTP-only cookies |
+| Validation | class-validator / class-transformer (backend), Zod (env) |
+| UI | Radix UI primitives, Lucide icons, Sonner toasts |
+| Language | TypeScript 5 |
 
-## Demo credentials
+## Demo Credentials
 
-- Admin: `admin@korucrm.dev` / `Admin@12345`
-- Manager: `manager@korucrm.dev` / `Manager@12345`
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@korucrm.dev` | `Admin@12345` |
+| Manager | `manager@korucrm.dev` | `Manager@12345` |
 
-## Environment variables
+## Environment Variables
 
 Copy `.env.example` to `.env`:
 
@@ -40,120 +46,38 @@ Copy `.env.example` to `.env`:
 cp .env.example .env
 ```
 
-Required app variables:
+Required variables:
 
-- `DATABASE_URL`
-- `CHAT_DATABASE_URL`
-- `JWT_SECRET`
-- `NEXT_PUBLIC_APP_NAME`
-- `APP_ORIGIN`
-- `COOKIE_SECURE`
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Main PostgreSQL connection string |
+| `CHAT_DATABASE_URL` | Chat database connection string |
+| `AUTH_DATABASE_URL` | Auth database connection string |
+| `JWT_SECRET` | Secret for signing JWTs (min 16 chars) |
+| `NEXT_PUBLIC_APP_NAME` | App display name (default: `Koru`) |
+| `APP_ORIGIN` | Public frontend URL for generated links (invite URLs, etc.) |
+| `COOKIE_SECURE` | `"false"` for HTTP, `"true"` for HTTPS |
 
-Example:
+Example `.env`:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_crm?schema=public"
 CHAT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_chat?schema=public"
+AUTH_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/koru_auth?schema=public"
 JWT_SECRET="replace-with-a-long-random-string"
 NEXT_PUBLIC_APP_NAME="Koru"
 APP_ORIGIN="http://localhost:3000"
 COOKIE_SECURE="false"
 ```
 
-Optional Docker Compose overrides:
+## Local Setup
 
-```env
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=postgres
-APP_DB_NAME=koru_crm
-CHAT_DB_NAME=koru_chat
-```
+### Prerequisites
 
-`docker compose` reads the root `.env` automatically. Inside containers, Compose overrides `DATABASE_URL` and `CHAT_DATABASE_URL` to use the `postgres` service instead of `localhost`.
+- Node.js 22+
+- PostgreSQL 16+ with three databases: `koru_crm`, `koru_chat`, `koru_auth`
 
-Runtime notes:
-
-- `APP_ORIGIN` is the public frontend URL used for generated links such as invite URLs
-- set `COOKIE_SECURE="false"` for plain HTTP on localhost or LAN
-- set `COOKIE_SECURE="true"` when the app is served over HTTPS
-
-## Docker setup
-
-Services exposed by Docker Compose:
-
-- `frontend` on `http://localhost:3000`
-- `backend` on `http://localhost:4000`
-- PostgreSQL on `localhost:5432`
-
-### Start the stack
-
-Before the first run, make sure Docker Desktop or another Docker daemon is running.
-
-```bash
-cp .env.example .env
-docker compose up --build -d
-```
-
-Or use the npm alias to run Compose in the foreground:
-
-```bash
-npm run docker:up
-```
-
-After startup:
-
-- open `http://localhost:3000`
-- backend health endpoint is available at `http://localhost:4000/api`
-- PostgreSQL data is stored in the `postgres_data` Docker volume
-
-### What happens automatically
-
-- PostgreSQL creates two databases: `koru_crm` and `koru_chat`
-- the backend runs `prisma migrate deploy`
-- the backend syncs the chat schema with `prisma db push`
-- the frontend starts only after the backend healthcheck passes
-
-### Seed demo data
-
-Run this after the containers are up:
-
-```bash
-npm run docker:seed
-```
-
-Equivalent raw command:
-
-```bash
-docker compose run --rm backend npm run db:seed
-```
-
-### Useful Docker commands
-
-```bash
-npm run docker:logs
-npm run docker:down
-docker compose down -v
-```
-
-Use `docker compose down -v` when you need a clean PostgreSQL volume, for example after changing `POSTGRES_*`, `APP_DB_NAME`, or `CHAT_DB_NAME`.
-
-### Run from another device
-
-If you want to open the same running instance from another laptop or phone on your local network:
-
-1. Find the IP address of the machine that runs Docker.
-2. Set `APP_ORIGIN` in `.env`, for example `APP_ORIGIN="http://192.168.1.50:3000"`.
-3. Set `COOKIE_SECURE="false"` if you are using plain HTTP.
-4. Restart the stack:
-
-```bash
-docker compose up --build -d
-```
-
-Then open `http://<host-ip>:3000` from the other device.
-
-## Local setup
+### Steps
 
 1. Install dependencies:
 
@@ -161,13 +85,13 @@ Then open `http://<host-ip>:3000` from the other device.
 npm install
 ```
 
-2. Generate Prisma client:
+2. Generate Prisma clients:
 
 ```bash
 npm run prisma:generate
 ```
 
-3. Run the first migration:
+3. Run the main database migration:
 
 ```bash
 npm run prisma:migrate
@@ -179,119 +103,234 @@ npm run prisma:migrate
 npm run prisma:push:chat
 ```
 
-5. Seed demo data:
+5. Sync the auth schema:
+
+```bash
+npm run prisma:push:auth
+```
+
+6. Seed demo data:
 
 ```bash
 npm run db:seed
 ```
 
-6. Start the app:
+7. Start development:
 
 ```bash
+# Frontend (Next.js) — http://localhost:3000
 npm run dev
+
+# Backend (NestJS) — http://localhost:4000
+npm run dev:backend
 ```
 
-App URL:
+The frontend runs Next.js server actions that call backend services directly. The NestJS backend provides a standalone REST API on port 4000 with the `/api` prefix.
 
-- `http://localhost:3000`
+## REST API Endpoints
 
-## Production build check
+All endpoints use the `/api` prefix. Protected endpoints require a valid session cookie or `Authorization: Bearer <token>` header.
+
+### Auth
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/auth/register` | Public | Create account |
+| POST | `/api/auth/login` | Public | Sign in |
+| POST | `/api/auth/logout` | ✅ | Sign out |
+| GET | `/api/auth/me` | ✅ | Get current user |
+
+### Clients
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/clients` | ✅ | Create client |
+| PATCH | `/api/clients/:id` | ✅ | Update client |
+| POST | `/api/clients/notes` | ✅ | Add note to a record |
+
+### Leads
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/leads` | ✅ | Create lead |
+| PATCH | `/api/leads/:id` | ✅ | Update lead |
+
+### Deals
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/deals` | ✅ | Create deal |
+| PATCH | `/api/deals/:id` | ✅ | Update deal |
+
+### Tasks
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/api/tasks` | ✅ | List tasks (paginated, filterable) |
+| GET | `/api/tasks/:id` | ✅ | Get task details |
+| POST | `/api/tasks` | ✅ | Create task |
+| PATCH | `/api/tasks/:id` | ✅ | Update task |
+| PATCH | `/api/tasks/:id/status` | ✅ | Quick status change |
+| DELETE | `/api/tasks/:id` | ✅ | Delete task |
+
+### Meetings
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/meetings` | ✅ | Create meeting |
+| PATCH | `/api/meetings/:id` | ✅ | Update meeting |
+| PATCH | `/api/meetings/:id/status` | ✅ | Update meeting status |
+| DELETE | `/api/meetings/:id` | ✅ | Delete meeting |
+
+### Comments
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/comments` | ✅ | Create/update comment on a task or meeting |
+
+### Users
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/users` | ✅ | Create user (admin/manager) |
+| POST | `/api/users/invite` | ✅ | Generate team invite token |
+| POST | `/api/users/join-team` | ✅ | Join a team via invite or nickname |
+| PATCH | `/api/users/settings/profile` | ✅ | Update own profile |
+| PATCH | `/api/users/settings/chat-appearance` | ✅ | Update chat appearance |
+| PATCH | `/api/users/:id` | ✅ | Update a user |
+
+### Promo Codes
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/promo-codes` | Admin | Create promo code |
+| PATCH | `/api/promo-codes/:id` | Admin | Update promo code |
+| POST | `/api/promo-codes/validate` | ✅ | Validate a promo code against an amount |
+
+### Chat
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/chat/conversations` | ✅ | Create direct or group conversation |
+| POST | `/api/chat/messages` | ✅ | Send message (text, media, poll) |
+| PATCH | `/api/chat/messages/:id` | ✅ | Edit own message |
+| DELETE | `/api/chat/messages/:id` | ✅ | Delete own message |
+| POST | `/api/chat/conversations/:id/mute` | ✅ | Mute/unmute conversation |
+| POST | `/api/chat/conversations/:id/pin` | ✅ | Pin/unpin a message |
+| POST | `/api/chat/messages/:id/forward` | ✅ | Forward message to another conversation |
+| POST | `/api/chat/messages/polls/:pollId/vote` | ✅ | Vote on a poll |
+
+## Prisma Commands
+
+```bash
+# Generate all Prisma clients
+npm run prisma:generate
+
+# Create/apply migration (main schema)
+npm run prisma:migrate
+
+# Push chat schema changes
+npm run prisma:push:chat
+
+# Push auth schema changes
+npm run prisma:push:auth
+
+# Open Prisma Studio
+npm run prisma:studio
+
+# Seed demo data
+npm run db:seed
+```
+
+## Production Build
 
 ```bash
 npm run lint
 npm run build
 ```
 
-## Prisma commands
+## Promo Code Flow
 
-Generate client:
-
-```bash
-npm run prisma:generate
-```
-
-Create/apply local migration:
-
-```bash
-npm run prisma:migrate
-```
-
-Open Prisma Studio:
-
-```bash
-npm run prisma:studio
-```
-
-Seed data:
-
-```bash
-npm run db:seed
-```
-
-## Promo code flow
-
-1. A user enters a promo code in the deal form.
+1. User enters a promo code in the deal form.
 2. The frontend calls `POST /api/promo-codes/validate`.
-3. The server checks:
-   - code exists
-   - code is active
-   - code is not expired
-   - usage limit has not been reached
-4. The server calculates discount and final amount.
-5. On deal save, the server action validates again and writes:
-   - `Deal`
-   - `PromoCodeUsage`
-   - promo `usedCount`
-   - activity log entry
+3. The server validates: code exists, is active, not expired, within usage limit.
+4. The server calculates discount and returns the final amount.
+5. On deal save, the server validates again and atomically writes `Deal`, `PromoCodeUsage`, increments `usedCount`, and logs the activity.
 6. Existing promo usage is adjusted correctly when a deal is edited.
 
-Promo validation logic lives on the server only. The client never decides whether a code is valid.
+Promo validation logic lives on the server only.
 
-## Project structure
+## Project Structure
 
 ```text
 .
-├── backend
-│   ├── prisma
-│   │   ├── migrations
-│   │   ├── schema.prisma
-│   │   ├── chat-schema.prisma
+├── backend/
+│   ├── prisma/
+│   │   ├── migrations/
+│   │   ├── schema.prisma          # Main CRM schema
+│   │   ├── chat-schema.prisma     # Chat schema
+│   │   ├── auth/
+│   │   │   └── schema.prisma      # Auth schema
 │   │   └── seed.ts
-│   └── src
-├── frontend
-│   ├── src
-│   │   ├── actions
-│   │   ├── app
-│   │   ├── components
-│   │   └── lib
+│   ├── prisma.config.ts
+│   └── src/
+│       ├── main.ts                # NestJS bootstrap
+│       ├── app.module.ts
+│       ├── config/
+│       ├── common/
+│       │   ├── auth/              # JWT, guards, decorators
+│       │   ├── database/          # Prisma services (main, chat, auth)
+│       │   ├── scope/             # Role-based access helpers
+│       │   ├── activity/          # Activity logging
+│       │   ├── i18n/              # Translations
+│       │   ├── nest/              # Frontend adapter (app-context)
+│       │   ├── next/              # Next.js session & middleware
+│       │   └── validation/        # DTO validation
+│       └── modules/
+│           ├── auth/
+│           ├── chat/
+│           ├── clients/
+│           ├── comments/
+│           ├── deals/
+│           ├── leads/
+│           ├── meetings/
+│           ├── promo-codes/
+│           ├── tasks/
+│           └── users/
+├── frontend/
+│   ├── src/
+│   │   ├── actions/               # Next.js server actions
+│   │   ├── app/                   # App Router pages
+│   │   ├── components/
+│   │   └── lib/
 │   ├── middleware.ts
 │   └── next.config.ts
-├── docker
-│   ├── backend
-│   │   └── start.sh
-│   └── postgres
-│       └── init
-│           └── 01-create-databases.sh
-├── docker-compose.yml
-├── Dockerfile
+├── scripts/
 ├── package.json
 └── README.md
 ```
 
-## Push to GitHub
+## Screens
 
-Create a new repository, then run:
+- Landing page
+- Login / Registration
+- Dashboard (metrics, activity feed)
+- Clients list & detail
+- Leads list
+- Deals list
+- Tasks list & detail
+- Meetings
+- Chat (direct & group)
+- Promo codes
+- Analytics
+- Settings (profile, chat appearance, team management)
 
-```bash
-git init
-git add .
-git commit -m "Initial CRM system"
-git branch -M main
-git remote add origin <your-repo-url>
-git push -u origin main
-```
+## Roles
 
-If the repo already exists, use your normal remote and branch flow.
+| Role | Capabilities |
+|------|-------------|
+| `ADMIN` | Full access: manage users, promo codes, all CRM records |
+| `MANAGER` | Manage CRM records within their team scope, view promo code data |
 
 ## Deploy to Vercel
 
@@ -299,6 +338,8 @@ If the repo already exists, use your normal remote and branch flow.
 2. Import the project into Vercel.
 3. Add environment variables in Vercel Project Settings:
    - `DATABASE_URL`
+   - `CHAT_DATABASE_URL`
+   - `AUTH_DATABASE_URL`
    - `JWT_SECRET`
    - `NEXT_PUBLIC_APP_NAME`
 4. Use a PostgreSQL database compatible with Prisma.
@@ -308,41 +349,25 @@ If the repo already exists, use your normal remote and branch flow.
 npx prisma migrate deploy
 ```
 
-6. Optionally seed demo data in the target database:
+6. Optionally seed demo data:
 
 ```bash
 npm run db:seed
 ```
 
-7. Deploy.
-
 Notes:
 
-- Dashboard routes are forced dynamic so build-time does not try to query the database.
+- Dashboard routes are forced dynamic so build-time does not query the database.
 - Prisma uses a singleton client in development to avoid hot-reload connection churn.
 - The build script already runs `prisma generate`.
 
-## Main screens
+## Push to GitHub
 
-- Landing page
-- Login
-- Registration
-- Dashboard
-- Clients list
-- Client detail
-- Leads list
-- Deals list
-- Promo codes
-- Analytics
-- Settings
-
-## Roles
-
-- `ADMIN`
-  - manage users
-  - create/edit/disable promo codes
-  - full dashboard access
-- `MANAGER`
-  - manage CRM records
-  - view promo code data
-  - cannot manage users or promo code administration
+```bash
+git init
+git add .
+git commit -m "Initial CRM system"
+git branch -M main
+git remote add origin <your-repo-url>
+git push -u origin main
+```

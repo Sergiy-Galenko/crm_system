@@ -38,13 +38,6 @@ type UserSummary = {
   avatarColor?: string | null;
 };
 
-type NotificationItem = {
-  id: string;
-  label: string;
-  meta: string;
-  createdAtLabel: string;
-};
-
 type MeetingReminder = {
   title: string;
   description: string;
@@ -55,18 +48,6 @@ type SystemNotice = {
   title: string;
   description: string;
 };
-
-function BadgeCount({ count }: { count: number }) {
-  if (count <= 0) {
-    return null;
-  }
-
-  return (
-    <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white shadow-sm">
-      {count > 9 ? "9+" : count}
-    </span>
-  );
-}
 
 function SidebarSectionTitle({
   title,

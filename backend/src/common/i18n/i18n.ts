@@ -186,7 +186,6 @@ const uk: TranslationDictionary = {
   "Close sidebar": "Закрити бокову панель",
   "Sign in": "Увійти",
   "Start free": "Почати безкоштовно",
-  "Production-ready CRM on Next.js + Prisma": "CRM для продакшену на Next.js + Prisma",
   "Minimal revenue operations for premium teams.": "Мінімалістична CRM для сильних команд продажів.",
   "Manage clients, leads, deals, promo codes, tasks, notes, and admin activity in one polished workspace. Built for Vercel deployment with secure auth, typed validation, and a clean full-stack architecture.": "Керуйте клієнтами, лідами, угодами, промокодами, задачами, нотатками та адмін-діями в одному акуратному робочому просторі. Проєкт підготовлено для деплою на Vercel із безпечною автентифікацією, типізованою валідацією та чистою full-stack архітектурою.",
   "Launch workspace": "Відкрити CRM",

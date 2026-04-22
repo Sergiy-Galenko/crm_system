@@ -1,7 +1,6 @@
 import { addDays } from "date-fns";
 import { isPrismaDatabaseUnavailableError } from "@backend/common/database/prisma-errors";
 import { AppShell } from "@/components/layout/app-shell";
-import { promoCodeAccessWhere, taskAccessWhere } from "@/lib/crm-scope";
 import { prisma } from "@/lib/db";
 import { chatDb } from "@/lib/chat-db";
 import { getServerTranslator } from "@/lib/locale-server";
@@ -18,34 +17,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const layoutData = databaseUnavailable
     ? null
     : await Promise.all([
-        prisma.task.findMany({
-          where: {
-            ...taskAccessWhere(user),
-            status: {
-              not: "DONE",
-            },
-            dueDate: {
-              lte: addDays(new Date(), 5),
-            },
-          },
-          orderBy: {
-            dueDate: "asc",
-          },
-          take: 3,
-        }),
-        prisma.promoCode.findMany({
-          where: {
-            ...promoCodeAccessWhere(user),
-            active: true,
-            expiresAt: {
-              lte: addDays(new Date(), 7),
-            },
-          },
-          orderBy: {
-            expiresAt: "asc",
-          },
-          take: 3,
-        }),
         prisma.meeting.findMany({
           where: {
             assignedToId: user.id,
@@ -67,57 +38,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
           },
           take: 3,
         }),
-        prisma.activityLog.findMany({
-          where: {
-            entity: "USER",
-            action: "UPDATED",
-            entityId: user.id,
-            description: {
-              contains: "joined your team",
-            },
-          },
-          include: {
-            actor: {
-              select: {
-                name: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 3,
-        }),
-        chatDb.chatConversation.findMany({
-          where: {
-            participants: {
-              some: {
-                userId: user.id,
-              },
-            },
-          },
-          orderBy: {
-            lastMessageAt: "desc",
-          },
-          take: 12,
-          select: {
-            id: true,
-            messages: {
-              take: 1,
-              orderBy: {
-                createdAt: "desc",
-              },
-              select: {
-                senderId: true,
-                createdAt: true,
-              },
-            },
-          },
-        }),
-        chatDb.$queryRaw<Array<{ conversationId: string; lastReadAt: Date }>>`
-          SELECT "conversationId", "lastReadAt"
-          FROM "ChatParticipant"
-          WHERE "userId" = ${user.id}
+        chatDb.$queryRaw<Array<{ unreadCount: bigint }>>`
+          SELECT COUNT(*)::bigint AS "unreadCount"
+          FROM "ChatParticipant" participant
+          JOIN LATERAL (
+            SELECT message."senderId", message."createdAt"
+            FROM "ChatMessage" message
+            WHERE message."conversationId" = participant."conversationId"
+            ORDER BY message."createdAt" DESC
+            LIMIT 1
+          ) latest_message ON TRUE
+          WHERE participant."userId" = ${user.id}
+            AND latest_message."senderId" <> ${user.id}
+            AND latest_message."createdAt" > participant."lastReadAt"
         `,
       ]).catch((error) => {
         if (!isPrismaDatabaseUnavailableError(error)) {
@@ -128,20 +61,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         return null;
       });
 
-  const [, , myUpcomingMeetings, , recentChatThreads, chatReadStates] =
-    layoutData ?? [[], [], [], [], [], []];
-  const chatReadStateByConversationId = new Map(chatReadStates.map((item) => [item.conversationId, item.lastReadAt]));
-
-  const chatIndicatorCount = recentChatThreads.filter((conversation) => {
-    const lastMessage = conversation.messages[0];
-    const lastReadAt = chatReadStateByConversationId.get(conversation.id);
-
-    if (!lastMessage || !lastReadAt) {
-      return false;
-    }
-
-    return lastMessage.senderId !== user.id && lastMessage.createdAt > lastReadAt;
-  }).length;
+  const [myUpcomingMeetings, chatUnreadRows] = layoutData ?? [[], []];
+  const chatIndicatorCount = Number(chatUnreadRows[0]?.unreadCount ?? 0);
 
   return (
     <AppShell
