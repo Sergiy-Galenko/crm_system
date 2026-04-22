@@ -149,12 +149,11 @@ export function RegisterForm({ inviteToken = "" }: { inviteToken?: string }) {
         </FormField>
         {state.message && !state.success ? <p className="text-sm text-rose-500">{state.message}</p> : null}
         <SubmitButton className="w-full" disabled={!inviteConfirmed}>{t("Create account")}</SubmitButton>
-        <p className="text-sm text-slate-500">
-          {t("Already have an account?")}{" "}
-          <Link href={inviteToken ? `/login?invite=${encodeURIComponent(inviteToken)}` : "/login"} className="font-medium text-slate-950">
+        <Button asChild type="button" variant="secondary" className="w-full">
+          <Link href={inviteToken ? `/login?invite=${encodeURIComponent(inviteToken)}` : "/login"}>
             {t("Sign in")}
           </Link>
-        </p>
+        </Button>
       </form>
     </>
   );

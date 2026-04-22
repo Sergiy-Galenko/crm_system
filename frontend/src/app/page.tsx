@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BadgePercent, BriefcaseBusiness, Users2 } from "lucide-react";
+import { ArrowRight, BadgePercent, BriefcaseBusiness, CalendarClock, ClipboardCheck, Users2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -53,31 +53,6 @@ export default async function LandingPage() {
               </Button>
             </div>
 
-            <div className="mt-10 grid gap-3 sm:grid-cols-3">
-              {[
-                {
-                  icon: Users2,
-                  title: "Client intelligence",
-                  text: "Accounts, contact history, notes, tasks, and ownership in one clean timeline.",
-                },
-                {
-                  icon: BriefcaseBusiness,
-                  title: "Deal pipeline",
-                  text: "Track gross to net revenue, stage movement, and promo-adjusted values.",
-                },
-                {
-                  icon: BadgePercent,
-                  title: "Promo governance",
-                  text: "Server-side validation with usage caps, expiration rules, and audit history.",
-                },
-              ].map((item) => (
-                <div key={item.title} className="rounded-xl border border-slate-200 bg-white p-4">
-                  <item.icon className="h-4 w-4 text-slate-500" />
-                  <h3 className="mt-3 text-sm font-semibold text-slate-950">{t(item.title)}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-slate-500">{t(item.text)}</p>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="card p-6">
@@ -100,6 +75,42 @@ export default async function LandingPage() {
                 )}
               </p>
           </div>
+        </div>
+
+        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            {
+              icon: Users2,
+              title: "Client intelligence",
+              text: "Accounts, contact history, notes, tasks, and ownership in one clean timeline.",
+            },
+            {
+              icon: BriefcaseBusiness,
+              title: "Deal pipeline",
+              text: "Track gross to net revenue, stage movement, and promo-adjusted values.",
+            },
+            {
+              icon: BadgePercent,
+              title: "Promo governance",
+              text: "Server-side validation with usage caps, expiration rules, and audit history.",
+            },
+            {
+              icon: ClipboardCheck,
+              title: "Task execution",
+              text: "Prioritize follow-ups, owners, due dates, and client-linked work without scattered spreadsheets.",
+            },
+            {
+              icon: CalendarClock,
+              title: "Meeting cadence",
+              text: "Plan client calls, outcomes, links, and comments in one calendar board.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-xl border border-slate-200 bg-white p-4">
+              <item.icon className="h-4 w-4 text-slate-500" />
+              <h3 className="mt-3 text-sm font-semibold text-slate-950">{t(item.title)}</h3>
+              <p className="mt-1.5 text-sm leading-6 text-slate-500">{t(item.text)}</p>
+            </div>
+          ))}
         </div>
       </section>
     </main>
