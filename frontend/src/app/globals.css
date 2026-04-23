@@ -21,6 +21,15 @@
    *   Combined budget for the chat height formula: ~2.5rem (comfortable average).
    */
   --shell-gap-y: 2rem;
+
+  /* Sidebar accent-customisable properties (default = slate) */
+  --sidebar-from: #231e52;
+  --sidebar-via: #221d4d;
+  --sidebar-to: #19163a;
+  --sidebar-glow: rgba(255,255,255,0.12);
+  --sidebar-card-from: rgba(167,164,190,0.98);
+  --sidebar-card-to: rgba(147,144,173,0.94);
+  --sidebar-active: rgba(10,15,37,0.96);
 }
 
 :root,

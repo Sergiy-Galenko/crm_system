@@ -85,7 +85,7 @@ function SidebarNavLink({
       className={cn(
         "group flex items-center gap-3 rounded-[1.45rem] border px-3.5 py-3.5 text-[1.02rem] font-medium transition duration-200",
         active
-          ? "border-white/10 bg-[linear-gradient(135deg,rgba(10,15,37,0.96),rgba(17,24,48,0.9))] text-white shadow-[0_22px_48px_rgba(6,6,22,0.34)]"
+          ? "border-white/10 text-white shadow-[0_22px_48px_rgba(6,6,22,0.34)]"
           : "border-transparent text-white/84 hover:border-white/8 hover:bg-white/[0.055] hover:text-white",
       )}
       onClick={onNavigate}
@@ -157,11 +157,12 @@ export function AppShell({
     <div className="page-shell flex min-h-screen gap-5 py-4 md:py-5">
       <aside
         className={cn(
-          "fixed inset-y-4 left-4 z-40 w-[292px] overflow-hidden rounded-[2.35rem] border border-white/10 bg-[linear-gradient(180deg,#231e52_0%,#221d4d_42%,#19163a_100%)] p-4 shadow-[0_36px_120px_rgba(9,8,27,0.46)] transition duration-300 lg:static lg:flex lg:translate-x-0",
+          "fixed inset-y-4 left-4 z-40 w-[292px] overflow-hidden rounded-[2.35rem] border border-white/10 p-4 shadow-[0_36px_120px_rgba(9,8,27,0.46)] transition duration-300 lg:static lg:flex lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-[120%] lg:translate-x-0",
         )}
+        style={{ background: `linear-gradient(180deg, var(--sidebar-from) 0%, var(--sidebar-via) 42%, var(--sidebar-to) 100%)` }}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_58%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: `radial-gradient(circle at top, var(--sidebar-glow), transparent 58%)` }} />
         <div className="relative flex h-full flex-col">
           <div className="flex items-start justify-between gap-3">
             <BrandMark
@@ -179,7 +180,7 @@ export function AppShell({
             </Button>
           </div>
 
-          <div className="mt-6 rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(167,164,190,0.98),rgba(147,144,173,0.94))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+          <div className="mt-6 rounded-[1.9rem] border border-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]" style={{ background: `linear-gradient(180deg, var(--sidebar-card-from), var(--sidebar-card-to))` }}>
             <div className="flex flex-col items-center text-center">
               <div className="relative">
                 <div className="absolute inset-2 rounded-full bg-white/18 blur-xl" />
