@@ -79,43 +79,57 @@ COOKIE_SECURE="false"
 
 ### Steps
 
-1. Install dependencies:
+1. Copy environment variables:
+
+```bash
+cp .env.example .env
+```
+
+2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Generate Prisma clients:
+3. Create local PostgreSQL databases:
+
+```bash
+createdb koru_crm
+createdb koru_chat
+createdb koru_auth
+```
+
+4. Generate Prisma clients:
 
 ```bash
 npm run prisma:generate
 ```
 
-3. Run the main database migration:
+5. Run the main database migration:
 
 ```bash
 npm run prisma:migrate
 ```
 
-4. Sync the chat schema:
+6. Sync the chat schema:
 
 ```bash
 npm run prisma:push:chat
 ```
 
-5. Sync the auth schema:
+7. Sync the auth schema:
 
 ```bash
 npm run prisma:push:auth
 ```
 
-6. Seed demo data:
+8. Seed demo data:
 
 ```bash
 npm run db:seed
 ```
 
-7. Start development:
+9. Start development in two terminal windows:
 
 ```bash
 # Frontend (Next.js) — http://localhost:3000
