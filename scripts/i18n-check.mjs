@@ -53,7 +53,7 @@ function collectTranslationKeys(text) {
 }
 
 function collectDictionaryKeys(text) {
-  const matches = text.matchAll(/^\s*"((?:\\.|[^"\\])*)":/gm);
+  const matches = text.matchAll(/^\s*,?\s*"((?:\\.|[^"\\])*)":/gm);
   const keys = new Set();
 
   for (const [, key] of matches) {

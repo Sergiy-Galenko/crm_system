@@ -5,23 +5,10 @@ import { loadWorkspaceEnv } from "@backend/common/env/load-workspace-env";
 loadWorkspaceEnv();
 
 type GlobalChatPrisma = typeof globalThis & {
-  chatPrismaV2?: PrismaClient;
+  chatPrismaV2?: ChatPrismaService;
 };
 
 const globalForChatPrisma = globalThis as GlobalChatPrisma;
-
-function createChatPrismaClient() {
-  return new PrismaClient({
-    datasourceUrl: process.env.CHAT_DATABASE_URL,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
-}
-
-export const chatPrisma = globalForChatPrisma.chatPrismaV2 ?? createChatPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForChatPrisma.chatPrismaV2 = chatPrisma;
-}
 
 @Injectable()
 export class ChatPrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -39,4 +26,14 @@ export class ChatPrismaService extends PrismaClient implements OnModuleInit, OnM
   async onModuleDestroy() {
     await this.$disconnect();
   }
+}
+
+function createChatPrismaClient() {
+  return new ChatPrismaService();
+}
+
+export const chatPrisma = globalForChatPrisma.chatPrismaV2 ?? createChatPrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForChatPrisma.chatPrismaV2 = chatPrisma;
 }

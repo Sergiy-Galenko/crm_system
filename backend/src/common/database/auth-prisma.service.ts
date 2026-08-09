@@ -5,23 +5,10 @@ import { loadWorkspaceEnv } from "@backend/common/env/load-workspace-env";
 loadWorkspaceEnv();
 
 type GlobalAuthPrisma = typeof globalThis & {
-  authPrismaV1?: PrismaClient;
+  authPrismaV1?: AuthPrismaService;
 };
 
 const globalForAuthPrisma = globalThis as GlobalAuthPrisma;
-
-function createAuthPrismaClient() {
-  return new PrismaClient({
-    datasourceUrl: process.env.AUTH_DATABASE_URL,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
-}
-
-export const authPrisma = globalForAuthPrisma.authPrismaV1 ?? createAuthPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForAuthPrisma.authPrismaV1 = authPrisma;
-}
 
 @Injectable()
 export class AuthPrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -39,4 +26,14 @@ export class AuthPrismaService extends PrismaClient implements OnModuleInit, OnM
   async onModuleDestroy() {
     await this.$disconnect();
   }
+}
+
+function createAuthPrismaClient() {
+  return new AuthPrismaService();
+}
+
+export const authPrisma = globalForAuthPrisma.authPrismaV1 ?? createAuthPrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForAuthPrisma.authPrismaV1 = authPrisma;
 }

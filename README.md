@@ -129,15 +129,15 @@ npm run prisma:push:auth
 npm run db:seed
 ```
 
-9. Start development in two terminal windows:
+9. Start frontend and backend together:
 
 ```bash
 # Frontend (Next.js) — http://localhost:3000
-npm run dev
-
 # Backend (NestJS) — http://localhost:4000
-npm run dev:backend
+npm run dev
 ```
+
+For a production build, use `npm run build` followed by `npm start`; it starts both services together as well.
 
 The frontend runs Next.js server actions that call backend services directly. The NestJS backend provides a standalone REST API on port 4000 with the `/api` prefix.
 

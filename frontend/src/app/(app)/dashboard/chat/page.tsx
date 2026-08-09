@@ -24,6 +24,10 @@ const chatUserSelect = {
   lastSeenAt: true,
 } satisfies Prisma.UserSelect;
 
+// A chat can grow without bound. Rendering its entire history on every page
+// request keeps both the server and the browser from releasing that data.
+const INITIAL_MESSAGE_LIMIT = 100;
+
 const conversationListInclude = {
   participants: {
     orderBy: {
@@ -45,12 +49,14 @@ const conversationDetailInclude = {
     },
   },
   messages: {
+    // Fetch newest first so PostgreSQL can use the conversation/date index,
+    // then restore chronological order before rendering below.
+    take: INITIAL_MESSAGE_LIMIT,
     orderBy: {
-      createdAt: "asc",
+      createdAt: "desc",
     },
     include: {
       replyToMessage: true,
-      reactions: true,
       poll: {
         include: {
           options: {
@@ -520,7 +526,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
           ...p,
           user: userMap.get(p.userId) ?? { ...fallbackUser, id: p.userId },
         })),
-        messages: activeConversationRaw.messages.map((m) => ({
+        messages: [...activeConversationRaw.messages].reverse().map((m) => ({
           ...m,
           sender: userMap.get(m.senderId) ?? { ...fallbackUser, id: m.senderId },
           replyToMessage: m.replyToMessage
